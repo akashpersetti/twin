@@ -93,14 +93,8 @@ export default function Twin() {
         }
     };
 
-    // Check if avatar exists
-    const [hasAvatar, setHasAvatar] = useState(false);
-    useEffect(() => {
-        // Check if avatar.png exists
-        fetch('/avatar.png', { method: 'HEAD' })
-            .then(res => setHasAvatar(res.ok))
-            .catch(() => setHasAvatar(false));
-    }, []);
+    // Avatar: show image; fall back to Bot icon if it fails to load
+    const [avatarError, setAvatarError] = useState(false);
 
     return (
         <div className="flex flex-col h-full bg-gray-50 rounded-lg shadow-lg">
@@ -117,11 +111,12 @@ export default function Twin() {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.length === 0 && (
                     <div className="text-center text-gray-500 mt-8">
-                        {hasAvatar ? (
+                        {!avatarError ? (
                             <img 
                                 src="/avatar.png" 
                                 alt="Digital Twin Avatar" 
                                 className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-gray-300"
+                                onError={() => setAvatarError(true)}
                             />
                         ) : (
                             <Bot className="w-12 h-12 mx-auto mb-3 text-gray-400" />
@@ -140,11 +135,12 @@ export default function Twin() {
                     >
                         {message.role === 'assistant' && (
                             <div className="flex-shrink-0">
-                                {hasAvatar ? (
+                                {!avatarError ? (
                                     <img 
                                         src="/avatar.png" 
                                         alt="Digital Twin Avatar" 
                                         className="w-8 h-8 rounded-full border border-slate-300"
+                                        onError={() => setAvatarError(true)}
                                     />
                                 ) : (
                                     <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center">
@@ -184,11 +180,12 @@ export default function Twin() {
                 {isLoading && (
                     <div className="flex gap-3 justify-start">
                         <div className="flex-shrink-0">
-                            {hasAvatar ? (
+                            {!avatarError ? (
                                 <img 
                                     src="/avatar.png" 
                                     alt="Digital Twin Avatar" 
                                     className="w-8 h-8 rounded-full border border-slate-300"
+                                    onError={() => setAvatarError(true)}
                                 />
                             ) : (
                                 <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center">
