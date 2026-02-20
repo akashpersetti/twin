@@ -14,12 +14,13 @@ echo "📦 Building Lambda package..."
 # 2. Terraform workspace & apply
 cd terraform
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-AWS_REGION=${DEFAULT_AWS_REGION:-us-east-1}
+# Use DEFAULT_AWS_REGION, then AWS_REGION (set by CI), then us-east-1 so S3 backend matches bucket region
+AWS_REGION=${DEFAULT_AWS_REGION:-${AWS_REGION:-us-east-1}}
 terraform init -input=false \
   -backend-config="bucket=twin-terraform-state-${AWS_ACCOUNT_ID}" \
   -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
   -backend-config="region=${AWS_REGION}" \
-  -backend-config="dynamodb_table=twin-terraform-locks" \
+  -backend-config="use_lockfile=true" \
   -backend-config="encrypt=true"
 
 if ! terraform workspace list | grep -q "$ENVIRONMENT"; then
