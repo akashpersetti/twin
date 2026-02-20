@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 /* Ensure rose gradient/button classes are in production build */
-@source inline("from-rose-600 to-rose-800 bg-rose-600 hover:bg-rose-700 focus:ring-rose-600");
+@source inline("from-rose-600 to-rose-800 bg-rose-50 bg-rose-200 bg-rose-400 bg-rose-600 hover:bg-rose-700 focus:ring-rose-600 text-rose-200 text-rose-400 text-rose-700 border-rose-200");
 
 /* Smooth scrolling animation keyframe */
 @keyframes bounce {
