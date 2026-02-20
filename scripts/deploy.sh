@@ -46,16 +46,24 @@ CUSTOM_URL=$(terraform output -raw custom_domain_url 2>/dev/null || true)
 # 3. Build + deploy frontend
 cd ../frontend
 
-# Create production environment file with API URL
+# Create production environment file with API URL and cache-bust for avatar
 echo "📝 Setting API URL for production..."
 echo "NEXT_PUBLIC_API_URL=$API_URL" > .env.production
+echo "NEXT_PUBLIC_AVATAR_VERSION=$(date +%s)" >> .env.production
 
 npm install
 npm run build
 aws s3 sync ./out "s3://$FRONTEND_BUCKET/" --delete
-# Ensure public assets (e.g. avatar.png) are in S3; static export may not copy them reliably
+# Ensure public assets (e.g. avatar.png) are in S3
 if [ -d ./public ]; then
   aws s3 sync ./public "s3://$FRONTEND_BUCKET/" --exclude ".DS_Store"
+fi
+# Explicitly upload avatar with correct content-type (CloudFront/S3 website can mis-serve otherwise)
+if [ -f ./public/avatar.png ]; then
+  aws s3 cp ./public/avatar.png "s3://$FRONTEND_BUCKET/avatar.png" --content-type "image/png"
+  echo "✓ Uploaded avatar.png"
+else
+  echo "⚠ public/avatar.png not found; avatar will show as bot icon on site"
 fi
 cd ..
 

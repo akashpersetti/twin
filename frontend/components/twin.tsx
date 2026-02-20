@@ -93,8 +93,9 @@ export default function Twin() {
         }
     };
 
-    // Avatar: show image; fall back to Bot icon if it fails to load
+    // Avatar: show image; fall back to Bot icon if it fails to load. Cache-bust so CloudFront doesn't serve old 404.
     const [avatarError, setAvatarError] = useState(false);
+    const avatarSrc = `/avatar.png${typeof process.env.NEXT_PUBLIC_AVATAR_VERSION === 'string' ? `?v=${process.env.NEXT_PUBLIC_AVATAR_VERSION}` : ''}`;
 
     return (
         <div className="flex flex-col h-full bg-gray-50 rounded-lg shadow-lg">
@@ -113,7 +114,7 @@ export default function Twin() {
                     <div className="text-center text-gray-500 mt-8">
                         {!avatarError ? (
                             <img 
-                                src="/avatar.png" 
+                                src={avatarSrc} 
                                 alt="Digital Twin Avatar" 
                                 className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-gray-300"
                                 onError={() => setAvatarError(true)}
@@ -137,7 +138,7 @@ export default function Twin() {
                             <div className="flex-shrink-0">
                                 {!avatarError ? (
                                     <img 
-                                        src="/avatar.png" 
+                                        src={avatarSrc} 
                                         alt="Digital Twin Avatar" 
                                         className="w-8 h-8 rounded-full border border-slate-300"
                                         onError={() => setAvatarError(true)}
@@ -182,7 +183,7 @@ export default function Twin() {
                         <div className="flex-shrink-0">
                             {!avatarError ? (
                                 <img 
-                                    src="/avatar.png" 
+                                    src={avatarSrc} 
                                     alt="Digital Twin Avatar" 
                                     className="w-8 h-8 rounded-full border border-slate-300"
                                     onError={() => setAvatarError(true)}
