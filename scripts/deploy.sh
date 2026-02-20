@@ -53,6 +53,10 @@ echo "NEXT_PUBLIC_API_URL=$API_URL" > .env.production
 npm install
 npm run build
 aws s3 sync ./out "s3://$FRONTEND_BUCKET/" --delete
+# Ensure public assets (e.g. avatar.png) are in S3; static export may not copy them reliably
+if [ -d ./public ]; then
+  aws s3 sync ./public "s3://$FRONTEND_BUCKET/" --exclude ".DS_Store"
+fi
 cd ..
 
 # 4. Final messages
