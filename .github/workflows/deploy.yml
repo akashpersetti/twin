@@ -46,12 +46,6 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Cache uv environment
-        uses: actions/cache@v4
-        with:
-          path: backend/.venv
-          key: uv-${{ runner.os }}-${{ hashFiles('backend/pyproject.toml') }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -75,7 +69,6 @@ jobs:
           ./scripts/deploy.sh ${{ github.event.inputs.environment || 'dev' }}
         env:
           AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-          BEDROCK_MODEL_ID: ${{ secrets.BEDROCK_MODEL_ID || 'amazon.nova-lite-v1:0' }}
           
       - name: Get Deployment URLs
         id: deploy_outputs

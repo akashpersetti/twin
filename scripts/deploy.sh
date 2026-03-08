@@ -11,14 +11,9 @@ cd "$(dirname "$0")/.."        # project root
 echo "📦 Building Lambda package..."
 (cd backend && uv run deploy.py)
 
-# 2. Upload Lambda zip to S3 (avoids 70MB direct upload limit)
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-LAMBDA_BUCKET="twin-terraform-state-${AWS_ACCOUNT_ID}"
-echo "📤 Uploading Lambda package to S3..."
-aws s3 cp backend/lambda-deployment.zip "s3://${LAMBDA_BUCKET}/${ENVIRONMENT}/lambda-deployment.zip"
-
-# 3. Terraform workspace & apply
+# 2. Terraform workspace & apply
 cd terraform
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 # Use DEFAULT_AWS_REGION, then AWS_REGION (set by CI), then us-east-1 so S3 backend matches bucket region
 AWS_REGION=${DEFAULT_AWS_REGION:-${AWS_REGION:-us-east-1}}
 terraform init -input=false \
@@ -45,16 +40,10 @@ echo "🎯 Applying Terraform..."
 "${TF_APPLY_CMD[@]}"
 
 API_URL=$(terraform output -raw api_gateway_url)
-MEMORY_BUCKET=$(terraform output -raw s3_memory_bucket)
 FRONTEND_BUCKET=$(terraform output -raw s3_frontend_bucket)
 CUSTOM_URL=$(terraform output -raw custom_domain_url 2>/dev/null || true)
 
-# 4. Build vector store and upload to S3
-cd ../backend
-echo "🧠 Building knowledge base vector store..."
-uv run ingest.py --bucket "$MEMORY_BUCKET"
-
-# 5. Build + deploy frontend
+# 3. Build + deploy frontend
 cd ../frontend
 
 # Create production environment file with API URL and cache-bust for avatar
@@ -82,7 +71,7 @@ else
 fi
 cd ..
 
-# 5. Final messages
+# 4. Final messages
 echo -e "\n✅ Deployment complete!"
 echo "🌐 CloudFront URL : $(terraform -chdir=terraform output -raw cloudfront_url)"
 if [ -n "$CUSTOM_URL" ]; then

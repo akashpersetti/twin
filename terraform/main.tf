@@ -14,10 +14,6 @@ locals {
     Environment = var.environment
     ManagedBy   = "terraform"
   }
-
-  # Reuse Terraform state bucket for Lambda artifacts (avoids 70MB direct upload limit)
-  lambda_s3_bucket = "twin-terraform-state-${data.aws_caller_identity.current.account_id}"
-  lambda_s3_key    = "${var.environment}/lambda-deployment.zip"
 }
 
 # S3 bucket for conversation memory
@@ -125,8 +121,7 @@ resource "aws_iam_role_policy_attachment" "lambda_s3" {
 
 # Lambda function
 resource "aws_lambda_function" "api" {
-  s3_bucket        = local.lambda_s3_bucket
-  s3_key           = local.lambda_s3_key
+  filename         = "${path.module}/../backend/lambda-deployment.zip"
   function_name    = "${local.name_prefix}-api"
   role             = aws_iam_role.lambda_role.arn
   handler          = "lambda_handler.handler"
@@ -138,11 +133,10 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      CORS_ORIGINS          = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
-      S3_BUCKET             = aws_s3_bucket.memory.id
-      USE_S3                = "true"
-      BEDROCK_MODEL_ID      = var.bedrock_model_id
-      VECTOR_STORE_BUCKET   = aws_s3_bucket.memory.id
+      CORS_ORIGINS     = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      S3_BUCKET        = aws_s3_bucket.memory.id
+      USE_S3           = "true"
+      BEDROCK_MODEL_ID = var.bedrock_model_id
     }
   }
 

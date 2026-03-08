@@ -38,7 +38,7 @@ bedrock_client = boto3.client(
 # - amazon.nova-lite-v1:0   (balanced - default)
 # - amazon.nova-pro-v1:0    (most capable, higher cost)
 # Remember the Heads up: you might need to add us. or eu. prefix to the below model id
-BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-20250514-v1:0")
+BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0")
 
 # Memory storage configuration
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
@@ -110,30 +110,33 @@ def save_conversation(session_id: str, messages: List[Dict]):
 
 def call_bedrock(conversation: List[Dict], user_message: str) -> str:
     """Call AWS Bedrock with conversation history"""
-
-    system_prompt = prompt(user_message, conversation)
-
-    # Build conversation messages (no system prompt here — passed via system parameter)
+    
+    # Build messages in Bedrock format
     messages = []
-
+    
+    # Add system prompt as first user message (Bedrock convention)
+    messages.append({
+        "role": "user", 
+        "content": [{"text": f"System: {prompt()}"}]
+    })
+    
     # Add conversation history (limit to last 10 exchanges to manage context)
-    for msg in conversation[-20:]:
+    for msg in conversation[-20:]:  # Last 10 back-and-forth exchanges
         messages.append({
             "role": msg["role"],
             "content": [{"text": msg["content"]}]
         })
-
+    
     # Add current user message
     messages.append({
         "role": "user",
         "content": [{"text": user_message}]
     })
-
+    
     try:
         # Call Bedrock using the converse API
         response = bedrock_client.converse(
             modelId=BEDROCK_MODEL_ID,
-            system=[{"text": system_prompt}],
             messages=messages,
             inferenceConfig={
                 "maxTokens": 2000,
