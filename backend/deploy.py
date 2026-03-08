@@ -19,23 +19,30 @@ def main():
     # Install dependencies using Docker with Lambda runtime image
     print("Installing dependencies for Lambda runtime...")
 
-    # Use the official AWS Lambda Python 3.12 image
-    # This ensures compatibility with Lambda's runtime environment
+    docker_base = [
+        "docker", "run", "--rm",
+        "-v", f"{os.getcwd()}:/var/task",
+        "--platform", "linux/amd64",
+        "--entrypoint", "",
+        "public.ecr.aws/lambda/python:3.12",
+        "/bin/sh", "-c",
+    ]
+
+    # Step 1: Install standard packages using pre-built wheels
     subprocess.run(
-        [
-            "docker",
-            "run",
-            "--rm",
-            "-v",
-            f"{os.getcwd()}:/var/task",
-            "--platform",
-            "linux/amd64",  # Force x86_64 architecture
-            "--entrypoint",
-            "",  # Override the default entrypoint
-            "public.ecr.aws/lambda/python:3.12",
-            "/bin/sh",
-            "-c",
-            "pip install --target /var/task/lambda-package -r /var/task/requirements.txt --platform manylinux2014_x86_64 --only-binary=:all: --upgrade",
+        docker_base + [
+            "pip install --target /var/task/lambda-package -r /var/task/requirements.txt"
+            " --platform manylinux2014_x86_64 --only-binary=:all: --upgrade"
+        ],
+        check=True,
+    )
+
+    # Step 2: Install chromadb separately — it needs to compile C extensions
+    # so we skip --only-binary here; Docker ensures correct linux/amd64 architecture
+    print("Installing chromadb for Lambda runtime...")
+    subprocess.run(
+        docker_base + [
+            "pip install --target /var/task/lambda-package chromadb --upgrade"
         ],
         check=True,
     )
