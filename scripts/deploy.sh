@@ -40,10 +40,16 @@ echo "🎯 Applying Terraform..."
 "${TF_APPLY_CMD[@]}"
 
 API_URL=$(terraform output -raw api_gateway_url)
+MEMORY_BUCKET=$(terraform output -raw s3_memory_bucket)
 FRONTEND_BUCKET=$(terraform output -raw s3_frontend_bucket)
 CUSTOM_URL=$(terraform output -raw custom_domain_url 2>/dev/null || true)
 
-# 3. Build + deploy frontend
+# 3. Build vector store and upload to S3
+cd ../backend
+echo "🧠 Building knowledge base vector store..."
+uv run ingest.py --bucket "$MEMORY_BUCKET"
+
+# 4. Build + deploy frontend
 cd ../frontend
 
 # Create production environment file with API URL and cache-bust for avatar
@@ -71,7 +77,7 @@ else
 fi
 cd ..
 
-# 4. Final messages
+# 5. Final messages
 echo -e "\n✅ Deployment complete!"
 echo "🌐 CloudFront URL : $(terraform -chdir=terraform output -raw cloudfront_url)"
 if [ -n "$CUSTOM_URL" ]; then

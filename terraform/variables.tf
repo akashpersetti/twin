@@ -20,7 +20,7 @@ variable "bedrock_model_id" {
   description = "Bedrock model ID"
   type        = string
 #   default     = "amazon.nova-micro-v1:0"
-  default     = "google.gemma-3-27b-it"
+  default     = "us.anthropic.claude-sonnet-4-20250514-v1:0"
 }
 
 variable "lambda_timeout" {

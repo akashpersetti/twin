@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.42.49",
+    "chromadb>=0.6.0",
     "fastapi>=0.129.0",
     "mangum>=0.21.0",
     "openai>=2.20.0",
