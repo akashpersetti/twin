@@ -1,27 +1,109 @@
 @import 'tailwindcss';
-/* Ensure rose gradient/button classes are in production build */
+
+/* Safelist rose classes used by twin.tsx */
 @source inline("from-rose-600 to-rose-800 bg-rose-50 bg-rose-200 bg-rose-400 bg-rose-600 hover:bg-rose-700 focus:ring-rose-600 text-rose-200 text-rose-400 text-rose-700 border-rose-200");
 
-/* Smooth scrolling animation keyframe */
+/* Brand color tokens */
+@theme {
+  --color-brand-primary: #7c3aed;
+  --color-brand-accent:  #06b6d4;
+  --color-brand-rose:    #e11d48;
+}
+
+/* ─── CSS Variables ─────────────────────────── */
+:root {
+  --bg-base:        #0a0a0f;
+  --bg-card:        rgba(255,255,255,0.04);
+  --border-glass:   rgba(255,255,255,0.10);
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --glow-primary:   rgba(124,58,237,0.35);
+}
+
+.light {
+  --bg-base:        #f8fafc;
+  --bg-card:        rgba(255,255,255,0.80);
+  --border-glass:   rgba(0,0,0,0.08);
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --glow-primary:   rgba(124,58,237,0.15);
+}
+
+/* ─── Global Font ───────────────────────────── */
+html, body {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+/* ─── Utility Classes ───────────────────────── */
+.glass {
+  background:       var(--bg-card);
+  border:           1px solid var(--border-glass);
+  backdrop-filter:  blur(12px) saturate(180%);
+  box-shadow:
+    0 1px 1px rgba(0,0,0,0.25),
+    0 4px 12px rgba(0,0,0,0.30),
+    0 16px 40px rgba(0,0,0,0.20),
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 6px 20px rgba(124,58,237,0.06);
+}
+
+.glass-hover:hover {
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.35),
+    0 8px 24px rgba(0,0,0,0.40),
+    0 32px 64px rgba(0,0,0,0.28),
+    0 0 0 1px rgba(255,255,255,0.07) inset,
+    0 8px 32px rgba(124,58,237,0.14);
+  transform: translateY(-2px);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.bg-grid-mesh {
+  background-image:
+    linear-gradient(rgba(124,58,237,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,58,237,0.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ─── Animations ────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes fab-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.6; }
+  50%       { transform: scale(1.4); opacity: 0; }
+}
+
+.animate-fab-pulse {
+  animation: fab-pulse 2s ease-out infinite;
+}
+
+/* Typing dots (used by twin.tsx) */
 @keyframes bounce {
-  0%,
-  80%,
-  100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
+  0%, 80%, 100% { transform: translateY(0); }
+  40%           { transform: translateY(-10px); }
 }
 
 .animate-bounce {
   animation: bounce 1.4s infinite;
 }
 
-.delay-100 {
-  animation-delay: 0.1s;
-}
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
 
-.delay-200 {
-  animation-delay: 0.2s;
+/* Tilt card positioning */
+.tilt-card { position: relative; }
+
+/* ─── Reduced Motion ────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

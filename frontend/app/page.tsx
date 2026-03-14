@@ -1,28 +1,65 @@
-import Twin from '@/components/twin';
+'use client';
+
+import { useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
+
+import Loader from '@/components/sections/Loader';
+import ScrollProgress from '@/components/layout/ScrollProgress';
+import Navbar from '@/components/layout/Navbar';
+import Hero from '@/components/sections/Hero';
+import ImpactStrip from '@/components/sections/ImpactStrip';
+import Experience from '@/components/sections/Experience';
+import Projects from '@/components/sections/Projects';
+import Skills from '@/components/sections/Skills';
+import Education from '@/components/sections/Education';
+import Certifications from '@/components/sections/Certifications';
+import Contact from '@/components/sections/Contact';
+import TwinFloatingButton from '@/components/widgets/TwinFloatingButton';
 
 export default function Home() {
+  const [loaderDone, setLoaderDone] = useState(false);
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">
-            Meet Akash
-          </h1>
-          <p className="text-center text-gray-600 mb-8">
-            An AI Persona of Akash, trained on experience, projects, and way of thinking.
-          </p>
+    <>
+      <AnimatePresence>
+        {!loaderDone && (
+          <Loader onComplete={() => setLoaderDone(true)} />
+        )}
+      </AnimatePresence>
 
-          <div className="h-[600px]">
-            <Twin />
-          </div>
-
-          <footer className="mt-8 text-center text-sm text-gray-500">
-            <p>
-              Akash Hadagali Persetti
-            </p>
-          </footer>
-        </div>
-      </div>
-    </main>
+      {loaderDone && (
+        <>
+          <ScrollProgress />
+          <Navbar />
+          <main>
+            <section id="hero">
+              <Hero />
+            </section>
+            <section id="impact">
+              <ImpactStrip />
+            </section>
+            <section id="experience">
+              <Experience />
+            </section>
+            <section id="projects">
+              <Projects />
+            </section>
+            <section id="skills">
+              <Skills />
+            </section>
+            <section id="education">
+              <Education />
+            </section>
+            <section id="certifications">
+              <Certifications />
+            </section>
+            <section id="contact">
+              <Contact />
+            </section>
+          </main>
+          <TwinFloatingButton />
+        </>
+      )}
+    </>
   );
 }

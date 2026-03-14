@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import os
 from dotenv import load_dotenv
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Generator
 import json
 import uuid
 from datetime import datetime
@@ -38,7 +39,7 @@ bedrock_client = boto3.client(
 # - amazon.nova-lite-v1:0   (balanced - default)
 # - amazon.nova-pro-v1:0    (most capable, higher cost)
 # Remember the Heads up: you might need to add us. or eu. prefix to the below model id
-BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "amazon.nova-lite-v1:0")
+BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-20250514-v1:0")
 
 # Memory storage configuration
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
@@ -108,50 +109,38 @@ def save_conversation(session_id: str, messages: List[Dict]):
             json.dump(messages, f, indent=2)
 
 
-def call_bedrock(conversation: List[Dict], user_message: str) -> str:
-    """Call AWS Bedrock with conversation history"""
-    
-    # Build messages in Bedrock format
+def build_bedrock_messages(conversation: List[Dict], user_message: str) -> List[Dict]:
+    """Build the messages list for Bedrock in the correct format."""
     messages = []
-    
-    # Add system prompt as first user message (Bedrock convention)
     messages.append({
-        "role": "user", 
+        "role": "user",
         "content": [{"text": f"System: {prompt()}"}]
     })
-    
-    # Add conversation history (limit to last 10 exchanges to manage context)
-    for msg in conversation[-20:]:  # Last 10 back-and-forth exchanges
+    for msg in conversation[-20:]:
         messages.append({
             "role": msg["role"],
             "content": [{"text": msg["content"]}]
         })
-    
-    # Add current user message
     messages.append({
         "role": "user",
         "content": [{"text": user_message}]
     })
-    
+    return messages
+
+
+def call_bedrock(conversation: List[Dict], user_message: str) -> str:
+    """Call AWS Bedrock with conversation history"""
+    messages = build_bedrock_messages(conversation, user_message)
     try:
-        # Call Bedrock using the converse API
         response = bedrock_client.converse(
             modelId=BEDROCK_MODEL_ID,
             messages=messages,
-            inferenceConfig={
-                "maxTokens": 2000,
-                "temperature": 0.7,
-                "topP": 0.9
-            }
+            inferenceConfig={"maxTokens": 2000, "temperature": 0.7, "topP": 0.9}
         )
-        
-        # Extract the response text
         return response["output"]["message"]["content"][0]["text"]
-        
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ValidationException':
-            # Handle message format issues
             print(f"Bedrock validation error: {e}")
             raise HTTPException(status_code=400, detail="Invalid message format for Bedrock")
         elif error_code == 'AccessDeniedException':
@@ -160,6 +149,40 @@ def call_bedrock(conversation: List[Dict], user_message: str) -> str:
         else:
             print(f"Bedrock error: {e}")
             raise HTTPException(status_code=500, detail=f"Bedrock error: {str(e)}")
+
+
+def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str) -> Generator[str, None, None]:
+    """Stream response from AWS Bedrock and save conversation when done."""
+    messages = build_bedrock_messages(conversation, user_message)
+    full_response = ""
+
+    try:
+        response = bedrock_client.converse_stream(
+            modelId=BEDROCK_MODEL_ID,
+            messages=messages,
+            inferenceConfig={"maxTokens": 2000, "temperature": 0.7, "topP": 0.9}
+        )
+
+        # Send session_id first so the client can persist it
+        yield f"data: {json.dumps({'session_id': session_id})}\n\n"
+
+        for event in response["stream"]:
+            if "contentBlockDelta" in event:
+                delta = event["contentBlockDelta"]["delta"].get("text", "")
+                if delta:
+                    full_response += delta
+                    yield f"data: {json.dumps({'chunk': delta})}\n\n"
+
+    except ClientError as e:
+        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        return
+
+    # Save completed conversation
+    conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat()})
+    conversation.append({"role": "assistant", "content": full_response, "timestamp": datetime.now().isoformat()})
+    save_conversation(session_id, conversation)
+
+    yield f"data: {json.dumps({'done': True})}\n\n"
 
 
 @app.get("/")
@@ -214,6 +237,23 @@ async def chat(request: ChatRequest):
         raise
     except Exception as e:
         print(f"Error in chat endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    try:
+        session_id = request.session_id or str(uuid.uuid4())
+        conversation = load_conversation(session_id)
+        return StreamingResponse(
+            stream_bedrock(conversation, request.message, session_id),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in chat/stream endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

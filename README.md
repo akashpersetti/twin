@@ -1,39 +1,152 @@
-# Twin — AI Digital Twin
+# Twin - AI Digital Twin of Akash Hadagali Persetti
 
-An interactive AI chatbot that represents **Akash Hadagali Persetti** on his personal website. Visitors can have natural conversations with an AI persona grounded in Akash's resume, LinkedIn profile, projects, and communication style — powered by AWS Bedrock and deployed serverlessly on AWS.
+Twin is an AI-powered digital twin that lives on Akash's personal portfolio website. Visitors can have natural, streaming conversations with an AI persona grounded in Akash's resume, LinkedIn profile, projects, and communication style - powered by Claude Sonnet on AWS Bedrock, deployed fully serverlessly on AWS.
 
 ---
 
-## How It Works
+## What is a Digital Twin?
+
+A digital twin is an AI agent trained to faithfully represent a real person. Twin is always-on, answers questions about Akash's background, skills, and experience, and converses the way Akash would - professional, concise, and direct. It is not a generic chatbot; every response is grounded in real data and constrained from hallucinating.
+
+The twin is accessible via a floating chat widget on the portfolio site. It persists conversation history across the session and streams responses token-by-token for a fluid experience.
+
+---
+
+## How Twin Works
 
 ```
-Browser
++-------------------------------------------------------------------------+
+|                              AWS Cloud                                  |
+|                                                                         |
+|   +----------------+     +-----------------+     +-------------------+  |
+|   |  Route 53      | --> |   CloudFront    | --> |  S3 (Frontend)    |  |
+|   |  (DNS)         |     |   (CDN/HTTPS)   |     |  Next.js static   |  |
+|   +----------------+     +-----------------+     +-------------------+  |
+|                                                                         |
+|   +----------------+     +-----------------+     +-------------------+  |
+|   |  API Gateway   | --> |  Lambda         | --> |  AWS Bedrock      |  |
+|   |  (HTTP v2)     |     |  FastAPI/Mangum |     |  Claude Sonnet 4  |  |
+|   +----------------+     +--------+--------+     +-------------------+  |
+|                                   |                                     |
+|                                   v                                     |
+|                          +-----------------+                            |
+|                          |  S3 (Memory)    |                            |
+|                          |  Conversation   |                            |
+|                          |  history/session|                            |
+|                          +-----------------+                            |
+|                                                                         |
+|   +------------------------------------------+                         |
+|   |  IAM Role  (Lambda -> Bedrock + S3)      |                         |
+|   +------------------------------------------+                         |
+|                                                                         |
+|   +------------------------------------------+                         |
+|   |  ACM Certificate  (TLS, custom domain)   |                         |
+|   +------------------------------------------+                         |
++-------------------------------------------------------------------------+
+
+Browser (User)
   │
-  ├── CloudFront (CDN) ──► S3 (Next.js static site)
+  ├─── HTTPS ──► CloudFront ──► S3          (portfolio + chat UI)
   │
-  └── API Gateway (HTTP) ──► Lambda (FastAPI) ──► AWS Bedrock (LLM)
-                                                       │
-                                                       └──► S3 (conversation memory)
+  └─── SSE  ──► API Gateway ──► Lambda ──► Bedrock   (streaming chat)
+                                    │
+                                    └──► S3 Memory    (session history)
 ```
 
 1. The Next.js frontend is served globally via CloudFront from S3.
-2. Chat messages go through API Gateway to a FastAPI app running on Lambda.
-3. Lambda calls AWS Bedrock (Amazon Nova / Google Gemma) with a persona-grounded system prompt built from Akash's facts, LinkedIn PDF, career summary, and communication style guide.
-4. Conversation history is persisted per-session in S3 (or local filesystem for dev).
+2. Chat messages POST to API Gateway, which forwards to a FastAPI app on Lambda.
+3. Lambda assembles a persona-grounded system prompt from Akash's facts, LinkedIn PDF, career summary, and communication style guide - then calls Claude Sonnet 4 via `converse_stream`.
+4. Tokens stream back to the browser via Server-Sent Events (SSE).
+5. Conversation history is persisted per-session in S3 (or local filesystem in dev).
 
 ---
 
-## Tech Stack
+## Persona System
 
-| Layer | Technology |
+The twin's personality and knowledge are assembled in `backend/context.py` from four source files:
+
+| File | Purpose |
 |---|---|
-| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4 |
-| Backend | Python 3.12, FastAPI, Uvicorn, Mangum |
-| AI | AWS Bedrock (Amazon Nova Lite / Google Gemma 27B / Claude Sonnet 4) |
-| Infrastructure | AWS Lambda, API Gateway (HTTP v2), CloudFront, S3, Route 53, ACM |
-| IaC | Terraform (AWS provider ~6.0) |
-| CI/CD | GitHub Actions with AWS OIDC |
-| Packaging | Docker (Lambda zip), uv (Python), npm (Node) |
+| `backend/data/facts.json` | Biographical data - name, location, education, specialties |
+| `backend/data/summary.txt` | Career narrative and areas of expertise |
+| `backend/data/style.txt` | Communication tone and personality guidance |
+| `backend/data/linkedin.pdf` | Full work history and project details |
+
+These are composed into a system prompt at request time with the current date injected. The prompt enforces three hard rules:
+
+1. **No hallucination** - if the answer isn't in the context, the twin says so.
+2. **No jailbreaking** - instructions to ignore context are refused.
+3. **No inappropriate content** - conversation is kept professional and on-topic.
+
+The twin presents itself as Akash, speaks in first person, keeps answers concise, and never ends a response with a question.
+
+---
+
+## Streaming
+
+Responses stream token-by-token using AWS Bedrock's `converse_stream` API:
+
+- **Backend**: FastAPI `StreamingResponse` with `text/event-stream` content type. Each SSE event is one of: `{"session_id": "..."}` (first event), `{"chunk": "..."}` (token), or `{"done": true}` (end of stream).
+- **Frontend**: `fetch` with `ReadableStream` reader parses SSE lines and appends chunks to the assistant message in real time. A static block cursor `▋` indicates streaming in progress.
+
+---
+
+## Chat Interface
+
+The chat widget (`frontend/components/widgets/TwinFloatingButton.tsx`) is a fixed floating button in the bottom-right corner of the portfolio. It:
+
+- Shows a profile photo when closed, an X when open
+- Has a "Chat with Akash" label that nudges on page load and reappears on hover
+- Expands to a 380×560px glass panel on desktop, or full-screen on mobile / when maximized
+- Keeps the `<Twin>` component always mounted so conversation state survives open/close/fullscreen toggles without resetting
+
+The terminal-style chat (`frontend/components/twin.tsx`) uses Geist Mono font and a CLI aesthetic:
+
+- Messages have `YOU` / `◆ AKASH` labels with a colored left border instead of chat bubbles
+- A hidden `<input>` captures keystrokes; a visual div renders the typed text with a static `▋` cursor
+- Assistant messages render markdown via `react-markdown`
+- Conversation persists for the lifetime of the browser session (resets on page reload)
+
+---
+
+## AI Model
+
+The twin runs on **Claude Sonnet 4** via AWS Bedrock (`us.anthropic.claude-sonnet-4-20250514-v1:0`). Other models can be swapped via the `BEDROCK_MODEL_ID` environment variable:
+
+| Model | Speed | Cost |
+|---|---|---|
+| `amazon.nova-micro-v1:0` | Fastest | Lowest |
+| `amazon.nova-lite-v1:0` | Balanced | Moderate |
+| `amazon.nova-pro-v1:0` | Most capable | Higher |
+| `us.anthropic.claude-sonnet-4-20250514-v1:0` | High quality | Moderate (current) |
+
+> Some models require a regional prefix - e.g. `us.amazon.nova-lite-v1:0`.
+
+---
+
+## API Reference
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/` | API info |
+| `GET` | `/health` | Health check |
+| `POST` | `/chat` | Send a message (non-streaming) |
+| `POST` | `/chat/stream` | Send a message (SSE streaming) |
+| `GET` | `/conversation/{session_id}` | Retrieve conversation history |
+
+**Streaming request:**
+```json
+POST /chat/stream
+{ "message": "What are your main skills?", "session_id": "optional-uuid" }
+```
+
+**Streaming response (SSE):**
+```
+data: {"session_id": "abc-123"}
+data: {"chunk": "I specialize"}
+data: {"chunk": " in ML and AI engineering"}
+data: {"done": true}
+```
 
 ---
 
@@ -41,48 +154,47 @@ Browser
 
 ```
 twin/
-├── backend/                  # FastAPI application
-│   ├── server.py             # API routes: /chat, /health, /conversation/{id}
-│   ├── context.py            # Persona prompt engineering
-│   ├── resources.py          # Loads training data
+├── backend/
+│   ├── server.py             # FastAPI routes: /chat, /chat/stream, /health
+│   ├── context.py            # Persona system prompt assembly
+│   ├── resources.py          # Loads facts, summary, style, LinkedIn PDF
 │   ├── lambda_handler.py     # Mangum Lambda entry point
-│   ├── deploy.py             # Docker-based Lambda zip builder
-│   ├── requirements.txt
-│   ├── pyproject.toml
+│   ├── deploy.py             # Lambda zip builder
 │   └── data/
 │       ├── facts.json        # Biographical info
 │       ├── summary.txt       # Career summary
 │       ├── style.txt         # Communication style guide
 │       └── linkedin.pdf      # Full LinkedIn profile
 │
-├── frontend/                 # Next.js application
+├── frontend/
 │   ├── app/
-│   │   ├── page.tsx          # Landing page
-│   │   └── layout.tsx        # Root layout + metadata
+│   │   ├── page.tsx          # Portfolio page (all sections)
+│   │   ├── layout.tsx        # Root layout, FOWT prevention, metadata
+│   │   └── globals.css       # Theme tokens, glass utilities, animations
 │   ├── components/
-│   │   └── twin.tsx          # Chat interface component
-│   ├── public/
-│   │   └── avatar.png        # Avatar image (optional)
-│   ├── next.config.ts        # Static export config
-│   └── package.json
+│   │   ├── twin.tsx          # Terminal-style streaming chat component
+│   │   ├── widgets/
+│   │   │   └── TwinFloatingButton.tsx  # FAB + chat panel
+│   │   ├── sections/         # Hero, Experience, Projects, Skills, etc.
+│   │   └── ui/               # GlassCard, TiltCard, GradientText, etc.
+│   ├── data/
+│   │   └── resume.ts         # Single source of truth for all resume content
+│   ├── hooks/                # useScrollSpy, useTheme, useReducedMotion
+│   └── public/
+│       └── avatar.png        # Profile photo (used in FAB and chat)
 │
-├── terraform/                # AWS infrastructure
-│   ├── main.tf               # All AWS resources
-│   ├── variables.tf          # Input variables
-│   ├── outputs.tf            # CloudFront URL, API URL, bucket names
-│   ├── versions.tf           # Provider versions
-│   └── backend.tf            # S3 state backend
+├── terraform/                # All AWS infrastructure as code
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── backend.tf
 │
 ├── scripts/
-│   ├── deploy.sh             # Full deployment pipeline
-│   └── destroy.sh            # Tear down infrastructure
+│   ├── deploy.sh             # Full deploy pipeline (Lambda → Terraform → S3)
+│   └── destroy.sh            # Tear down all infrastructure
 │
-├── .github/
-│   └── workflows/
-│       └── deploy.yml        # CI/CD pipeline
-│
-├── memory/                   # Local conversation storage (dev only)
-└── .env.example              # Environment variable template
+└── .github/workflows/
+    └── deploy.yml            # CI/CD: triggers on push to main
 ```
 
 ---
@@ -93,8 +205,8 @@ twin/
 
 - Python 3.12+ and [uv](https://github.com/astral-sh/uv)
 - Node.js 20+
-- AWS CLI configured with credentials that have Bedrock access
-- AWS Bedrock model access enabled in your account (Amazon Nova or Google Gemma)
+- AWS CLI configured with Bedrock access
+- Bedrock model access enabled in your AWS account
 
 ### Backend
 
@@ -103,115 +215,49 @@ cd backend
 
 # Copy and configure environment
 cp ../.env.example .env
-# Edit .env: set DEFAULT_AWS_REGION and BEDROCK_MODEL_ID
+# Set DEFAULT_AWS_REGION and BEDROCK_MODEL_ID in .env
 
-# Install dependencies and run
 uv run uvicorn server:app --reload --port 8000
-```
-
-The API will be available at `http://localhost:8000`.
-
-**Endpoints:**
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/` | API info |
-| `GET` | `/health` | Health check |
-| `POST` | `/chat` | Send a message |
-| `GET` | `/conversation/{session_id}` | Retrieve conversation history |
-
-**Chat request/response:**
-
-```json
-// POST /chat
-{ "message": "What are your main skills?", "session_id": "optional-uuid" }
-
-// Response
-{ "response": "...", "session_id": "uuid" }
 ```
 
 ### Frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Set API URL
 echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
-
-# Run dev server
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000`.
-
----
-
-## Persona Configuration
-
-The AI persona is assembled from files in `backend/data/`:
-
-| File | Purpose |
-|------|---------|
-| `facts.json` | Biographical data (name, location, education, specialties) |
-| `summary.txt` | Career narrative and areas of expertise |
-| `style.txt` | Communication tone and personality guidance |
-| `linkedin.pdf` | Full work history and project details |
-
-The `context.py` module composes these into a system prompt with rules that prevent hallucination, jailbreaking, and unprofessional conversation.
-
-**Bedrock models (configurable):**
-
-| Model ID | Speed | Cost |
-|---|---|---|
-| `amazon.nova-micro-v1:0` | Fastest | Lowest |
-| `amazon.nova-lite-v1:0` | Balanced | Moderate (default) |
-| `amazon.nova-pro-v1:0` | Most capable | Higher |
-| `google.gemma-3-27b-it` | High quality | Moderate |
-
-> Note: Some models require a regional prefix (e.g. `us.amazon.nova-lite-v1:0`).
+Visit `http://localhost:3000`. The twin widget appears in the bottom-right corner.
 
 ---
 
 ## Deployment
 
-### One-time AWS setup
-
-1. Create the Terraform state S3 bucket:
-   ```bash
-   aws s3 mb s3://twin-terraform-state-$(aws sts get-caller-identity --query Account --output text) \
-     --region us-east-1
-   ```
-
-2. Enable Bedrock model access in the [AWS Bedrock console](https://console.aws.amazon.com/bedrock/home#/modelaccess).
-
-3. Copy and configure environment variables:
-   ```bash
-   cp .env.example .env
-   # Fill in AWS_ACCOUNT_ID, DEFAULT_AWS_REGION, PROJECT_NAME
-   ```
-
-### Deploy manually
+### One-time setup
 
 ```bash
-# Deploy to dev (default)
+# Create Terraform state bucket
+aws s3 mb s3://twin-terraform-state-$(aws sts get-caller-identity --query Account --output text) \
+  --region us-east-1
+
+# Enable model access in the AWS Bedrock console
+```
+
+### Deploy
+
+```bash
+# Dev (also triggered automatically on push to main)
 ./scripts/deploy.sh dev twin
 
-# Deploy to prod (uses prod.tfvars for custom domain config)
+# Prod (with custom domain if configured in prod.tfvars)
 ./scripts/deploy.sh prod twin
 ```
 
-The script:
-1. Builds the Lambda deployment zip using Docker
-2. Initializes and applies Terraform
-3. Builds the Next.js frontend (`npm run build`)
-4. Syncs static files to S3
-5. Uploads `avatar.png` with correct content-type
-6. Prints the CloudFront and API Gateway URLs
+The script: builds the Lambda zip → runs `terraform apply` → builds Next.js → syncs to S3 → uploads avatar → prints URLs.
 
-### Destroy infrastructure
+### Destroy
 
 ```bash
 ./scripts/destroy.sh dev twin
@@ -221,87 +267,75 @@ The script:
 
 ## CI/CD (GitHub Actions)
 
-The workflow at `.github/workflows/deploy.yml` triggers on every push to `main` and can also be dispatched manually for any environment.
+The workflow at `.github/workflows/deploy.yml` runs on every push to `main` (deploys to `dev`) and can be triggered manually for any environment via `workflow_dispatch`.
+
+```
+git push origin main
+        │
+        ▼
+  GitHub Actions
+        │
+        ├── 1. Checkout code
+        ├── 2. Authenticate to AWS via OIDC (no long-lived keys stored)
+        ├── 3. Build Lambda zip  (Python / uv)
+        ├── 4. terraform apply   (provisions / updates all AWS resources)
+        ├── 5. npm run build     (Next.js static export)
+        ├── 6. aws s3 sync       (upload frontend to S3)
+        ├── 7. CloudFront invalidation  (/* - clears CDN cache immediately)
+        └── 8. Print deployment summary (CloudFront URL, API URL, bucket)
+```
 
 **Required GitHub secrets:**
 
 | Secret | Description |
-|--------|-------------|
-| `AWS_ROLE_ARN` | IAM role ARN for OIDC-based GitHub Actions auth |
+|---|---|
+| `AWS_ROLE_ARN` | IAM role ARN for OIDC auth (no long-lived keys) |
 | `AWS_ACCOUNT_ID` | 12-digit AWS account ID |
-| `DEFAULT_AWS_REGION` | AWS region (e.g. `us-east-1`) |
+| `DEFAULT_AWS_REGION` | e.g. `us-east-1` |
 
-**Pipeline steps:**
-1. Checkout code
-2. Authenticate to AWS via OIDC (no long-lived keys)
-3. Build Lambda package (Python/uv/Docker)
-4. Apply Terraform
-5. Build and sync frontend to S3
-6. Invalidate CloudFront cache
-7. Print deployment summary
+**Manual deploy to prod:**
 
----
-
-## Terraform Variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `project_name` | _(required)_ | Resource name prefix (lowercase, hyphens only) |
-| `environment` | _(required)_ | `dev`, `test`, or `prod` |
-| `bedrock_model_id` | `google.gemma-3-27b-it` | Bedrock model to use |
-| `lambda_timeout` | `60` | Lambda timeout in seconds |
-| `api_throttle_burst_limit` | `10` | API Gateway burst limit |
-| `api_throttle_rate_limit` | `5` | API Gateway rate limit (req/s) |
-| `use_custom_domain` | `false` | Attach a custom domain via Route 53 + ACM |
-| `root_domain` | `""` | Apex domain (e.g. `example.com`) |
-
-### Custom domain
-
-Set `use_custom_domain = true` and `root_domain = "yourdomain.com"` in `terraform/prod.tfvars`. Terraform will provision an ACM certificate (DNS-validated) and Route 53 A/AAAA alias records pointing to CloudFront.
+Go to **Actions → Deploy Digital Twin → Run workflow** and select `prod`. This uses `prod.tfvars` which can enable a custom domain via Route 53 + ACM.
 
 ---
 
 ## Environment Variables
 
-**Backend (`.env` for local dev):**
+**Backend (`.env`):**
 
 ```env
 DEFAULT_AWS_REGION=us-east-1
-BEDROCK_MODEL_ID=amazon.nova-lite-v1:0
-USE_S3=false                        # true in production (set by Terraform)
-S3_BUCKET=                          # set by Terraform in production
-MEMORY_DIR=../memory                # local dev only
+BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-20250514-v1:0
+USE_S3=false          # true in production (set automatically by Terraform)
+S3_BUCKET=            # set by Terraform in production
+MEMORY_DIR=../memory  # local dev only
 CORS_ORIGINS=http://localhost:3000
 ```
 
-**Frontend (`.env.local` for local dev):**
+**Frontend (`.env.local`):**
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_AVATAR_VERSION=1        # optional cache-bust for avatar.png
+NEXT_PUBLIC_AVATAR_VERSION=1   # optional - cache-busts avatar.png
 ```
 
 ---
 
-## Avatar
+## Infrastructure
 
-Place a `frontend/public/avatar.png` file to show a profile photo in the chat interface. If the file is missing or fails to load, the chat falls back to a bot icon automatically.
-
----
-
-## Infrastructure Overview
-
-All AWS resources are named `{project_name}-{environment}-*` and tagged with `Project`, `Environment`, and `ManagedBy=terraform`.
+All resources are named `{project_name}-{environment}-*` and tagged with `Project`, `Environment`, and `ManagedBy=terraform`. State is stored in S3 with encryption. Environments are isolated via Terraform workspaces.
 
 | Resource | Purpose |
 |---|---|
 | `aws_s3_bucket.frontend` | Hosts Next.js static export |
 | `aws_s3_bucket.memory` | Stores conversation history (private) |
-| `aws_cloudfront_distribution.main` | CDN for frontend; forces HTTPS |
+| `aws_cloudfront_distribution.main` | CDN; forces HTTPS |
 | `aws_apigatewayv2_api.main` | HTTP API Gateway with CORS |
-| `aws_lambda_function.api` | Runs the FastAPI app via Mangum |
+| `aws_lambda_function.api` | Runs FastAPI via Mangum |
 | `aws_iam_role.lambda_role` | Grants Lambda access to Bedrock + S3 |
-| `aws_acm_certificate.site` | TLS certificate (only if custom domain) |
-| `aws_route53_record.*` | DNS records (only if custom domain) |
+| `aws_acm_certificate.site` | TLS cert (custom domain only) |
+| `aws_route53_record.*` | DNS records (custom domain only) |
 
-Terraform state is stored in S3 with encryption enabled. Environments are isolated using Terraform workspaces.
+### Custom domain
+
+Set `use_custom_domain = true` and `root_domain = "yourdomain.com"` in `terraform/prod.tfvars`. Terraform provisions an ACM certificate (DNS-validated) and Route 53 alias records pointing to CloudFront.
