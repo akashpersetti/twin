@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 
@@ -45,7 +45,11 @@ const mdComponents: Components = {
     ),
 };
 
-export default function Twin() {
+export interface TwinHandle {
+    clear: () => void;
+}
+
+const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +61,13 @@ export default function Twin() {
 
     const [avatarError, setAvatarError] = useState(false);
     const avatarSrc = `/avatar.png${typeof process.env.NEXT_PUBLIC_AVATAR_VERSION === 'string' ? `?v=${process.env.NEXT_PUBLIC_AVATAR_VERSION}` : ''}`;
+
+    useImperativeHandle(ref, () => ({
+        clear: () => {
+            setMessages([]);
+            setSessionId('');
+        },
+    }));
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -270,4 +281,6 @@ export default function Twin() {
             </div>
         </div>
     );
-}
+});
+
+export default Twin;

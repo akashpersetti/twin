@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, Minimize2 } from 'lucide-react';
-import Twin from '@/components/twin';
+import { X, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
+import Twin, { TwinHandle } from '@/components/twin';
 
 export default function TwinFloatingButton() {
   const [open, setOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [nudge, setNudge] = useState(false);
+  const twinRef = useRef<TwinHandle>(null);
 
   // Show nudge label briefly on mount
   useEffect(() => {
@@ -75,6 +76,15 @@ export default function TwinFloatingButton() {
           </span>
           <div className="flex items-center gap-1">
             <button
+              onClick={() => twinRef.current?.clear()}
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+              aria-label="Clear conversation"
+              title="Clear conversation"
+            >
+              <RotateCcw size={14} />
+            </button>
+            <button
               onClick={() => setFullscreen(f => !f)}
               className="p-1.5 rounded-lg transition-colors"
               style={{ color: 'var(--text-secondary)' }}
@@ -95,7 +105,7 @@ export default function TwinFloatingButton() {
 
         {/* Twin - single instance, never remounted */}
         <div className="flex-1 overflow-hidden">
-          <Twin />
+          <Twin ref={twinRef} />
         </div>
       </motion.div>
 
