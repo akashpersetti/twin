@@ -77,65 +77,47 @@ export default function Twin() {
         setIsLoading(true);
 
         const assistantId = (Date.now() + 1).toString();
+        let placeholderAdded = false;
 
         try {
-            const response = await fetch(`${API_URL}/chat/stream`, {
+            const response = await fetch(`${API_URL}/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userMessage.content, session_id: sessionId || undefined }),
             });
 
-            if (!response.ok || !response.body) throw new Error('Stream failed');
+            if (!response.ok) throw new Error('Request failed');
 
-            // Add empty assistant message placeholder
+            const data = await response.json();
+            if (data.session_id && !sessionId) setSessionId(data.session_id);
+
+            // Add placeholder and begin typewriter animation
             setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', timestamp: new Date() }]);
+            placeholderAdded = true;
             setIsLoading(false);
             setIsStreaming(true);
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
+            const text: string = data.response;
+            await new Promise<void>(resolve => {
+                let pos = 0;
+                const tick = setInterval(() => {
+                    pos = Math.min(pos + 5, text.length);
+                    setMessages(prev => prev.map(m =>
+                        m.id === assistantId ? { ...m, content: text.slice(0, pos) } : m
+                    ));
+                    if (pos >= text.length) { clearInterval(tick); resolve(); }
+                }, 16);
+            });
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop() ?? '';
-
-                for (const line of lines) {
-                    if (!line.startsWith('data: ')) continue;
-                    try {
-                        const data = JSON.parse(line.slice(6));
-                        if (data.session_id && !sessionId) setSessionId(data.session_id);
-                        if (data.chunk) {
-                            setMessages(prev => prev.map(m =>
-                                m.id === assistantId ? { ...m, content: m.content + data.chunk } : m
-                            ));
-                        }
-                        if (data.error) {
-                            setMessages(prev => prev.map(m =>
-                                m.id === assistantId ? { ...m, content: 'Sorry, I encountered an error. Please try again.' } : m
-                            ));
-                        }
-                    } catch { /* malformed line */ }
-                }
-            }
         } catch (error) {
-            console.error('Stream error:', error);
-            if (isLoading) {
-                // No placeholder added yet - add error message directly
-                setMessages(prev => [...prev, {
-                    id: assistantId,
-                    role: 'assistant',
-                    content: 'Sorry, I encountered an error. Please try again.',
-                    timestamp: new Date(),
-                }]);
-            } else {
+            console.error('Chat error:', error);
+            const errMsg = 'Sorry, I encountered an error. Please try again.';
+            if (placeholderAdded) {
                 setMessages(prev => prev.map(m =>
-                    m.id === assistantId && m.content === '' ? { ...m, content: 'Sorry, I encountered an error. Please try again.' } : m
+                    m.id === assistantId && m.content === '' ? { ...m, content: errMsg } : m
                 ));
+            } else {
+                setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: errMsg, timestamp: new Date() }]);
             }
         } finally {
             setIsLoading(false);
