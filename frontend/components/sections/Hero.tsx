@@ -4,7 +4,11 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { Download, ChevronDown } from 'lucide-react';
 import GradientText from '@/components/ui/GradientText';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { resume } from '@/data/resume';
 
+const [firstName, ...lastParts] = resume.basics.name.split(' ');
+const nameParts = [firstName, lastParts.join(' ')];
+const downloadFilename = `${resume.basics.name.replace(/\s+/g, '_')}_Resume.pdf`;
 
 export default function Hero() {
   const { scrollY } = useScroll();
@@ -33,7 +37,7 @@ export default function Hero() {
           className="text-5xl sm:text-6xl md:text-7xl font-black mb-4 leading-tight"
           style={{ color: 'var(--text-primary)' }}
         >
-          {['Akash', 'Hadagali Persetti'].map((line, i) => (
+          {nameParts.map((line, i) => (
             <motion.span
               key={line}
               className="block"
@@ -53,7 +57,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: reduced ? 0 : 0.58 }}
         >
-          <GradientText>MS Computer Science Student · ML + AI Engineer</GradientText>
+          <GradientText>{resume.basics.title}</GradientText>
         </motion.p>
 
         {/* Tagline */}
@@ -65,7 +69,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: reduced ? 0 : 0.72 }}
         >
           Building agentic AI systems, real-time ML pipelines, and full-stack applications.
-          Currently pursuing my M.S. at Indiana University Bloomington.
+          Currently pursuing my M.S. at {resume.education[0].institution}.
         </motion.p>
 
         {/* CTAs */}
@@ -87,7 +91,7 @@ export default function Hero() {
           </button>
           <a
             href="/resume.pdf"
-            download="Akash_Hadagali_Persetti_Resume.pdf"
+            download={downloadFilename}
             className="px-8 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
             style={{
               border: '1px solid var(--border-glass)',

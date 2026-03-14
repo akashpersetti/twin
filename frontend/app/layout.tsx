@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { resume } from "@/data/resume";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,9 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Akash Hadagali Persetti - ML + AI Engineer",
-  description:
-    "Portfolio of Akash Hadagali Persetti - MS Computer Science at Indiana University Bloomington. Building agentic AI systems, real-time ML pipelines, and full-stack applications.",
+  title: `${resume.basics.name} - ${resume.basics.title}`,
+  description: `Portfolio of ${resume.basics.name} - ${resume.education[0].degree} at ${resume.education[0].institution}. Building agentic AI systems, real-time ML pipelines, and full-stack applications.`,
   icons: {
     icon: "./icon.png",
   },

@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
 import Twin, { TwinHandle } from '@/components/twin';
+import { resume } from '@/data/resume';
+
+const firstName = resume.basics.name.split(' ')[0];
 
 export default function TwinFloatingButton() {
   const [open, setOpen] = useState(false);
@@ -72,7 +75,7 @@ export default function TwinFloatingButton() {
           style={{ borderColor: 'var(--border-glass)', background: 'rgba(124,58,237,0.1)' }}
         >
           <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-            Chat with Akash
+            Chat with {firstName}
           </span>
           <div className="flex items-center gap-1">
             <button
@@ -129,7 +132,7 @@ export default function TwinFloatingButton() {
               onClick={() => setOpen(true)}
             >
               <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>
-                Chat with Akash
+                Chat with {firstName}
               </span>
               <span style={{ fontSize: 11, color: '#7c3aed' }}>✦</span>
             </motion.div>
