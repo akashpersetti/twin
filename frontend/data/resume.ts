@@ -1,7 +1,7 @@
 export const resume = {
   basics: {
     name: "Akash Hadagali Persetti",
-    title: "MS Computer Science Student | ML + AI Engineer",
+    title: "MS Computer Science Student | Aspiring ML + AI Engineer",
     location: "Bloomington, IN",
     address: "421 W Hoosier Court Ave, Bloomington, IN - 47404",
     email: "hadagalipersettiakash@gmail.com",
@@ -16,7 +16,7 @@ export const resume = {
   impact: [
     { value: 60, unit: "%", label: "Manual effort reduced (Sentinel)" },
     { value: 30, unit: "%", label: "Miscounting errors cut (ML Intern)" },
-    { value: 25, unit: "%", label: "Organic search visibility lift" },
+    { value: 25, unit: "%", label: "Organic search visibility lift (Web Development Intern)" },
   ],
 
   experience: [
