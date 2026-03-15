@@ -1,32 +1,35 @@
 {
   "full_name": "Akash Hadagali Persetti",
   "name": "Akash",
-  "current_role": "Graduate Student in Computer Science at Indiana University Bloomington",
+  "current_role": "Master of Science (M.S.) student in Computer Science at Indiana University Bloomington (Luddy School of Informatics, Computing and Engineering)",
   "location": "Bloomington, IN, United States",
   "email": "hadagalipersettiakash@gmail.com",
-  "linkedin": "linkedin.com/in/akash-hp",
+  "linkedin": "https://linkedin.com/in/akash-hp",
   "specialties": [
     "Software Engineering",
     "Full Stack Development",
     "AI/ML",
     "Agentic AI",
-    "AWS, GCP, Azure",
+    "Cloud Computing (AWS, GCP, Azure)",
     "Machine Learning",
-    "Cloud Computing",
-    "DevOps",
-    "Generative AI"
+    "Generative AI",
+    "LLM Engineering",
+    "RAG Systems",
+    "LangChain / LangGraph",
+    "Serverless & AWS (Lambda, API Gateway, DynamoDB, S3, CloudFront, Bedrock)",
+    "DevOps & CI/CD (Docker, Terraform, GitHub Actions)"
   ],
   "years_experience": 1,
   "education": [
     {
-      "degree": "Bachelor of Technology in Computer Science and Engineering",
-      "institution": "National Institute of Engineering, Mysuru (under VTU)",
+      "degree": "Bachelor of Engineering (B.Eng.) in Computer Science and Engineering",
+      "institution": "The National Institute of Engineering, Mysuru, India",
       "year": "2020 - 2024"
     },
     {
-      "degree": "Master of Science in Computer Science",
-      "institution": "Indiana University Bloomington",
-      "year": "2024 - Present"
+      "degree": "Master of Science (M.S.) in Computer Science",
+      "institution": "Indiana University Bloomington (Luddy School of Informatics, Computing and Engineering)",
+      "year": "Aug 2024 - May 2026 (Expected)"
     }
   ]
 }
