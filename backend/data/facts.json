@@ -1,28 +1,32 @@
 {
-    "full_name": "Akash Hadagali Persetti",
-    "name": "Akash",
-    "current_role": "Student at Indiana University Bloomington",
-    "location": "Bloomington, IN, United States",
-    "email": "hadagalipersettiakash@gmail.com",
-    "linkedin": "linkedin.com/in/akash-hp",
-    "specialties": [
-      "Software Engineering",
-      "Full Stack Development",
-      "AI/ML",
-      "Agentic AI", 
-      "AWS, GCP, Azure"
-    ],
-    "years_experience": 0,
-    "education": [
-      {
-        "degree": "Bachelor of Technology in Computer Science and Engineering",
-        "institution": "National Institute of Engineering, Mysuru (under VTU)",
-        "year": "2024"
-      },
-      {
-        "degree": "Master of Science in Computer Science",
-        "institution": "Indiana University Bloomington",
-        "year": "2026"
-      }
-    ]
-  }
+  "full_name": "Akash Hadagali Persetti",
+  "name": "Akash",
+  "current_role": "Graduate Student in Computer Science at Indiana University Bloomington",
+  "location": "Bloomington, IN, United States",
+  "email": "hadagalipersettiakash@gmail.com",
+  "linkedin": "linkedin.com/in/akash-hp",
+  "specialties": [
+    "Software Engineering",
+    "Full Stack Development",
+    "AI/ML",
+    "Agentic AI",
+    "AWS, GCP, Azure",
+    "Machine Learning",
+    "Cloud Computing",
+    "DevOps",
+    "Generative AI"
+  ],
+  "years_experience": 1,
+  "education": [
+    {
+      "degree": "Bachelor of Technology in Computer Science and Engineering",
+      "institution": "National Institute of Engineering, Mysuru (under VTU)",
+      "year": "2020 - 2024"
+    },
+    {
+      "degree": "Master of Science in Computer Science",
+      "institution": "Indiana University Bloomington",
+      "year": "2024 - Present"
+    }
+  ]
+}

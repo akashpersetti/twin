@@ -52,15 +52,15 @@ export const resume = {
 
   projects: [
     {
-      title: "Sentinel",
-      subtitle: "AI-Powered Task Automation Agent",
+      title: "Wingman",
+      subtitle: "Personal AI Co-Worker",
       period: "Jan 2026 – Feb 2026",
-      tech: ["LangGraph", "GPT-4o-mini", "SQLite", "Playwright", "MCP", "Python"],
+      tech: ["LangGraph", "GPT-4o-mini", "DynamoDB", "FastAPI", "Mangum", "Docker", "Terraform", "GitHub Actions", "AWS"],
       bullets: [
-        "Reduced manual effort for repetitive multi-step workflows by an estimated 60% by building a self-evaluating autonomous agent using LangGraph and GPT-4o-mini, with a worker-evaluator loop that converges task completion in under 3 refinement cycles on average",
-        "Achieved zero-overhead session continuity by integrating persistent memory via SQLite and LangGraph checkpointing, enabling fully resumable agentic workflows across separate user sessions",
-        "Delivered broad task automation across 6+ domains (browser automation, code execution, web search, file I/O, Wikipedia, push notifications) by orchestrating Playwright, Python REPL, and external APIs within a unified tool-calling architecture",
-        "Improved tool extensibility by designing the agent around Model Context Protocol (MCP), enabling plug-and-play integration of new tool servers without changes to core agent logic",
+        "Built a self-evaluating agentic system using LangGraph and GPT-4o-mini where a worker model executes tasks with tools while a structured-output evaluator checks each response against user-defined success criteria, retrying with injected feedback for up to 5 turns before surfacing a final answer",
+        "Achieved fully stateless Lambda execution by reconstructing LangGraph state from DynamoDB on every request instead of using a persistent checkpointer, eliminating cold-start graph state issues and making the agent safe for serverless deployment",
+        "Enabled broad task automation across 5 tool domains (web search via Serper, Wikipedia, Python REPL, file I/O in a sandboxed directory, and Pushover push notifications) by binding all tools to the worker LLM through LangChain’s ToolNode and bind tools interface",
+        "Deployed the full stack on AWS with zero long-lived credentials by containerizing FastAPI + Mangum in a Docker image pushed to ECR, provisioning Lambda, API Gateway v2, DynamoDB, S3, and CloudFront via Terraform, and automating every release through GitHub Actions OIDC",
       ],
     },
     {

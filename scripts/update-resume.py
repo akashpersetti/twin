@@ -1,16 +1,16 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["pypdf>=6.7.0", "anthropic>=0.40.0"]
+# dependencies = ["pypdf>=6.7.0", "openai-agents>=0.0.19"]
 # ///
 
 """
 Update resume pipeline.
 
 Usage:
-    uv run scripts/update-resume.py <pdf> [--dry-run] [--no-facts] [--model MODEL]
+    uv run scripts/update-resume.py <pdf> [--dry-run] [--model MODEL]
 
 After running, commit and push:
-    git add frontend/data/resume.ts frontend/public/resume.pdf backend/data/resume.pdf
+    git add frontend/data/resume.ts frontend/public/resume.pdf backend/data/resume.pdf backend/data/facts.json backend/data/summary.txt
     git commit -m "update resume"
     git push
 """
@@ -23,7 +23,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-from anthropic import Anthropic
+from agents import Agent, OpenAIChatCompletionsModel, Runner
+from openai import AsyncOpenAI
 from pypdf import PdfReader
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -32,6 +33,7 @@ FRONTEND_PDF = ROOT / "frontend/public/resume.pdf"
 BACKEND_PDF = ROOT / "backend/data/resume.pdf"
 RESUME_TS = ROOT / "frontend/data/resume.ts"
 FACTS_JSON = ROOT / "backend/data/facts.json"
+SUMMARY_TXT = ROOT / "backend/data/summary.txt"
 
 TOP_LEVEL_KEYS = [
     "basics",
@@ -46,7 +48,8 @@ TOP_LEVEL_KEYS = [
     "communityService",
 ]
 
-DEFAULT_MODEL = "claude-sonnet-4-5"
+DEFAULT_MODEL = "openai/gpt-oss-120b:free"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 def extract_pdf_text(pdf_path: Path) -> str:
@@ -91,10 +94,10 @@ def validate_ts(ts: str) -> tuple[bool, str]:
     return True, ts.strip()
 
 
-def update_resume_ts(client: Anthropic, pdf_text: str, current_ts: str, model: str, dry_run: bool) -> bool:
+def update_resume_ts(pdf_text: str, current_ts: str, model: str, dry_run: bool, client: AsyncOpenAI) -> bool:
     truncated = pdf_text[:12000] if len(pdf_text) > 12000 else pdf_text
 
-    system = (
+    instructions = (
         "You are a TypeScript code generator. "
         "Output ONLY valid TypeScript starting with `export const resume = {` and ending with `} as const;`. "
         "No markdown, no commentary, no explanation. "
@@ -109,18 +112,19 @@ def update_resume_ts(client: Anthropic, pdf_text: str, current_ts: str, model: s
         "Generate an updated resume.ts using the PDF data, keeping the exact same TypeScript structure."
     )
 
-    print("Calling Claude to generate resume.ts...")
-    message = client.messages.create(
-        model=model,
-        max_tokens=8192,
-        messages=[{"role": "user", "content": user_message}],
-        system=system,
+    agent = Agent(
+        name="ResumeUpdater",
+        instructions=instructions,
+        model=OpenAIChatCompletionsModel(model=model, openai_client=client),
     )
-    raw = message.content[0].text
 
-    ok, result = validate_ts(raw)
+    print("Calling model to generate resume.ts...")
+    result = Runner.run_sync(agent, user_message)
+    raw = result.final_output
+
+    ok, result_ts = validate_ts(raw)
     if not ok:
-        print(f"\nValidation failed: {result}", file=sys.stderr)
+        print(f"\nValidation failed: {result_ts}", file=sys.stderr)
         fail_path = Path("/tmp/resume_ts_failed.ts")
         fail_path.write_text(raw, encoding="utf-8")
         print(f"Raw output saved to {fail_path}", file=sys.stderr)
@@ -128,7 +132,7 @@ def update_resume_ts(client: Anthropic, pdf_text: str, current_ts: str, model: s
 
     if dry_run:
         print("\n--- Generated resume.ts (dry run) ---")
-        print(result)
+        print(result_ts)
         print("--- End ---\n")
         return True
 
@@ -136,7 +140,7 @@ def update_resume_ts(client: Anthropic, pdf_text: str, current_ts: str, model: s
     with tempfile.NamedTemporaryFile(
         mode="w", encoding="utf-8", suffix=".ts", delete=False
     ) as tmp:
-        tmp.write(result + "\n")
+        tmp.write(result_ts + "\n")
         tmp_path = tmp.name
 
     os.replace(tmp_path, RESUME_TS)
@@ -144,10 +148,10 @@ def update_resume_ts(client: Anthropic, pdf_text: str, current_ts: str, model: s
     return True
 
 
-def update_facts_json(client: Anthropic, pdf_text: str, current_facts: str, model: str, dry_run: bool) -> bool:
+def update_facts_json(pdf_text: str, current_facts: str, model: str, dry_run: bool, client: AsyncOpenAI) -> bool:
     truncated = pdf_text[:12000] if len(pdf_text) > 12000 else pdf_text
 
-    system = (
+    instructions = (
         "You are a JSON generator. "
         "Output ONLY valid JSON — no markdown, no commentary, no explanation. "
         "Preserve all existing keys. Add or update values based on the resume PDF. "
@@ -160,14 +164,15 @@ def update_facts_json(client: Anthropic, pdf_text: str, current_facts: str, mode
         "Generate updated facts.json using the PDF data, keeping all existing keys."
     )
 
-    print("Calling Claude to generate facts.json...")
-    message = client.messages.create(
-        model=model,
-        max_tokens=2048,
-        messages=[{"role": "user", "content": user_message}],
-        system=system,
+    agent = Agent(
+        name="FactsUpdater",
+        instructions=instructions,
+        model=OpenAIChatCompletionsModel(model=model, openai_client=client),
     )
-    raw = message.content[0].text.strip()
+
+    print("Calling model to generate facts.json...")
+    result = Runner.run_sync(agent, user_message)
+    raw = result.final_output.strip()
 
     # Strip markdown fences if present
     if raw.startswith("```"):
@@ -202,21 +207,71 @@ def update_facts_json(client: Anthropic, pdf_text: str, current_facts: str, mode
     return True
 
 
+def update_summary_txt(pdf_text: str, current_summary: str, model: str, dry_run: bool, client: AsyncOpenAI) -> bool:
+    truncated = pdf_text[:12000] if len(pdf_text) > 12000 else pdf_text
+
+    instructions = (
+        "You are a professional bio writer. "
+        "Output ONLY the updated summary text — no markdown, no headings, no explanation. "
+        "The summary is used as context for an AI digital twin chatbot on a personal website. "
+        "Keep the same tone, style, and structure as the existing summary. "
+        "Update it to reflect the new resume content. Keep it concise (3-5 sentences)."
+    )
+
+    user_message = (
+        f"Here is the current summary.txt:\n\n{current_summary}\n\n"
+        f"Here is the extracted text from the new resume PDF:\n\n{truncated}\n\n"
+        "Generate an updated summary.txt reflecting the new resume content."
+    )
+
+    agent = Agent(
+        name="SummaryUpdater",
+        instructions=instructions,
+        model=OpenAIChatCompletionsModel(model=model, openai_client=client),
+    )
+
+    print("Calling model to generate summary.txt...")
+    result = Runner.run_sync(agent, user_message)
+    raw = result.final_output.strip()
+
+    if not raw:
+        print("\nsummary.txt validation failed: empty output", file=sys.stderr)
+        return False
+
+    if dry_run:
+        print("\n--- Generated summary.txt (dry run) ---")
+        print(raw)
+        print("--- End ---\n")
+        return True
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", suffix=".txt", delete=False
+    ) as tmp:
+        tmp.write(raw + "\n")
+        tmp_path = tmp.name
+
+    os.replace(tmp_path, SUMMARY_TXT)
+    print(f"  Written: {SUMMARY_TXT}")
+    return True
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Update resume pipeline from a PDF.")
     parser.add_argument("pdf", type=Path, help="Path to the new resume PDF")
     parser.add_argument("--dry-run", action="store_true", help="Generate but don't write files")
-    parser.add_argument("--no-facts", action="store_true", help="Skip updating facts.json")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Anthropic model (default: {DEFAULT_MODEL})")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"OpenRouter model (default: {DEFAULT_MODEL})")
     args = parser.parse_args()
 
     # 1. Validate API key
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
-        print("Error: ANTHROPIC_API_KEY environment variable is not set.", file=sys.stderr)
+        print("Error: OPENROUTER_API_KEY environment variable is not set.", file=sys.stderr)
         sys.exit(1)
 
-    # 2. Validate PDF path
+    # 2. Configure OpenRouter client
+    openrouter_client = AsyncOpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+
+    # 3. Validate PDF path
     pdf_path: Path = args.pdf.resolve()
     if not pdf_path.exists():
         print(f"Error: PDF not found: {pdf_path}", file=sys.stderr)
@@ -226,8 +281,9 @@ def main() -> None:
         sys.exit(1)
 
     print(f"Source PDF: {pdf_path}")
+    print(f"Model: {args.model}")
 
-    # 3. Copy PDF to destinations
+    # 4. Copy PDF to destinations
     if not args.dry_run:
         FRONTEND_PDF.parent.mkdir(parents=True, exist_ok=True)
         BACKEND_PDF.parent.mkdir(parents=True, exist_ok=True)
@@ -238,7 +294,7 @@ def main() -> None:
     else:
         print("  [dry-run] Skipping PDF copy")
 
-    # 4. Extract PDF text
+    # 5. Extract PDF text
     print("Extracting text from PDF...")
     pdf_text = extract_pdf_text(pdf_path)
     if len(pdf_text) < 200:
@@ -250,26 +306,29 @@ def main() -> None:
     else:
         print(f"  Extracted {len(pdf_text)} characters")
 
-    client = Anthropic(api_key=api_key)
-
-    # 5. Update resume.ts
+    # 6. Update resume.ts
     current_ts = RESUME_TS.read_text(encoding="utf-8")
-    ts_ok = update_resume_ts(client, pdf_text, current_ts, args.model, args.dry_run)
+    ts_ok = update_resume_ts(pdf_text, current_ts, args.model, args.dry_run, openrouter_client)
     if not ts_ok:
         sys.exit(1)
 
-    # 6. Update facts.json
-    if not args.no_facts:
-        current_facts = FACTS_JSON.read_text(encoding="utf-8")
-        facts_ok = update_facts_json(client, pdf_text, current_facts, args.model, args.dry_run)
-        if not facts_ok:
-            sys.exit(1)
+    # 7. Update facts.json
+    current_facts = FACTS_JSON.read_text(encoding="utf-8")
+    facts_ok = update_facts_json(pdf_text, current_facts, args.model, args.dry_run, openrouter_client)
+    if not facts_ok:
+        sys.exit(1)
 
-    # 7. Summary
+    # 8. Update summary.txt
+    current_summary = SUMMARY_TXT.read_text(encoding="utf-8")
+    summary_ok = update_summary_txt(pdf_text, current_summary, args.model, args.dry_run, openrouter_client)
+    if not summary_ok:
+        sys.exit(1)
+
+    # 9. Done
     print("\nDone!")
     if not args.dry_run:
         print("\nNext steps:")
-        print("  git add frontend/data/resume.ts frontend/public/resume.pdf backend/data/resume.pdf backend/data/facts.json")
+        print("  git add frontend/data/resume.ts frontend/public/resume.pdf backend/data/resume.pdf backend/data/facts.json backend/data/summary.txt")
         print('  git commit -m "update resume"')
         print("  git push   # GitHub Actions auto-deploys everything")
 
