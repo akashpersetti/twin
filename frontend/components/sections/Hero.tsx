@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Download, ChevronDown } from 'lucide-react';
+import { Download, ChevronDown, Github } from 'lucide-react';
 import GradientText from '@/components/ui/GradientText';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { resume } from '@/data/resume';
@@ -103,6 +103,22 @@ export default function Hero() {
           >
             <Download size={16} />
             Download Resume
+          </a>
+          <a
+            href="https://github.com/akashpersetti/twin"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-8 py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
+            style={{
+              border: '1px solid var(--border-glass)',
+              color: 'var(--text-primary)',
+              background: 'var(--bg-card)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25), 0 1px 2px rgba(255,255,255,0.04) inset',
+            }}
+          >
+            <Github size={16} />
+            Source Code
           </a>
         </motion.div>
       </div>
