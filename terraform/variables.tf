@@ -52,3 +52,15 @@ variable "root_domain" {
   type        = string
   default     = ""
 }
+
+variable "acm_certificate_arn" {
+  description = "ARN of an existing ACM certificate in us-east-1 (bring-your-own-cert; skips Route 53 resources)"
+  type        = string
+  default     = ""
+}
+
+variable "domain_aliases" {
+  description = "Custom domain aliases to attach to CloudFront when using an existing cert"
+  type        = list(string)
+  default     = []
+}

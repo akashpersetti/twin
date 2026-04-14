@@ -2,10 +2,14 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  aliases = var.use_custom_domain && var.root_domain != "" ? [
-    var.root_domain,
-    "www.${var.root_domain}"
-  ] : []
+  # Prefer explicit domain_aliases (BYOC path); fall back to Route53-managed path; else none
+  aliases = length(var.domain_aliases) > 0 ? var.domain_aliases : (
+    var.use_custom_domain && var.root_domain != "" ? [var.root_domain, "www.${var.root_domain}"] : []
+  )
+
+  # Prefer provided cert ARN; fall back to Route53-managed ACM cert; else null (default CF cert)
+  cert_arn        = var.acm_certificate_arn != "" ? var.acm_certificate_arn : try(aws_acm_certificate.site[0].arn, null)
+  use_custom_cert = local.cert_arn != null
 
   name_prefix = "${var.project_name}-${var.environment}"
 
@@ -216,9 +220,9 @@ resource "aws_cloudfront_distribution" "main" {
   aliases = local.aliases
   
   viewer_certificate {
-    acm_certificate_arn            = var.use_custom_domain ? aws_acm_certificate.site[0].arn : null
-    cloudfront_default_certificate = var.use_custom_domain ? false : true
-    ssl_support_method             = var.use_custom_domain ? "sni-only" : null
+    acm_certificate_arn            = local.use_custom_cert ? local.cert_arn : null
+    cloudfront_default_certificate = local.use_custom_cert ? false : true
+    ssl_support_method             = local.use_custom_cert ? "sni-only" : null
     minimum_protocol_version       = "TLSv1.2_2021"
   }
 
