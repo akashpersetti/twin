@@ -10,7 +10,7 @@ export const resume = {
     linkedinUrl: "https://linkedin.com/in/akash-hp",
     github: "github.com/akashpersetti",
     githubUrl: "https://github.com/akashpersetti",
-    website: "https://d3ezo1pi74ktc5.cloudfront.net",
+    website: "https://akashpersetti.com",
   },
 
   impact: [
