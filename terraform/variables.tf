@@ -19,8 +19,7 @@ variable "environment" {
 variable "bedrock_model_id" {
   description = "Bedrock model ID"
   type        = string
-#   default     = "amazon.nova-micro-v1:0"
-  default     = "google.gemma-3-27b-it"
+  default     = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 }
 
 variable "lambda_timeout" {
