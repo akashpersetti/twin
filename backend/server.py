@@ -39,7 +39,7 @@ bedrock_client = boto3.client(
 # - amazon.nova-lite-v1:0   (balanced - default)
 # - amazon.nova-pro-v1:0    (most capable, higher cost)
 # Remember the Heads up: you might need to add us. or eu. prefix to the below model id
-BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-20250514-v1:0")
+BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-5-20250929-v1:0")
 
 # Memory storage configuration
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
@@ -135,7 +135,7 @@ def call_bedrock(conversation: List[Dict], user_message: str) -> str:
         response = bedrock_client.converse(
             modelId=BEDROCK_MODEL_ID,
             messages=messages,
-            inferenceConfig={"maxTokens": 2000, "temperature": 0.7, "topP": 0.9}
+            inferenceConfig={"maxTokens": 2000, "temperature": 0.7}
         )
         return response["output"]["message"]["content"][0]["text"]
     except ClientError as e:
@@ -160,7 +160,7 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str)
         response = bedrock_client.converse_stream(
             modelId=BEDROCK_MODEL_ID,
             messages=messages,
-            inferenceConfig={"maxTokens": 2000, "temperature": 0.7, "topP": 0.9}
+            inferenceConfig={"maxTokens": 2000, "temperature": 0.7}
         )
 
         # Send session_id first so the client can persist it
