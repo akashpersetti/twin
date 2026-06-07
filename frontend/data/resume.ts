@@ -86,6 +86,26 @@ export const resume = {
       ],
     },
     {
+      title: "TallyMark",
+      subtitle: "Voice + Text Agentic Expense Splitter",
+      period: "Mar 2026 – Apr 2026",
+      tech: ["React Native (Expo)", "FastAPI", "NeonDB (PostgreSQL)", "LangGraph"],
+      bullets: [
+        "Engineered a dual-modal LangGraph agent that parses natural-language expense descriptions from voice or text, answers balance and group queries, and executes write actions (add expense, settle debt) against live user data via tool-bound FastAPI endpoints",
+        "Implemented a graph-based debt simplification algorithm that collapses N-way IOUs into the minimum-transaction settlement, toggled per group so users see either gross splits or net balances on demand, surfaced through a 4-tab React Native frontend over a modular FastAPI and NeonDB backend",
+      ],
+    },
+    {
+      title: "mcp-second-opinion",
+      subtitle: "Open-Source MCP Server, Published to PyPI",
+      period: "May 2026 – Jun 2026",
+      tech: ["Python", "PyPI", "LiteLLM"],
+      bullets: [
+        "Built and published an MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs (OpenAI, Gemini, Anthropic, Grok) mid-conversation, exposing two tools: one to query a single model and one to fan out to all enabled providers in parallel and compare answers",
+        "Unified four provider APIs behind a single LiteLLM interface, returning per-call latency, token counts, and cost; gracefully disables providers with no API key instead of failing, and ships as a pip-installable CLI registered through standard MCP client config",
+      ],
+    },
+    {
       title: "Retail Sales Trend Analysis",
       subtitle: "Consumer Behavior Prediction",
       period: "Sep 2024 – Dec 2024",
@@ -99,18 +119,20 @@ export const resume = {
   ],
 
   skills: {
-    languages: ["Python", "C++", "Java"],
-    databases: ["MySQL", "MongoDB", "PostgreSQL", "DynamoDB"],
-    development: ["JavaScript", "TypeScript", "Node.js", "React", "HTML", "CSS", "FastAPI", "Next.js", "Webflow"],
-    ml: ["Clustering Algorithms & Classification Models", "CNN", "MediaPipe"],
+    languages: ["Python", "TypeScript", "JavaScript", "C++", "Java", "Apex", "SQL"],
+    databases: ["MySQL", "MongoDB", "PostgreSQL", "DynamoDB", "NeonDB"],
+    development: ["JavaScript", "TypeScript", "Node.js", "React", "React Native (Expo)", "HTML", "CSS", "FastAPI", "Next.js", "Webflow"],
+    ml: ["Clustering Algorithms & Classification Models", "CNN", "MediaPipe", "scikit-learn"],
     genai: [
       "Retrieval-Augmented Generation (RAG) Systems",
       "LangChain Framework",
       "Vector Databases (ChromaDB)",
       "LLM Evaluation",
       "Hugging Face Framework",
+      "OpenAI",
+      "AWS Bedrock (Claude Sonnet)",
     ],
-    agentic: ["OpenAI Agents SDK", "CrewAI", "LangGraph", "AutoGen", "Model Context Protocol (MCP)", "Strands Agents", "n8n"],
+    agentic: ["OpenAI Agents SDK", "CrewAI", "LangGraph", "AutoGen", "Model Context Protocol (MCP)", "Strands Agents", "n8n", "LangChain"],
     cloud: [
       "AWS (Lambda, S3, CloudFront, Bedrock, DynamoDB, ECR, API Gateway, EC2, VPC, Aurora, App Runner, Amplify, SageMaker)",
       "Google Cloud Platform (GCP)",
@@ -157,6 +179,13 @@ export const resume = {
   ],
 
   certifications: [
+    {
+      title: "Proficient AI Engineer",
+      issuer: "Ed Donner / The AI Engineer track",
+      period: "2026",
+      details: "Advanced AI engineering coursework and projects",
+      topics: [],
+    },
     {
       title: "Introduction to Machine Learning",
       issuer: "NPTEL / IIT Madras",
