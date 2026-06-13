@@ -50,6 +50,11 @@ MEMORY_DIR = os.getenv("MEMORY_DIR", "../memory")
 if USE_S3:
     s3_client = boto3.client("s3")
 
+# SES notification configuration
+SES_SENDER_EMAIL = os.getenv("SES_SENDER_EMAIL", "")
+NOTIFICATION_EMAIL = os.getenv("NOTIFICATION_EMAIL", "")
+ses_client = boto3.client("ses", region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1"))
+
 
 # Request/Response models
 class ChatRequest(BaseModel):
@@ -61,6 +66,11 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     session_id: str
+
+
+class VisitorRequest(BaseModel):
+    name: str
+    contact: Optional[str] = None
 
 
 class Message(BaseModel):
@@ -205,10 +215,33 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {
-        "status": "healthy", 
+        "status": "healthy",
         "use_s3": USE_S3,
         "bedrock_model": BEDROCK_MODEL_ID
     }
+
+
+@app.post("/visitor")
+async def notify_visitor(request: VisitorRequest):
+    if not SES_SENDER_EMAIL or not NOTIFICATION_EMAIL:
+        return {"status": "skipped", "reason": "SES not configured"}
+
+    contact_str = f" ({request.contact})" if request.contact else ""
+    body = f"{request.name}{contact_str} interacted with your digital twin"
+
+    try:
+        ses_client.send_email(
+            Source=SES_SENDER_EMAIL,
+            Destination={"ToAddresses": [NOTIFICATION_EMAIL]},
+            Message={
+                "Subject": {"Data": "Digital twin interaction"},
+                "Body": {"Text": {"Data": body}},
+            },
+        )
+    except ClientError as e:
+        print(f"SES notification error: {e}")
+
+    return {"status": "ok"}
 
 
 @app.post("/chat", response_model=ChatResponse)
