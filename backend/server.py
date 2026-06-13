@@ -158,9 +158,9 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
             raise HTTPException(status_code=500, detail=f"Bedrock error: {str(e)}")
 
 
-def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str) -> Generator[str, None, None]:
+def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str, user_name: Optional[str] = None) -> Generator[str, None, None]:
     """Stream response from AWS Bedrock and save conversation when done."""
-    messages = build_bedrock_messages(conversation, user_message)
+    messages = build_bedrock_messages(conversation, user_message, user_name)
     full_response = ""
 
     try:
@@ -253,7 +253,7 @@ async def chat_stream(request: ChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
         conversation = load_conversation(session_id)
         return StreamingResponse(
-            stream_bedrock(conversation, request.message, session_id),
+            stream_bedrock(conversation, request.message, session_id, user_name=request.user_name),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
