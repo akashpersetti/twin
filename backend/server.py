@@ -55,6 +55,7 @@ if USE_S3:
 class ChatRequest(BaseModel):
     message: str
     session_id: Optional[str] = None
+    user_name: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -109,28 +110,34 @@ def save_conversation(session_id: str, messages: List[Dict]):
             json.dump(messages, f, indent=2)
 
 
-def build_bedrock_messages(conversation: List[Dict], user_message: str) -> List[Dict]:
+def build_bedrock_messages(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> List[Dict]:
     """Build the messages list for Bedrock in the correct format."""
+    system = prompt()
+    if user_name:
+        system += (
+            "\n\n---\n\nVISITOR CONTEXT\n\n"
+            f"The visitor's name is {user_name}. "
+            "When greeting or referring to them, use their name naturally."
+        )
+
+    if user_message == "__greet__":
+        user_message = (
+            f"Please greet {user_name} warmly by name and invite them to ask questions about Akash."
+            if user_name
+            else "Please greet the visitor warmly and invite them to ask questions about Akash."
+        )
+
     messages = []
-    messages.append({
-        "role": "user",
-        "content": [{"text": f"System: {prompt()}"}]
-    })
+    messages.append({"role": "user", "content": [{"text": f"System: {system}"}]})
     for msg in conversation[-20:]:
-        messages.append({
-            "role": msg["role"],
-            "content": [{"text": msg["content"]}]
-        })
-    messages.append({
-        "role": "user",
-        "content": [{"text": user_message}]
-    })
+        messages.append({"role": msg["role"], "content": [{"text": msg["content"]}]})
+    messages.append({"role": "user", "content": [{"text": user_message}]})
     return messages
 
 
-def call_bedrock(conversation: List[Dict], user_message: str) -> str:
+def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> str:
     """Call AWS Bedrock with conversation history"""
-    messages = build_bedrock_messages(conversation, user_message)
+    messages = build_bedrock_messages(conversation, user_message, user_name=user_name)
     try:
         response = bedrock_client.converse(
             modelId=BEDROCK_MODEL_ID,
@@ -214,7 +221,7 @@ async def chat(request: ChatRequest):
         conversation = load_conversation(session_id)
 
         # Call Bedrock for response
-        assistant_response = call_bedrock(conversation, request.message)
+        assistant_response = call_bedrock(conversation, request.message, user_name=request.user_name)
 
         # Update conversation history
         conversation.append(
