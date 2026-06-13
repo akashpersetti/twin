@@ -223,10 +223,78 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         }
     };
 
+    const handleNameSubmit = () => {
+        const name = input.trim();
+        setInput('');
+
+        if (!name) {
+            writeVisitor({ name: null, contact: null, seenAt: new Date().toISOString() });
+            setOnboardingStep('done');
+            setMessages([]);
+            return;
+        }
+
+        setVisitorName(name);
+        setMessages(prev => [
+            ...prev,
+            { id: Date.now().toString(), role: 'user', content: name, timestamp: new Date() },
+            {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: `Nice to meet you, ${name}! Got an email or phone number I can reach you at?`,
+                timestamp: new Date(),
+            },
+        ]);
+        setOnboardingStep('contact');
+    };
+
+    const handleContactSubmit = () => {
+        const contact = input.trim() || null;
+        setInput('');
+
+        writeVisitor({ name: visitorName, contact, seenAt: new Date().toISOString() });
+        setOnboardingStep('done');
+        setMessages([]);
+
+        if (visitorName) {
+            fetch(`${API_URL}/visitor`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: visitorName, contact }),
+            }).catch(() => {});
+
+            triggerGreeting(visitorName);
+        }
+    };
+
+    const handleOnboardingSkip = () => {
+        if (onboardingStep === 'name') {
+            writeVisitor({ name: null, contact: null, seenAt: new Date().toISOString() });
+            setOnboardingStep('done');
+            setMessages([]);
+        } else if (onboardingStep === 'contact') {
+            writeVisitor({ name: visitorName, contact: null, seenAt: new Date().toISOString() });
+            setOnboardingStep('done');
+            setMessages([]);
+
+            if (visitorName) {
+                fetch(`${API_URL}/visitor`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: visitorName, contact: null }),
+                }).catch(() => {});
+
+                triggerGreeting(visitorName);
+            }
+        }
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            sendMessage();
+            if (onboardingStep === 'name') handleNameSubmit();
+            else if (onboardingStep === 'contact') handleContactSubmit();
+            else sendMessage();
         }
     };
 
@@ -241,7 +309,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
             <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5" style={{ overflowX: 'hidden' }}>
 
                 {/* Empty state */}
-                {messages.length === 0 && (
+                {messages.length === 0 && onboardingStep === 'done' && !isLoading && !isStreaming && (
                     <div className="flex flex-col items-center justify-center h-full gap-4 select-none">
                         {!avatarError ? (
                             <img
@@ -320,6 +388,40 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 <div ref={messagesEndRef} />
             </div>
 
+            {/* Skip banner — only shown during onboarding */}
+            {onboardingStep !== 'done' && (
+                <div style={{
+                    borderTop: '1px solid var(--border-glass)',
+                    padding: '8px 16px',
+                    background: 'var(--bg-base)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexShrink: 0,
+                }}>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.80em', fontFamily: MONO }}>
+                        Don't want to share?
+                    </span>
+                    <button
+                        onClick={handleOnboardingSkip}
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: 'var(--text-primary)',
+                            padding: '5px 18px',
+                            borderRadius: '6px',
+                            fontFamily: MONO,
+                            fontSize: '0.82em',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            letterSpacing: '0.04em',
+                        }}
+                    >
+                        Skip ↗
+                    </button>
+                </div>
+            )}
+
             {/* Terminal input */}
             <div
                 style={{ borderTop: '1px solid var(--border-glass)', padding: '10px 16px', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'text' }}
@@ -337,7 +439,11 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                     )}
                     {!input && !inputFocused && (
                         <span style={{ color: 'var(--text-secondary)', opacity: 0.35, position: 'absolute', left: 0, pointerEvents: 'none', userSelect: 'none' }}>
-                            ask something...
+                            {onboardingStep === 'name'
+                                ? 'type your name...'
+                                : onboardingStep === 'contact'
+                                ? 'type your email or phone...'
+                                : 'ask something...'}
                         </span>
                     )}
                     {/* Hidden real input to capture keystrokes */}
@@ -349,7 +455,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                         onKeyDown={handleKeyDown}
                         onFocus={() => setInputFocused(true)}
                         onBlur={() => setInputFocused(false)}
-                        disabled={busy}
+                        disabled={onboardingStep === 'done' && busy}
                         autoFocus
                         style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'text', width: '100%' }}
                         aria-label="Chat input"
@@ -357,9 +463,13 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 </div>
 
                 <button
-                    onClick={sendMessage}
-                    disabled={!input.trim() || busy}
-                    style={{ background: 'none', border: 'none', cursor: !input.trim() || busy ? 'not-allowed' : 'pointer', color: !input.trim() || busy ? 'var(--border-glass)' : '#7c3aed', fontFamily: MONO, fontSize: '14px', padding: '0 4px', flexShrink: 0, transition: 'color 0.15s' }}
+                    onClick={() => {
+                        if (onboardingStep === 'name') handleNameSubmit();
+                        else if (onboardingStep === 'contact') handleContactSubmit();
+                        else sendMessage();
+                    }}
+                    disabled={onboardingStep === 'done' && (!input.trim() || busy)}
+                    style={{ background: 'none', border: 'none', cursor: onboardingStep !== 'done' || (input.trim() && !busy) ? 'pointer' : 'not-allowed', color: onboardingStep !== 'done' || (input.trim() && !busy) ? '#7c3aed' : 'var(--border-glass)', fontFamily: MONO, fontSize: '14px', padding: '0 4px', flexShrink: 0, transition: 'color 0.15s' }}
                     aria-label="Send"
                 >
                     ⏎
