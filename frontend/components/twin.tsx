@@ -14,6 +14,23 @@ interface Message {
     timestamp: Date;
 }
 
+interface TwinVisitor {
+  name: string | null;
+  contact: string | null;
+  seenAt: string;
+}
+
+function readVisitor(): TwinVisitor | null {
+  try {
+    const raw = localStorage.getItem('twin_visitor');
+    return raw ? (JSON.parse(raw) as TwinVisitor) : null;
+  } catch { return null; }
+}
+
+function writeVisitor(v: TwinVisitor): void {
+  localStorage.setItem('twin_visitor', JSON.stringify(v));
+}
+
 const mdComponents: Components = {
     p: ({ children }) => <p style={{ marginBottom: '0.4em', lineHeight: 1.65 }}>{children}</p>,
     ul: ({ children }) => <ul style={{ marginBottom: '0.4em', marginLeft: '1.2em', listStyleType: 'disc' }}>{children}</ul>,
@@ -56,6 +73,8 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     const [isStreaming, setIsStreaming] = useState(false);
     const [sessionId, setSessionId] = useState<string>('');
     const [inputFocused, setInputFocused] = useState(false);
+    const [onboardingStep, setOnboardingStep] = useState<'name' | 'contact' | 'done'>('name');
+    const [visitorName, setVisitorName] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const hiddenInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,6 +91,73 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    const triggerGreeting = async (name: string) => {
+        const greetId = (Date.now() + 2).toString();
+        let placeholderAdded = false;
+        setIsLoading(true);
+
+        try {
+            const response = await fetch(`${API_URL}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: '__greet__', user_name: name }),
+            });
+
+            if (!response.ok) throw new Error('Request failed');
+
+            const data = await response.json();
+            if (data.session_id) setSessionId(data.session_id);
+
+            setMessages(prev => [...prev, { id: greetId, role: 'assistant', content: '', timestamp: new Date() }]);
+            placeholderAdded = true;
+            setIsLoading(false);
+            setIsStreaming(true);
+
+            const text: string = data.response;
+            await new Promise<void>(resolve => {
+                let pos = 0;
+                const tick = setInterval(() => {
+                    pos = Math.min(pos + 5, text.length);
+                    setMessages(prev => prev.map(m =>
+                        m.id === greetId ? { ...m, content: text.slice(0, pos) } : m
+                    ));
+                    if (pos >= text.length) { clearInterval(tick); resolve(); }
+                }, 16);
+            });
+        } catch {
+            const fallback = `Hey, ${name}! Ask me anything about Akash.`;
+            if (placeholderAdded) {
+                setMessages(prev => prev.map(m =>
+                    m.id === greetId && m.content === '' ? { ...m, content: fallback } : m
+                ));
+            } else {
+                setMessages(prev => [...prev, { id: greetId, role: 'assistant', content: fallback, timestamp: new Date() }]);
+            }
+        } finally {
+            setIsLoading(false);
+            setIsStreaming(false);
+            setTimeout(() => hiddenInputRef.current?.focus(), 50);
+        }
+    };
+
+    useEffect(() => {
+        const visitor = readVisitor();
+        if (visitor) {
+            setVisitorName(visitor.name);
+            setOnboardingStep('done');
+            if (visitor.name) {
+                triggerGreeting(visitor.name);
+            }
+        } else {
+            setMessages([{
+                id: 'onboard-name',
+                role: 'assistant',
+                content: "Hey! I'm Akash's digital twin. What's your name?",
+                timestamp: new Date(),
+            }]);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const sendMessage = async () => {
         if (!input.trim() || isLoading || isStreaming) return;
