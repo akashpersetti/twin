@@ -123,6 +123,22 @@ resource "aws_iam_role_policy_attachment" "lambda_s3" {
   role       = aws_iam_role.lambda_role.name
 }
 
+resource "aws_iam_role_policy" "lambda_ses" {
+  name = "${local.name_prefix}-ses-policy"
+  role = aws_iam_role.lambda_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ses:SendEmail"]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # Lambda function
 resource "aws_lambda_function" "api" {
   filename         = "${path.module}/../backend/lambda-deployment.zip"
@@ -137,10 +153,12 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      CORS_ORIGINS     = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
-      S3_BUCKET        = aws_s3_bucket.memory.id
-      USE_S3           = "true"
-      BEDROCK_MODEL_ID = var.bedrock_model_id
+      CORS_ORIGINS       = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      S3_BUCKET          = aws_s3_bucket.memory.id
+      USE_S3             = "true"
+      BEDROCK_MODEL_ID   = var.bedrock_model_id
+      SES_SENDER_EMAIL   = var.ses_sender_email
+      NOTIFICATION_EMAIL = var.notification_email
     }
   }
 
