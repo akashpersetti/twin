@@ -42,3 +42,9 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Superpowers brainstorming sessions
+.superpowers/
+
+# Local design docs
+docs/
