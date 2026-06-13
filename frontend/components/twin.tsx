@@ -224,6 +224,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     };
 
     const handleNameSubmit = () => {
+        if (isLoading || isStreaming) return;
         const name = input.trim();
         setInput('');
 
@@ -249,6 +250,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     };
 
     const handleContactSubmit = () => {
+        if (isLoading || isStreaming) return;
         const contact = input.trim() || null;
         setInput('');
 
@@ -468,7 +470,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                         else if (onboardingStep === 'contact') handleContactSubmit();
                         else sendMessage();
                     }}
-                    disabled={onboardingStep === 'done' && (!input.trim() || busy)}
+                    disabled={busy || (onboardingStep === 'done' && !input.trim())}
                     style={{ background: 'none', border: 'none', cursor: onboardingStep !== 'done' || (input.trim() && !busy) ? 'pointer' : 'not-allowed', color: onboardingStep !== 'done' || (input.trim() && !busy) ? '#7c3aed' : 'var(--border-glass)', fontFamily: MONO, fontSize: '14px', padding: '0 4px', flexShrink: 0, transition: 'color 0.15s' }}
                     aria-label="Send"
                 >
