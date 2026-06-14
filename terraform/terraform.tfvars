@@ -8,4 +8,4 @@ use_custom_domain        = false
 root_domain              = ""
 acm_certificate_arn      = "arn:aws:acm:us-east-1:914697327092:certificate/9147fdc9-39f8-4eef-8354-bbdefda6d649"
 domain_aliases           = ["akashpersetti.com", "www.akashpersetti.com"]
-notification_email       = "ahadagal@iu.edu"
+notification_email       = "akash.hp@icloud.com"
