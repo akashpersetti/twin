@@ -64,12 +64,6 @@ variable "domain_aliases" {
   default     = []
 }
 
-variable "ses_sender_email" {
-  description = "SES verified sender address for visitor notifications"
-  type        = string
-  default     = ""
-}
-
 variable "notification_email" {
   description = "Email address to receive visitor interaction notifications"
   type        = string

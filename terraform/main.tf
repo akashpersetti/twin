@@ -123,8 +123,18 @@ resource "aws_iam_role_policy_attachment" "lambda_s3" {
   role       = aws_iam_role.lambda_role.name
 }
 
-resource "aws_iam_role_policy" "lambda_ses" {
-  name = "${local.name_prefix}-ses-policy"
+resource "aws_sns_topic" "visitor_notifications" {
+  name = "${local.name_prefix}-visitor-notifications"
+}
+
+resource "aws_sns_topic_subscription" "visitor_email" {
+  topic_arn = aws_sns_topic.visitor_notifications.arn
+  protocol  = "email"
+  endpoint  = var.notification_email
+}
+
+resource "aws_iam_role_policy" "lambda_sns" {
+  name = "${local.name_prefix}-sns-policy"
   role = aws_iam_role.lambda_role.name
 
   policy = jsonencode({
@@ -132,8 +142,8 @@ resource "aws_iam_role_policy" "lambda_ses" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["ses:SendEmail"]
-        Resource = "*"
+        Action   = ["sns:Publish"]
+        Resource = aws_sns_topic.visitor_notifications.arn
       }
     ]
   })
@@ -156,9 +166,8 @@ resource "aws_lambda_function" "api" {
       CORS_ORIGINS       = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
       S3_BUCKET          = aws_s3_bucket.memory.id
       USE_S3             = "true"
-      BEDROCK_MODEL_ID   = var.bedrock_model_id
-      SES_SENDER_EMAIL   = var.ses_sender_email
-      NOTIFICATION_EMAIL = var.notification_email
+      BEDROCK_MODEL_ID = var.bedrock_model_id
+      SNS_TOPIC_ARN    = aws_sns_topic.visitor_notifications.arn
     }
   }
 
