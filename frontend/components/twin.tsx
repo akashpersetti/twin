@@ -142,14 +142,17 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     };
 
     useEffect(() => {
+        const FIFTEEN_MINS = 15 * 60 * 1000;
         const visitor = readVisitor();
-        if (visitor) {
+        const expired = visitor && (Date.now() - new Date(visitor.seenAt).getTime() > FIFTEEN_MINS);
+        if (visitor && !expired) {
             setVisitorName(visitor.name);
             setOnboardingStep('done');
             if (visitor.name) {
                 triggerGreeting(visitor.name);
             }
         } else {
+            if (expired) localStorage.removeItem('twin_visitor');
             setMessages([{
                 id: 'onboard-name',
                 role: 'assistant',
