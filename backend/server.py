@@ -52,7 +52,7 @@ if USE_S3:
 
 # SNS notification configuration
 SNS_TOPIC_ARN = os.getenv("SNS_TOPIC_ARN", "")
-sns_client = boto3.client("sns", region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1"))
+sns_client = boto3.client("sns", region_name=os.getenv("AWS_DEFAULT_REGION", os.getenv("DEFAULT_AWS_REGION", "us-east-1")))
 
 
 # Request/Response models
