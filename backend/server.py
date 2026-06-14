@@ -50,10 +50,9 @@ MEMORY_DIR = os.getenv("MEMORY_DIR", "../memory")
 if USE_S3:
     s3_client = boto3.client("s3")
 
-# SES notification configuration
-SES_SENDER_EMAIL = os.getenv("SES_SENDER_EMAIL", "")
-NOTIFICATION_EMAIL = os.getenv("NOTIFICATION_EMAIL", "")
-ses_client = boto3.client("ses", region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1"))
+# SNS notification configuration
+SNS_TOPIC_ARN = os.getenv("SNS_TOPIC_ARN", "")
+sns_client = boto3.client("sns", region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1"))
 
 
 # Request/Response models
@@ -223,23 +222,20 @@ async def health_check():
 
 @app.post("/visitor")
 async def notify_visitor(request: VisitorRequest):
-    if not SES_SENDER_EMAIL or not NOTIFICATION_EMAIL:
-        return {"status": "skipped", "reason": "SES not configured"}
+    if not SNS_TOPIC_ARN:
+        return {"status": "skipped", "reason": "SNS not configured"}
 
     contact_str = f" ({request.contact})" if request.contact else ""
     body = f"{request.name}{contact_str} interacted with your digital twin"
 
     try:
-        ses_client.send_email(
-            Source=SES_SENDER_EMAIL,
-            Destination={"ToAddresses": [NOTIFICATION_EMAIL]},
-            Message={
-                "Subject": {"Data": "Digital twin interaction"},
-                "Body": {"Text": {"Data": body}},
-            },
+        sns_client.publish(
+            TopicArn=SNS_TOPIC_ARN,
+            Subject="Digital twin interaction",
+            Message=body,
         )
     except ClientError as e:
-        print(f"SES notification error: {e}")
+        print(f"SNS notification error: {e}")
 
     return {"status": "ok"}
 

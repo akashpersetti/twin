@@ -37,43 +37,51 @@ def test_greet_sentinel_without_name_is_replaced():
     assert "__greet__" not in last
 
 
-def test_visitor_sends_ses_email():
-    with patch.object(server_module, "ses_client") as mock_ses, \
-         patch.object(server_module, "SES_SENDER_EMAIL", "twin@akash.dev"), \
-         patch.object(server_module, "NOTIFICATION_EMAIL", "akash@email.com"):
+def test_visitor_sends_sns_notification():
+    with patch.object(server_module, "sns_client") as mock_sns, \
+         patch.object(server_module, "SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789:twin-notifications"):
 
         resp = client.post("/visitor", json={"name": "Sarah", "contact": "sarah@email.com"})
 
         assert resp.status_code == 200
-        mock_ses.send_email.assert_called_once()
-        kwargs = mock_ses.send_email.call_args[1]
-        assert kwargs["Source"] == "twin@akash.dev"
-        body = kwargs["Message"]["Body"]["Text"]["Data"]
-        assert "Sarah" in body
-        assert "sarah@email.com" in body
+        mock_sns.publish.assert_called_once()
+        kwargs = mock_sns.publish.call_args[1]
+        assert kwargs["TopicArn"] == "arn:aws:sns:us-east-1:123456789:twin-notifications"
+        assert "Sarah" in kwargs["Message"]
+        assert "sarah@email.com" in kwargs["Message"]
 
 
-def test_visitor_skips_ses_when_unconfigured():
-    with patch.object(server_module, "ses_client") as mock_ses, \
-         patch.object(server_module, "SES_SENDER_EMAIL", ""), \
-         patch.object(server_module, "NOTIFICATION_EMAIL", ""):
+def test_visitor_skips_sns_when_unconfigured():
+    with patch.object(server_module, "sns_client") as mock_sns, \
+         patch.object(server_module, "SNS_TOPIC_ARN", ""):
 
         resp = client.post("/visitor", json={"name": "Sarah"})
 
         assert resp.status_code == 200
         assert resp.json()["status"] == "skipped"
-        mock_ses.send_email.assert_not_called()
+        mock_sns.publish.assert_not_called()
 
 
 def test_visitor_contact_optional():
-    with patch.object(server_module, "ses_client") as mock_ses, \
-         patch.object(server_module, "SES_SENDER_EMAIL", "twin@akash.dev"), \
-         patch.object(server_module, "NOTIFICATION_EMAIL", "akash@email.com"):
+    with patch.object(server_module, "sns_client") as mock_sns, \
+         patch.object(server_module, "SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789:twin-notifications"):
 
         resp = client.post("/visitor", json={"name": "Bob"})
 
         assert resp.status_code == 200
-        kwargs = mock_ses.send_email.call_args[1]
-        body = kwargs["Message"]["Body"]["Text"]["Data"]
-        assert "Bob" in body
-        assert "(" not in body  # no contact bracket
+        kwargs = mock_sns.publish.call_args[1]
+        assert "Bob" in kwargs["Message"]
+        assert "(" not in kwargs["Message"]
+
+
+def test_visitor_returns_ok_on_sns_failure():
+    from botocore.exceptions import ClientError as BotoClientError
+    error_response = {"Error": {"Code": "AuthorizationError", "Message": "Not authorized"}}
+    with patch.object(server_module, "sns_client") as mock_sns, \
+         patch.object(server_module, "SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789:twin-notifications"):
+
+        mock_sns.publish.side_effect = BotoClientError(error_response, "Publish")
+        resp = client.post("/visitor", json={"name": "Sarah"})
+
+        assert resp.status_code == 200
+        assert resp.json()["status"] in ("ok", "error")
