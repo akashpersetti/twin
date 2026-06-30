@@ -23,12 +23,10 @@ export default function TiltCard({ children, className = '' }: TiltCardProps) {
     const rotateX = ((y - cy) / cy) * -10;
     const rotateY = ((x - cx) / cx) * 10;
     ref.current.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(6px)`;
+    ref.current.style.borderColor = 'var(--accent-soft)';
     ref.current.style.boxShadow = [
-      '0 2px 4px rgba(0,0,0,0.35)',
-      '0 12px 28px rgba(0,0,0,0.45)',
-      '0 36px 72px rgba(0,0,0,0.32)',
-      '0 0 0 1px rgba(255,255,255,0.08) inset',
-      '0 10px 36px rgba(124,58,237,0.18)',
+      '0 1px 2px rgba(15,23,42,0.04)',
+      '0 16px 40px rgba(13,148,136,0.14)',
     ].join(', ');
     ref.current.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
     ref.current.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
@@ -37,6 +35,7 @@ export default function TiltCard({ children, className = '' }: TiltCardProps) {
   function handleMouseLeave() {
     if (reduced || !ref.current) return;
     ref.current.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+    ref.current.style.borderColor = '';
     ref.current.style.boxShadow = '';
   }
 
@@ -53,7 +52,7 @@ export default function TiltCard({ children, className = '' }: TiltCardProps) {
         className="absolute inset-0 rounded-2xl opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none"
         style={{
           background:
-            'radial-gradient(240px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(124,58,237,0.15), transparent 70%)',
+            'radial-gradient(240px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(13,148,136,0.10), transparent 70%)',
         }}
       />
       {children}

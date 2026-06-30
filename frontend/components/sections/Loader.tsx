@@ -39,12 +39,8 @@ export default function Loader({ onComplete }: LoaderProps) {
         {['A', 'H', 'P'].map(letter => (
           <motion.span
             key={letter}
-            className="text-7xl font-black tracking-tight"
-            style={{
-              background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
+            className="text-7xl font-bold tracking-tight"
+            style={{ color: 'var(--accent)' }}
             variants={{
               hidden: { opacity: 0, y: 20 },
               show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
@@ -58,11 +54,11 @@ export default function Loader({ onComplete }: LoaderProps) {
       {/* Progress bar */}
       <div
         className="w-48 h-0.5 rounded-full overflow-hidden"
-        style={{ background: 'var(--border-glass)' }}
+        style={{ background: 'var(--border)' }}
       >
         <motion.div
           className="h-full rounded-full"
-          style={{ background: 'linear-gradient(90deg, #7c3aed, #06b6d4)' }}
+          style={{ background: 'linear-gradient(90deg, var(--accent), var(--accent-soft))' }}
           initial={{ width: '0%' }}
           animate={{ width: '100%' }}
           transition={{ duration: 1.2, ease: 'easeInOut' }}

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
+import SectionHeader from '@/components/ui/SectionHeader';
 import { Calendar, RotateCcw } from 'lucide-react';
 
 function FlipCard({ project, index }: { project: typeof resume.projects[number]; index: number }) {
@@ -32,14 +33,14 @@ function FlipCard({ project, index }: { project: typeof resume.projects[number];
               <h3 className="text-xl font-black mb-1" style={{ color: 'var(--text-primary)' }}>
                 {project.title}
               </h3>
-              <p className="text-sm font-medium mb-4" style={{ color: '#7c3aed' }}>
+              <p className="text-sm font-medium mb-4" style={{ color: 'var(--accent)' }}>
                 {project.subtitle}
               </p>
             </div>
             <div className="flex items-center justify-between">
               <span
                 className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(6,182,212,0.1)', color: '#06b6d4' }}
+                style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
               >
                 <Calendar size={10} /> {project.period}
               </span>
@@ -55,7 +56,7 @@ function FlipCard({ project, index }: { project: typeof resume.projects[number];
             style={{
               backfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
-              background: 'linear-gradient(135deg, rgba(124,58,237,0.08), rgba(6,182,212,0.05))',
+              background: 'var(--bg-alt)',
             }}
           >
             <div className="flex items-center justify-between flex-shrink-0">
@@ -68,18 +69,18 @@ function FlipCard({ project, index }: { project: typeof resume.projects[number];
             <ul className="flex-1 space-y-2 overflow-y-auto">
               {project.bullets.map((bullet, bi) => (
                 <li key={bi} className="flex gap-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  <span className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full" style={{ background: '#7c3aed' }} />
+                  <span className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full" style={{ background: 'var(--accent)' }} />
                   {bullet}
                 </li>
               ))}
             </ul>
 
-            <div className="flex flex-wrap gap-1.5 pt-2 border-t flex-shrink-0" style={{ borderColor: 'var(--border-glass)' }}>
+            <div className="flex flex-wrap gap-1.5 pt-2 border-t flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
               {project.tech.map(t => (
                 <span
                   key={t}
-                  className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(124,58,237,0.15)', color: '#7c3aed' }}
+                  className="mono text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
                 >
                   {t}
                 </span>
@@ -97,14 +98,14 @@ export default function Projects() {
   const [expandedMobile, setExpandedMobile] = useState<number | null>(null);
 
   return (
-    <section className="py-24 px-6" style={{ background: 'rgba(124,58,237,0.03)' }}>
+    <section className="py-24 px-6" style={{ background: 'var(--bg-alt)' }}>
       <div className="max-w-6xl mx-auto">
-        <SectionReveal>
-          <h2 className="text-3xl sm:text-4xl font-black mb-4" style={{ color: 'var(--text-primary)' }}>
-            Projects
-          </h2>
-          <div className="h-1 w-16 rounded-full mb-12" style={{ background: 'linear-gradient(90deg,#7c3aed,#06b6d4)' }} />
-        </SectionReveal>
+        <SectionHeader
+          eyebrow="Selected work"
+          title="Projects"
+          description="Agentic systems, LLM products, and ML pipelines — most shipped serverless on AWS via Terraform and GitHub Actions."
+        />
+        <p className="text-sm mb-8 -mt-6 mono" style={{ color: 'var(--text-secondary)' }}>Tap any card to read the details.</p>
 
         {/* Desktop: 3-col flip grid */}
         <div className="hidden md:grid md:grid-cols-3 gap-6">
@@ -126,12 +127,12 @@ export default function Projects() {
                   <h3 className="font-black text-base" style={{ color: 'var(--text-primary)' }}>
                     {project.title}
                   </h3>
-                  <p className="text-sm font-medium" style={{ color: '#7c3aed' }}>
+                  <p className="text-sm font-medium" style={{ color: 'var(--accent)' }}>
                     {project.subtitle}
                   </p>
                   <span
                     className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mt-1"
-                    style={{ background: 'rgba(6,182,212,0.1)', color: '#06b6d4' }}
+                    style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
                   >
                     <Calendar size={10} /> {project.period}
                   </span>
@@ -155,11 +156,11 @@ export default function Projects() {
                     transition={{ duration: 0.3, ease: 'easeInOut' }}
                     style={{ overflow: 'hidden' }}
                   >
-                    <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--border-glass)' }}>
+                    <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--border)' }}>
                       <ul className="mt-3 space-y-2 mb-3">
                         {project.bullets.map((bullet, bi) => (
                           <li key={bi} className="flex gap-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                            <span className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full" style={{ background: '#7c3aed' }} />
+                            <span className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full" style={{ background: 'var(--accent)' }} />
                             {bullet}
                           </li>
                         ))}
@@ -168,8 +169,8 @@ export default function Projects() {
                         {project.tech.map(t => (
                           <span
                             key={t}
-                            className="text-xs px-2 py-0.5 rounded-full"
-                            style={{ background: 'rgba(124,58,237,0.15)', color: '#7c3aed' }}
+                            className="mono text-xs px-2 py-0.5 rounded-full"
+                            style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
                           >
                             {t}
                           </span>

@@ -27,7 +27,7 @@ export default function MobileDrawer({ open, onClose, items, activeId }: MobileD
         <>
           <motion.div
             className="fixed inset-0 z-40"
-            style={{ background: 'rgba(0,0,0,0.6)' }}
+            style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(2px)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -35,7 +35,7 @@ export default function MobileDrawer({ open, onClose, items, activeId }: MobileD
           />
           <motion.div
             className="fixed top-0 right-0 bottom-0 z-40 w-72 flex flex-col p-8"
-            style={{ background: 'var(--bg-base)', borderLeft: '1px solid var(--border-glass)' }}
+            style={{ background: 'var(--bg-base)', borderLeft: '1px solid var(--border)' }}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -55,8 +55,8 @@ export default function MobileDrawer({ open, onClose, items, activeId }: MobileD
                   onClick={() => scrollTo(item.id)}
                   className="text-left px-4 py-3 rounded-xl text-lg font-medium transition-colors"
                   style={{
-                    color: activeId === item.id ? '#7c3aed' : 'var(--text-primary)',
-                    background: activeId === item.id ? 'rgba(124,58,237,0.1)' : 'transparent',
+                    color: activeId === item.id ? 'var(--accent)' : 'var(--text-primary)',
+                    background: activeId === item.id ? 'var(--accent-wash)' : 'transparent',
                   }}
                 >
                   {item.label}

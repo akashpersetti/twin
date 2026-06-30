@@ -1,7 +1,7 @@
 export const resume = {
   basics: {
     name: "Akash Hadagali Persetti",
-    title: "MS Computer Science Student | Aspiring ML + AI Engineer",
+    title: "AI Engineer | M.S. Computer Science",
     location: "Bloomington, IN",
     address: "421 W Hoosier Court Ave, Bloomington, IN - 47404",
     email: "hadagalipersettiakash@gmail.com",
@@ -20,6 +20,19 @@ export const resume = {
   ],
 
   experience: [
+    {
+      role: "AI Engineer",
+      company: "MyEdMaster LLC",
+      location: "Leesburg, Virginia, United States",
+      type: "Remote",
+      period: "Jun 2026 – Present",
+      project: "Adaptive AI Tutoring Platform",
+      bullets: [
+        "Building an adaptive AI tutoring product that assesses a learner's existing knowledge of a topic or target certification, then generates a customized real-time training program covering only the gaps",
+        "Designing the assessment-to-curriculum pipeline with LLM-driven content generation, working toward a QA-approved prototype",
+        "Stack: Python, LLMs (OpenAI SDK), MySQL, Claude Code",
+      ],
+    },
     {
       role: "Machine Learning Intern",
       company: "MyEdMaster LLC",
@@ -147,7 +160,7 @@ export const resume = {
       institution: "Indiana University Bloomington",
       school: "Luddy School of Informatics, Computing and Engineering",
       location: "Bloomington, Indiana, United States",
-      period: "Aug 2024 – May 2026 (Expected)",
+      period: "Aug 2024 – May 2026 (Graduated)",
       gpa: "3.8 / 4.0",
       coursework: [
         "Applied Algorithms",

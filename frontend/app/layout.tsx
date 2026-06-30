@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { resume } from "@/data/resume";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: `${resume.basics.name} - ${resume.basics.title}`,
-  description: `Portfolio of ${resume.basics.name} - ${resume.education[0].degree} at ${resume.education[0].institution}. Building agentic AI systems, real-time ML pipelines, and full-stack applications.`,
+  description: `${resume.basics.name} - AI Engineer building adaptive AI tutoring and agentic systems. M.S. in Computer Science, Indiana University Bloomington (Graduated May 2026).`,
   icons: {
     icon: "./icon.png",
   },
@@ -27,18 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* FOWT prevention: apply stored theme before first paint */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.classList.add('light');}catch(e){}})()`,
-          }}
-        />
-      </head>
+    <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ background: 'var(--bg-base)', color: 'var(--text-primary)', fontFamily: 'var(--font-geist-mono), ui-monospace, monospace' }}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
+        style={{
+          background: "var(--bg-base)",
+          color: "var(--text-primary)",
+          fontFamily: "var(--font-sans), ui-sans-serif, system-ui, sans-serif",
+        }}
       >
         {children}
       </body>

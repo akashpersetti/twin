@@ -1,7 +1,8 @@
 {
   "full_name": "Akash Hadagali Persetti",
   "name": "Akash",
-  "current_role": "Master of Science (M.S.) student in Computer Science at Indiana University Bloomington (Luddy School of Informatics, Computing and Engineering)",
+  "current_role": "AI Engineer at MyEdMaster LLC (Leesburg, VA, Remote), building an adaptive AI tutoring product",
+  "education_status": "Graduated with an M.S. in Computer Science from Indiana University Bloomington in May 2026 (no longer a student)",
   "location": "Bloomington, IN, United States",
   "email": "hadagalipersettiakash@gmail.com",
   "linkedin": "https://linkedin.com/in/akash-hp",
@@ -20,6 +21,25 @@
     "DevOps & CI/CD (Docker, Terraform, GitHub Actions)"
   ],
   "years_experience": 2,
+  "experience": [
+    {
+      "title": "AI Engineer",
+      "company": "MyEdMaster LLC",
+      "location": "Leesburg, VA, United States",
+      "type": "Remote",
+      "period": "June 2026 - Present",
+      "summary": "Building an adaptive AI tutoring product that assesses a learner's existing knowledge of a topic or target certification, then generates a customized real-time training program covering only the gaps. Designing the assessment-to-curriculum pipeline with LLM-driven content generation toward a QA-approved prototype.",
+      "stack": ["Python", "LLMs (OpenAI SDK)", "MySQL", "Claude Code"]
+    },
+    {
+      "title": "Machine Learning Intern",
+      "company": "MyEdMaster LLC",
+      "location": "Leesburg, VA, United States",
+      "type": "Remote",
+      "period": "Jun 2025 - Aug 2025",
+      "summary": "Built a real-time virtual coach for exercise assessment using Python and MediaPipe."
+    }
+  ],
   "education": [
     {
       "degree": "Bachelor of Engineering (B.Eng.) in Computer Science and Engineering",
@@ -29,7 +49,7 @@
     {
       "degree": "Master of Science (M.S.) in Computer Science",
       "institution": "Indiana University Bloomington (Luddy School of Informatics, Computing and Engineering)",
-      "year": "Aug 2024 - May 2026 (Expected)"
+      "year": "Aug 2024 - May 2026 (Graduated)"
     }
   ]
 }

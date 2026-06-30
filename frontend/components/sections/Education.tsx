@@ -3,25 +3,20 @@
 import { motion } from 'framer-motion';
 import { GraduationCap } from 'lucide-react';
 import { resume } from '@/data/resume';
-import SectionReveal from '@/components/ui/SectionReveal';
+import SectionHeader from '@/components/ui/SectionHeader';
 import GlassCard from '@/components/ui/GlassCard';
 
 export default function Education() {
   return (
-    <section className="py-24 px-6" style={{ background: 'rgba(124,58,237,0.03)' }}>
+    <section className="py-24 px-6" style={{ background: 'var(--bg-alt)' }}>
       <div className="max-w-4xl mx-auto">
-        <SectionReveal>
-          <h2 className="text-3xl sm:text-4xl font-black mb-4" style={{ color: 'var(--text-primary)' }}>
-            Education
-          </h2>
-          <div className="h-1 w-16 rounded-full mb-12" style={{ background: 'linear-gradient(90deg,#7c3aed,#06b6d4)' }} />
-        </SectionReveal>
+        <SectionHeader eyebrow="Academic background" title="Education" />
 
         <div className="relative">
           {/* Timeline line */}
           <div
             className="absolute left-4 top-0 bottom-0 w-px hidden md:block"
-            style={{ background: 'var(--border-glass)' }}
+            style={{ background: 'var(--border)' }}
           />
 
           <div className="flex flex-col gap-6">
@@ -38,8 +33,8 @@ export default function Education() {
                 <div
                   className="absolute left-2.5 top-6 w-3 h-3 rounded-full border-2 hidden md:block"
                   style={{
-                    background: '#7c3aed',
-                    borderColor: '#7c3aed',
+                    background: 'var(--accent)',
+                    borderColor: 'var(--accent)',
                     transform: 'translateX(-50%)',
                   }}
                 />
@@ -49,15 +44,15 @@ export default function Education() {
                     <div className="flex items-start gap-3">
                       <div
                         className="p-2 rounded-lg mt-0.5"
-                        style={{ background: 'rgba(124,58,237,0.15)' }}
+                        style={{ background: 'var(--accent-wash)' }}
                       >
-                        <GraduationCap size={20} color="#7c3aed" />
+                        <GraduationCap size={20} color="#0d9488" />
                       </div>
                       <div>
                         <h3 className="font-bold text-lg leading-tight" style={{ color: 'var(--text-primary)' }}>
                           {edu.degree}
                         </h3>
-                        <p className="font-semibold mt-0.5" style={{ color: '#06b6d4' }}>
+                        <p className="font-semibold mt-0.5" style={{ color: 'var(--accent)' }}>
                           {edu.institution}
                         </p>
                         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -71,11 +66,11 @@ export default function Education() {
 
                     {/* GPA badge */}
                     <span
-                      className="px-3 py-1.5 rounded-xl text-sm font-black tabular-nums"
+                      className="mono px-3 py-1.5 rounded-lg text-sm font-bold tabular-nums"
                       style={{
-                        background: 'rgba(124,58,237,0.15)',
-                        color: '#7c3aed',
-                        boxShadow: '0 0 12px rgba(124,58,237,0.25)',
+                        background: 'var(--accent-wash)',
+                        color: 'var(--accent-hover)',
+                        border: '1px solid var(--surface-tint)',
                       }}
                     >
                       GPA {edu.gpa}
@@ -91,7 +86,7 @@ export default function Education() {
                         <span
                           key={course}
                           className="text-xs px-2.5 py-1 rounded-full"
-                          style={{ background: 'rgba(6,182,212,0.1)', color: '#06b6d4' }}
+                          style={{ background: 'var(--bg-base)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
                         >
                           {course}
                         </span>

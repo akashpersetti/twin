@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 import MobileDrawer from '@/components/layout/MobileDrawer';
 
 const NAV_ITEMS = [
@@ -36,9 +35,9 @@ export default function Navbar() {
       <motion.header
         className="fixed top-0 left-0 right-0 z-40 transition-all duration-300"
         style={{
-          background: scrolled ? 'var(--bg-card)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
-          borderBottom: scrolled ? '1px solid var(--border-glass)' : 'none',
+          background: scrolled ? 'rgba(255,255,255,0.85)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(12px) saturate(180%)' : 'none',
+          borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
         }}
         initial={{ y: -80 }}
         animate={{ y: 0 }}
@@ -48,14 +47,16 @@ export default function Navbar() {
           {/* Logo */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="font-black text-xl tracking-tight"
-            style={{
-              background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
+            className="flex items-center gap-2 font-bold text-lg tracking-tight"
+            style={{ color: 'var(--text-primary)' }}
           >
-            AHP
+            <span
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold text-white"
+              style={{ background: 'var(--accent)' }}
+            >
+              A
+            </span>
+            <span>Akash<span style={{ color: 'var(--accent)' }}>.</span></span>
           </button>
 
           {/* Desktop nav */}
@@ -65,31 +66,38 @@ export default function Navbar() {
                 key={item.id}
                 onClick={() => scrollTo(item.id)}
                 className="relative px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
-                style={{ color: activeId === item.id ? '#7c3aed' : 'var(--text-secondary)' }}
+                style={{ color: activeId === item.id ? 'var(--accent)' : 'var(--text-secondary)' }}
               >
                 {activeId === item.id && (
                   <motion.span
                     layoutId="nav-pill"
                     className="absolute inset-0 rounded-lg"
-                    style={{ background: 'rgba(124,58,237,0.12)' }}
+                    style={{ background: 'var(--accent-wash)' }}
                     transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                   />
                 )}
                 <span className="relative">{item.label}</span>
               </button>
             ))}
-            <div className="ml-2">
-              <ThemeToggle />
-            </div>
+            <a
+              href="/resume.pdf"
+              download
+              className="ml-3 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
+              style={{ background: 'var(--accent)' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
+            >
+              Resume
+            </a>
           </nav>
 
           {/* Mobile */}
           <div className="flex md:hidden items-center gap-2">
-            <ThemeToggle />
             <button
               onClick={() => setDrawerOpen(true)}
               className="p-2 rounded-lg"
               style={{ color: 'var(--text-secondary)' }}
+              aria-label="Open menu"
             >
               <Menu size={20} />
             </button>

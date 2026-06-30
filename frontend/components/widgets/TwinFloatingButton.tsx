@@ -34,7 +34,7 @@ export default function TwinFloatingButton() {
         {open && fullscreen && (
           <motion.div
             className="fixed inset-0 z-40"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(4px)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -60,7 +60,7 @@ export default function TwinFloatingButton() {
           position: 'fixed',
           zIndex: 50,
           borderRadius: 20,
-          boxShadow: '0 25px 60px rgba(0,0,0,0.45)',
+          boxShadow: '0 20px 50px rgba(15,23,42,0.18)',
           pointerEvents: open ? 'auto' : 'none',
           // Switch between fullscreen and panel geometry
           ...(fullscreen
@@ -72,7 +72,7 @@ export default function TwinFloatingButton() {
         {/* Header */}
         <div
           className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
-          style={{ borderColor: 'var(--border-glass)', background: 'rgba(124,58,237,0.1)' }}
+          style={{ borderColor: 'var(--border)', background: 'var(--accent-wash)' }}
         >
           <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
             Chat with {firstName}
@@ -128,13 +128,13 @@ export default function TwinFloatingButton() {
               exit={{ opacity: 0, x: 8, scale: 0.95 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="glass rounded-xl px-3 py-2 flex items-center gap-2 select-none cursor-pointer whitespace-nowrap"
-              style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+              style={{ boxShadow: '0 8px 24px rgba(15,23,42,0.12)' }}
               onClick={() => setOpen(true)}
             >
               <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>
                 Chat with {firstName}
               </span>
-              <span style={{ fontSize: 11, color: '#7c3aed' }}>✦</span>
+              <span style={{ fontSize: 11, color: 'var(--accent)' }}>✦</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -142,21 +142,21 @@ export default function TwinFloatingButton() {
         <motion.button
           onClick={() => setOpen(prev => !prev)}
           className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0"
-          style={{ border: '2px solid rgba(124,58,237,0.5)' }}
+          style={{ border: '2px solid var(--accent-soft)' }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           aria-label="Open Twin chat"
         >
           <span
             className="absolute inset-0 rounded-full animate-fab-pulse"
-            style={{ background: 'rgba(124,58,237,0.4)' }}
+            style={{ background: 'rgba(13,148,136,0.35)' }}
           />
           <AnimatePresence mode="wait" initial={false}>
             {open ? (
               <motion.div
                 key="close"
                 className="absolute inset-0 flex items-center justify-center rounded-full"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #06b6d4)' }}
+                style={{ background: 'var(--accent)' }}
                 initial={{ opacity: 0, scale: 0.7 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.7 }}

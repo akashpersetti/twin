@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 're
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 
-const MONO = 'var(--font-geist-mono), "JetBrains Mono", "Fira Code", monospace';
+const MONO = 'var(--font-mono), "JetBrains Mono", "Fira Code", monospace';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface Message {
@@ -37,28 +37,28 @@ const mdComponents: Components = {
     ol: ({ children }) => <ol style={{ marginBottom: '0.4em', marginLeft: '1.2em', listStyleType: 'decimal' }}>{children}</ol>,
     li: ({ children }) => <li style={{ lineHeight: 1.65, marginBottom: '0.1em' }}>{children}</li>,
     strong: ({ children }) => <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{children}</strong>,
-    em: ({ children }) => <em style={{ color: '#a78bfa' }}>{children}</em>,
+    em: ({ children }) => <em style={{ color: 'var(--accent-hover)' }}>{children}</em>,
     h1: ({ children }) => <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.88em', marginBottom: '0.35em', marginTop: '0.75em', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{children}</p>,
     h2: ({ children }) => <p style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.83em', marginBottom: '0.3em', marginTop: '0.6em', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{children}</p>,
-    h3: ({ children }) => <p style={{ color: '#c4b5fd', fontWeight: 600, fontSize: '0.83em', marginBottom: '0.25em', marginTop: '0.5em' }}>{children}</p>,
+    h3: ({ children }) => <p style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '0.83em', marginBottom: '0.25em', marginTop: '0.5em' }}>{children}</p>,
     code: ({ children, className }) => {
         const isBlock = className?.includes('language-');
         return isBlock ? (
-            <code style={{ display: 'block', fontFamily: MONO, fontSize: '0.78em', lineHeight: 1.6, overflowX: 'auto', padding: '0.55em 0.75em', margin: '0.35em 0', borderRadius: 4, background: 'rgba(0,0,0,0.12)', color: '#86efac', border: '1px solid rgba(124,58,237,0.2)' }}>
+            <code style={{ display: 'block', fontFamily: MONO, fontSize: '0.78em', lineHeight: 1.6, overflowX: 'auto', padding: '0.55em 0.75em', margin: '0.35em 0', borderRadius: 6, background: 'var(--bg-alt)', color: 'var(--accent-hover)', border: '1px solid var(--border)' }}>
                 {children}
             </code>
         ) : (
-            <code style={{ fontFamily: MONO, fontSize: '0.82em', padding: '0.1em 0.3em', borderRadius: 3, background: 'rgba(124,58,237,0.15)', color: '#c4b5fd' }}>
+            <code style={{ fontFamily: MONO, fontSize: '0.82em', padding: '0.1em 0.3em', borderRadius: 4, background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}>
                 {children}
             </code>
         );
     },
     pre: ({ children }) => <pre style={{ overflow: 'auto', margin: '0.35em 0' }}>{children}</pre>,
     blockquote: ({ children }) => (
-        <blockquote style={{ borderLeft: '2px solid #7c3aed', paddingLeft: '0.7em', margin: '0.35em 0', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{children}</blockquote>
+        <blockquote style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.7em', margin: '0.35em 0', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{children}</blockquote>
     ),
     a: ({ href, children }) => (
-        <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#06b6d4', textDecoration: 'underline', textUnderlineOffset: '2px' }}>{children}</a>
+        <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: '2px' }}>{children}</a>
     ),
 };
 
@@ -321,16 +321,16 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                 src={avatarSrc}
                                 alt="Akash"
                                 onError={() => setAvatarError(true)}
-                                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(124,58,237,0.4)', filter: 'grayscale(15%)' }}
+                                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--accent-soft)' }}
                             />
                         ) : (
-                            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: '#fff' }}>A</div>
+                            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: '#fff' }}>A</div>
                         )}
                         <div style={{ textAlign: 'center' }}>
                             <p style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: 4 }}>Hello!</p>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85em' }}>Ask me anything</p>
                         </div>
-                        <p style={{ color: 'var(--border-glass)', fontSize: '0.75em' }}>────────────────────</p>
+                        <p style={{ color: 'var(--border)', fontSize: '0.75em' }}>────────────────────</p>
                     </div>
                 )}
 
@@ -344,7 +344,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                     fontWeight: 700,
                                     fontSize: '0.72em',
                                     letterSpacing: '0.1em',
-                                    color: message.role === 'user' ? '#06b6d4' : '#7c3aed',
+                                    color: message.role === 'user' ? 'var(--text-secondary)' : 'var(--accent)',
                                 }}>
                                     {message.role === 'user' ? 'YOU' : '◆ AKASH'}
                                 </span>
@@ -357,7 +357,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                             <div style={{
                                 maxWidth: '88%',
                                 paddingLeft: '0.75em',
-                                borderLeft: `2px solid ${message.role === 'user' ? '#06b6d4' : '#7c3aed'}`,
+                                borderLeft: `2px solid ${message.role === 'user' ? 'var(--border)' : 'var(--accent)'}`,
                                 color: message.role === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)',
                                 lineHeight: 1.65,
                                 textAlign: 'left',
@@ -369,7 +369,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                     <>
                                         <ReactMarkdown components={mdComponents}>{message.content}</ReactMarkdown>
                                         {isLastAssistant && (
-                                            <span style={{ color: '#7c3aed', display: 'inline-block', marginLeft: '1px' }}>▋</span>
+                                            <span style={{ color: 'var(--accent)', display: 'inline-block', marginLeft: '1px' }}>▋</span>
                                         )}
                                     </>
                                 ) : (
@@ -383,9 +383,9 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 {/* Loading state (before first chunk) */}
                 {isLoading && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.72em', letterSpacing: '0.1em', color: '#7c3aed', marginBottom: '0.25em' }}>◆ AKASH</span>
-                        <div style={{ paddingLeft: '0.75em', borderLeft: '2px solid #7c3aed' }}>
-                            <span style={{ color: '#7c3aed' }}>▋</span>
+                        <span style={{ fontWeight: 700, fontSize: '0.72em', letterSpacing: '0.1em', color: 'var(--accent)', marginBottom: '0.25em' }}>◆ AKASH</span>
+                        <div style={{ paddingLeft: '0.75em', borderLeft: '2px solid var(--accent)' }}>
+                            <span style={{ color: 'var(--accent)' }}>▋</span>
                         </div>
                     </div>
                 )}
@@ -411,7 +411,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                         onClick={handleOnboardingSkip}
                         style={{
                             background: 'transparent',
-                            border: '1px solid rgba(255,255,255,0.2)',
+                            border: '1px solid var(--border)',
                             color: 'var(--text-primary)',
                             padding: '5px 18px',
                             borderRadius: '6px',
@@ -432,7 +432,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 style={{ borderTop: '1px solid var(--border-glass)', padding: '10px 16px', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'text' }}
                 onClick={() => hiddenInputRef.current?.focus()}
             >
-                <span style={{ color: '#06b6d4', fontWeight: 700, flexShrink: 0, userSelect: 'none' }}>❯</span>
+                <span style={{ color: 'var(--accent)', fontWeight: 700, flexShrink: 0, userSelect: 'none' }}>❯</span>
 
                 {/* Visual display of typed text + block cursor */}
                 <div style={{ flex: 1, position: 'relative', minHeight: '1.4em', display: 'flex', alignItems: 'center' }}>
@@ -440,7 +440,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                         {input}
                     </span>
                     {inputFocused && !busy && (
-                        <span style={{ color: '#06b6d4', display: 'inline-block', lineHeight: 1 }}>▋</span>
+                        <span style={{ color: 'var(--accent)', display: 'inline-block', lineHeight: 1 }}>▋</span>
                     )}
                     {!input && !inputFocused && (
                         <span style={{ color: 'var(--text-secondary)', opacity: 0.35, position: 'absolute', left: 0, pointerEvents: 'none', userSelect: 'none' }}>
@@ -474,7 +474,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                         else sendMessage();
                     }}
                     disabled={busy || (onboardingStep === 'done' && !input.trim())}
-                    style={{ background: 'none', border: 'none', cursor: onboardingStep !== 'done' || (input.trim() && !busy) ? 'pointer' : 'not-allowed', color: onboardingStep !== 'done' || (input.trim() && !busy) ? '#7c3aed' : 'var(--border-glass)', fontFamily: MONO, fontSize: '14px', padding: '0 4px', flexShrink: 0, transition: 'color 0.15s' }}
+                    style={{ background: 'none', border: 'none', cursor: onboardingStep !== 'done' || (input.trim() && !busy) ? 'pointer' : 'not-allowed', color: onboardingStep !== 'done' || (input.trim() && !busy) ? 'var(--accent)' : 'var(--border)', fontFamily: MONO, fontSize: '14px', padding: '0 4px', flexShrink: 0, transition: 'color 0.15s' }}
                     aria-label="Send"
                 >
                     ⏎

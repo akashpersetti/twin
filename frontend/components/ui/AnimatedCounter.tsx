@@ -43,7 +43,7 @@ export default function AnimatedCounter({ value, unit, label }: AnimatedCounterP
         >
           0
         </span>
-        <span className="text-3xl font-bold mb-1" style={{ color: '#7c3aed' }}>{unit}</span>
+        <span className="text-3xl font-bold mb-1" style={{ color: 'var(--accent)' }}>{unit}</span>
       </div>
       <span className="text-sm text-center max-w-[160px]" style={{ color: 'var(--text-secondary)' }}>
         {label}
