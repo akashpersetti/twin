@@ -45,6 +45,7 @@ Thumbs.db
 
 # Superpowers brainstorming sessions
 .superpowers/
+.worktrees/
 
 # Local design docs
 docs/AGENTS.md
