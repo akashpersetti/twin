@@ -54,7 +54,7 @@ export default function BlogManager() {
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    const saved = sessionStorage.getItem('blog_token');
+    const saved = localStorage.getItem('blog_token');
     if (saved) setToken(saved);
   }, []);
 
@@ -72,7 +72,7 @@ export default function BlogManager() {
     setTokenError('');
     const res = await fetch(`${API_BASE}/api/posts`, { headers: authHeader(tokenInput) });
     if (res.status === 401) { setTokenError('Invalid token'); return; }
-    sessionStorage.setItem('blog_token', tokenInput);
+    localStorage.setItem('blog_token', tokenInput);
     setToken(tokenInput);
   }
 
