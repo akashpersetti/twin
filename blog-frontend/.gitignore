@@ -1,0 +1,6 @@
+node_modules/
+.next/
+out/
+content/
+*.log
+.DS_Store
