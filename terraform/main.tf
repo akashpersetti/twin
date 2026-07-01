@@ -616,8 +616,9 @@ resource "aws_apigatewayv2_route" "blog_delete_post" {
 # ── Blog CloudFront distribution ──────────────────────────────────────────────
 
 locals {
-  blog_aliases  = var.blog_domain != "" ? [var.blog_domain] : []
-  blog_use_cert = var.blog_domain != "" && local.use_custom_cert
+  blog_aliases    = var.blog_domain != "" ? [var.blog_domain] : []
+  blog_cert_arn   = var.blog_acm_certificate_arn != "" ? var.blog_acm_certificate_arn : local.cert_arn
+  blog_use_cert   = var.blog_domain != "" && local.blog_cert_arn != ""
 }
 
 resource "aws_cloudfront_distribution" "blog" {
@@ -625,7 +626,7 @@ resource "aws_cloudfront_distribution" "blog" {
   aliases = local.blog_aliases
 
   viewer_certificate {
-    acm_certificate_arn            = local.blog_use_cert ? local.cert_arn : null
+    acm_certificate_arn            = local.blog_use_cert ? local.blog_cert_arn : null
     cloudfront_default_certificate = local.blog_use_cert ? false : true
     ssl_support_method             = local.blog_use_cert ? "sni-only" : null
     minimum_protocol_version       = "TLSv1.2_2021"

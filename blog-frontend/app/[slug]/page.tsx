@@ -1,6 +1,8 @@
-import { getAllPosts, getPost, getPostSlugs } from "@/lib/posts";
+import { getPost, getPostSlugs } from "@/lib/posts";
 import PostBody from "@/components/PostBody";
 import type { Metadata } from "next";
+
+export const dynamicParams = false;
 
 export function generateStaticParams() {
   return getPostSlugs().map((slug) => ({ slug }));

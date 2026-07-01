@@ -81,3 +81,9 @@ variable "blog_github_repo" {
   type        = string
   default     = "akashpersetti/twin"
 }
+
+variable "blog_acm_certificate_arn" {
+  description = "ARN of ACM cert (us-east-1) for the blog CloudFront. Must cover blog_domain."
+  type        = string
+  default     = ""
+}
