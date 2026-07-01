@@ -121,6 +121,29 @@ def test_magic_link_verify_consumes_valid_token():
     )
 
 
+def test_magic_link_verify_rejects_token_consumed_concurrently():
+    from botocore.exceptions import ClientError
+
+    already_consumed = ClientError(
+        {
+            "Error": {
+                "Code": "ConditionalCheckFailedException",
+                "Message": "Token no longer exists",
+            }
+        },
+        "DeleteItem",
+    )
+    with patch.object(blog_module, "magic_tokens_table") as table, \
+         patch("time.time", return_value=1_000):
+        table.get_item.return_value = {
+            "Item": {"token": "valid", "expires_at": 1_001}
+        }
+        table.delete_item.side_effect = already_consumed
+        response = client.get("/api/auth/verify?token=valid")
+
+    assert response.status_code == 401
+
+
 @pytest.mark.parametrize(
     "url",
     [
