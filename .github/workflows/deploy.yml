@@ -78,6 +78,9 @@ jobs:
           echo "cloudfront_url=$(terraform output -raw cloudfront_url)" >> $GITHUB_OUTPUT
           echo "api_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
           echo "frontend_bucket=$(terraform output -raw s3_frontend_bucket)" >> $GITHUB_OUTPUT
+          echo "blog_content_bucket=$(terraform output -raw blog_content_bucket)" >> $GITHUB_OUTPUT
+          echo "blog_site_bucket=$(terraform output -raw blog_site_bucket)" >> $GITHUB_OUTPUT
+          echo "blog_cloudfront_distribution_id=$(terraform output -raw blog_cloudfront_distribution_id)" >> $GITHUB_OUTPUT
 
       - name: Invalidate CloudFront
         run: |
@@ -88,6 +91,36 @@ jobs:
           if [ "$DISTRIBUTION_ID" != "None" ] && [ -n "$DISTRIBUTION_ID" ]; then
             aws cloudfront create-invalidation \
               --distribution-id $DISTRIBUTION_ID \
+              --paths "/*"
+          fi
+
+      - name: Sync public blog
+        run: |
+          mkdir -p blog-frontend/content
+          aws s3 sync s3://${{ steps.deploy_outputs.outputs.blog_content_bucket }}/published/ \
+            blog-frontend/content/ --delete
+
+          cd blog-frontend
+          npm install
+          npm run build
+          cd ..
+
+          aws s3 sync blog-frontend/out/ \
+            s3://${{ steps.deploy_outputs.outputs.blog_site_bucket }}/ --delete
+
+          if [ -f blog-frontend/out/index.html ]; then
+            aws s3 cp blog-frontend/out/index.html \
+              s3://${{ steps.deploy_outputs.outputs.blog_site_bucket }}/index.html \
+              --content-type "text/html" \
+              --cache-control "max-age=0, no-cache, must-revalidate"
+          fi
+
+      - name: Invalidate blog CloudFront
+        run: |
+          BLOG_CF_ID="${{ steps.deploy_outputs.outputs.blog_cloudfront_distribution_id }}"
+          if [ -n "$BLOG_CF_ID" ] && [ "$BLOG_CF_ID" != "None" ] && [ "$BLOG_CF_ID" != "" ]; then
+            aws cloudfront create-invalidation \
+              --distribution-id "$BLOG_CF_ID" \
               --paths "/*"
           fi
 

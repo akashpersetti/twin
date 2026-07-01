@@ -1,0 +1,65 @@
+name: Deploy Blog
+
+on:
+  repository_dispatch:
+    types: [blog-deploy]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-blog:
+    name: Rebuild and sync public blog
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions-blog-deploy
+          aws-region: ${{ secrets.DEFAULT_AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: blog-frontend/package-lock.json
+
+      - name: Fetch published posts from S3
+        run: |
+          mkdir -p blog-frontend/content
+          aws s3 sync s3://${{ secrets.BLOG_CONTENT_BUCKET }}/published/ \
+            blog-frontend/content/ --delete
+
+      - name: Build blog-frontend
+        run: |
+          cd blog-frontend
+          npm install
+          npm run build
+
+      - name: Sync to blog-site S3
+        run: |
+          aws s3 sync blog-frontend/out/ \
+            s3://${{ secrets.BLOG_SITE_BUCKET }}/ --delete
+          if [ -f blog-frontend/out/index.html ]; then
+            aws s3 cp blog-frontend/out/index.html \
+              s3://${{ secrets.BLOG_SITE_BUCKET }}/index.html \
+              --content-type "text/html" \
+              --cache-control "max-age=0, no-cache, must-revalidate"
+          fi
+
+      - name: Invalidate blog CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.BLOG_CF_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Summary
+        run: echo "✅ Blog deployed to blog.akashpersetti.com"

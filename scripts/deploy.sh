@@ -11,6 +11,9 @@ cd "$(dirname "$0")/.."        # project root
 echo "📦 Building Lambda package..."
 (cd backend && uv run deploy.py)
 
+echo "📦 Building blog Lambda package..."
+(cd backend && uv run blog_deploy.py)
+
 # 2. Terraform workspace & apply
 cd terraform
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
