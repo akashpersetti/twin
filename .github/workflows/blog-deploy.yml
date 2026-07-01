@@ -40,19 +40,28 @@ jobs:
 
       - name: Build blog-frontend
         run: |
-          cd blog-frontend
-          npm install
-          npm run build
+          POST_COUNT=$(ls blog-frontend/content/*.md 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$POST_COUNT" -gt "0" ]; then
+            cd blog-frontend
+            npm install
+            npm run build
+          else
+            echo "No published posts — skipping Next.js build"
+          fi
 
       - name: Sync to blog-site S3
         run: |
-          aws s3 sync blog-frontend/out/ \
-            s3://${{ secrets.BLOG_SITE_BUCKET }}/ --delete
-          if [ -f blog-frontend/out/index.html ]; then
-            aws s3 cp blog-frontend/out/index.html \
-              s3://${{ secrets.BLOG_SITE_BUCKET }}/index.html \
-              --content-type "text/html" \
-              --cache-control "max-age=0, no-cache, must-revalidate"
+          if [ -d blog-frontend/out ]; then
+            aws s3 sync blog-frontend/out/ \
+              s3://${{ secrets.BLOG_SITE_BUCKET }}/ --delete
+            if [ -f blog-frontend/out/index.html ]; then
+              aws s3 cp blog-frontend/out/index.html \
+                s3://${{ secrets.BLOG_SITE_BUCKET }}/index.html \
+                --content-type "text/html" \
+                --cache-control "max-age=0, no-cache, must-revalidate"
+            fi
+          else
+            echo "No build output — skipping S3 sync"
           fi
 
       - name: Invalidate blog CloudFront

@@ -100,19 +100,24 @@ jobs:
           aws s3 sync s3://${{ steps.deploy_outputs.outputs.blog_content_bucket }}/published/ \
             blog-frontend/content/ --delete
 
-          cd blog-frontend
-          npm install
-          npm run build
-          cd ..
+          POST_COUNT=$(ls blog-frontend/content/*.md 2>/dev/null | wc -l | tr -d ' ')
+          if [ "$POST_COUNT" -gt "0" ]; then
+            cd blog-frontend
+            npm install
+            npm run build
+            cd ..
 
-          aws s3 sync blog-frontend/out/ \
-            s3://${{ steps.deploy_outputs.outputs.blog_site_bucket }}/ --delete
+            aws s3 sync blog-frontend/out/ \
+              s3://${{ steps.deploy_outputs.outputs.blog_site_bucket }}/ --delete
 
-          if [ -f blog-frontend/out/index.html ]; then
-            aws s3 cp blog-frontend/out/index.html \
-              s3://${{ steps.deploy_outputs.outputs.blog_site_bucket }}/index.html \
-              --content-type "text/html" \
-              --cache-control "max-age=0, no-cache, must-revalidate"
+            if [ -f blog-frontend/out/index.html ]; then
+              aws s3 cp blog-frontend/out/index.html \
+                s3://${{ steps.deploy_outputs.outputs.blog_site_bucket }}/index.html \
+                --content-type "text/html" \
+                --cache-control "max-age=0, no-cache, must-revalidate"
+            fi
+          else
+            echo "No published posts yet — skipping blog build"
           fi
 
       - name: Invalidate blog CloudFront

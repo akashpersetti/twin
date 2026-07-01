@@ -248,6 +248,24 @@ resource "aws_lambda_permission" "api_gw" {
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }
 
+# Rewrite extension-less paths (e.g. /blog → /blog.html) before S3 sees them
+resource "aws_cloudfront_function" "url_rewrite" {
+  name    = "${local.name_prefix}-url-rewrite"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  code    = <<-EOF
+    function handler(event) {
+      var uri = event.request.uri;
+      if (uri.endsWith('/')) {
+        event.request.uri += 'index.html';
+      } else if (!uri.split('/').pop().includes('.')) {
+        event.request.uri += '.html';
+      }
+      return event.request;
+    }
+  EOF
+}
+
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "main" {
   aliases = local.aliases
@@ -306,6 +324,11 @@ resource "aws_cloudfront_distribution" "main" {
       cookies {
         forward = "none"
       }
+    }
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.url_rewrite.arn
     }
 
     viewer_protocol_policy = "redirect-to-https"
