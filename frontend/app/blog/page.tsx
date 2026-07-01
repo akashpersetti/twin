@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -41,8 +41,11 @@ function slugify(title: string) {
 
 export default function BlogManager() {
   const [token, setToken] = useState('');
-  const [tokenInput, setTokenInput] = useState('');
-  const [tokenError, setTokenError] = useState('');
+  const [email, setEmail] = useState('ahadagal@iu.edu');
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
+  const [linkSent, setLinkSent] = useState(false);
+  const [sendingLink, setSendingLink] = useState(false);
   const [view, setView] = useState<View>('list');
   const [posts, setPosts] = useState<Post[]>([]);
   const [form, setForm] = useState<PostForm>({
@@ -52,11 +55,7 @@ export default function BlogManager() {
   const [deleteTarget, setDeleteTarget] = useState<Post | null>(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
-
-  useEffect(() => {
-    const saved = localStorage.getItem('blog_token');
-    if (saved) setToken(saved);
-  }, []);
+  const authInitialized = useRef(false);
 
   const loadPosts = useCallback(async (tok: string) => {
     setLoading(true);
@@ -65,15 +64,80 @@ export default function BlogManager() {
     if (res.ok) setPosts((await res.json()).posts ?? []);
   }, []);
 
-  useEffect(() => { if (token) loadPosts(token); }, [token, loadPosts]);
+  useEffect(() => {
+    if (authInitialized.current) return;
+    authInitialized.current = true;
 
-  async function handleTokenSubmit(e: React.FormEvent) {
+    async function initializeAuth() {
+      const url = new URL(window.location.href);
+      const magicToken = url.searchParams.get('magic');
+
+      if (magicToken) {
+        try {
+          const response = await fetch(
+            `${API_BASE}/api/auth/verify?token=${encodeURIComponent(magicToken)}`,
+          );
+          if (!response.ok) throw new Error('Magic-link verification failed');
+
+          const data: { admin_token?: unknown } = await response.json();
+          if (typeof data.admin_token !== 'string' || !data.admin_token) {
+            throw new Error('Magic-link response did not include an admin token');
+          }
+
+          localStorage.setItem('blog_token', data.admin_token);
+          setToken(data.admin_token);
+          await loadPosts(data.admin_token);
+        } catch {
+          setAuthError('This magic link is invalid or has expired.');
+        } finally {
+          url.searchParams.delete('magic');
+          history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+          setAuthLoading(false);
+        }
+        return;
+      }
+
+      const saved = localStorage.getItem('blog_token');
+      if (saved) {
+        setToken(saved);
+        await loadPosts(saved);
+      }
+      setAuthLoading(false);
+    }
+
+    void initializeAuth();
+  }, [loadPosts]);
+
+  async function handleMagicLinkRequest(e: React.FormEvent) {
     e.preventDefault();
-    setTokenError('');
-    const res = await fetch(`${API_BASE}/api/posts`, { headers: authHeader(tokenInput) });
-    if (res.status === 401) { setTokenError('Invalid token'); return; }
-    localStorage.setItem('blog_token', tokenInput);
-    setToken(tokenInput);
+    setAuthError('');
+    setSendingLink(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) throw new Error('Magic-link request failed');
+      setLinkSent(true);
+    } catch {
+      setAuthError('Unable to send a magic link. Please try again.');
+    } finally {
+      setSendingLink(false);
+    }
+  }
+
+  function handleSignOut() {
+    localStorage.removeItem('blog_token');
+    setToken('');
+    setPosts([]);
+    setMsg('');
+    setView('list');
+    setEditingSlug(null);
+    setDeleteTarget(null);
+    setLinkSent(false);
+    setAuthError('');
   }
 
   function startCreate() {
@@ -142,24 +206,40 @@ export default function BlogManager() {
   }
 
   // ── Auth gate ─────────────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--text-secondary)' }}>Verifying sign-in…</p>
+      </div>
+    );
+  }
+
   if (!token) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="glass" style={{ padding: '2rem', width: '100%', maxWidth: '360px' }}>
           <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>Blog Manager</h1>
-          <form onSubmit={handleTokenSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <input
-              type="password"
-              placeholder="Admin token"
-              value={tokenInput}
-              onChange={e => setTokenInput(e.target.value)}
-              style={{ padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.875rem', outline: 'none' }}
-            />
-            {tokenError && <p style={{ color: '#ef4444', fontSize: '0.8125rem', margin: 0 }}>{tokenError}</p>}
-            <button type="submit" style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.625rem', fontWeight: 600, cursor: 'pointer' }}>
-              Sign in
-            </button>
-          </form>
+          {linkSent ? (
+            <div>
+              <p style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '0.5rem' }}>Check your email</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>Use the link in the email to sign in. It expires in 15 minutes.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleMagicLinkRequest} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                style={{ padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.875rem', outline: 'none' }}
+              />
+              <button type="submit" disabled={sendingLink} style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.625rem', fontWeight: 600, cursor: sendingLink ? 'default' : 'pointer', opacity: sendingLink ? 0.7 : 1 }}>
+                {sendingLink ? 'Sending…' : 'Send magic link'}
+              </button>
+            </form>
+          )}
+          {authError && <p style={{ color: '#ef4444', fontSize: '0.8125rem', margin: '0.75rem 0 0' }}>{authError}</p>}
         </div>
       </div>
     );
@@ -172,9 +252,14 @@ export default function BlogManager() {
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Blog Manager</h1>
-            <button onClick={startCreate} style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
-              + New Post
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button onClick={handleSignOut} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', padding: '0.25rem', fontSize: '0.8125rem', cursor: 'pointer', textDecoration: 'underline' }}>
+                Sign out
+              </button>
+              <button onClick={startCreate} style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
+                + New Post
+              </button>
+            </div>
           </div>
           {msg && <p style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem' }}>{msg}</p>}
           {loading && <p style={{ color: 'var(--text-secondary)' }}>Loading…</p>}

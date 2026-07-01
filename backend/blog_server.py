@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import secrets
+import time
 import urllib.error
 import urllib.request
 from datetime import date
@@ -26,13 +28,21 @@ app.add_middleware(
 # Config from env
 BLOG_CONTENT_BUCKET = os.getenv("BLOG_CONTENT_BUCKET", "")
 GITHUB_REPO = os.getenv("GITHUB_REPO", "akashpersetti/twin")
-AWS_REGION = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
+AWS_REGION = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-2"))
 
 SSM_ADMIN_TOKEN_PARAM = "/twin/dev/blog-admin-token"
 SSM_GITHUB_PAT_PARAM = "/twin/dev/github-pat"
+OWNER_EMAIL = "ahadagal@iu.edu"
+SES_SENDER_EMAIL = "akash.hp@icloud.com"
+MAGIC_LINK_BASE_URL = "https://akashpersetti.com/blog"
+MAGIC_TOKEN_TTL_SECONDS = 15 * 60
+MAGIC_TOKEN_TABLE = os.getenv("MAGIC_TOKEN_TABLE", "twin-dev-magic-tokens")
 
 ssm = boto3.client("ssm", region_name=AWS_REGION)
 s3 = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+magic_tokens_table = dynamodb.Table(MAGIC_TOKEN_TABLE)
+ses = boto3.client("ses", region_name=AWS_REGION)
 
 # Cached at Lambda cold start
 _admin_token: Optional[str] = None
@@ -140,7 +150,92 @@ class DeleteRequest(BaseModel):
     confirm: bool = False
 
 
+class MagicLinkRequest(BaseModel):
+    email: str
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
+@app.post("/api/auth/request")
+def request_magic_link(req: MagicLinkRequest):
+    if req.email != OWNER_EMAIL:
+        return {"sent": True}
+
+    token = secrets.token_hex(32)
+    expires_at = int(time.time()) + MAGIC_TOKEN_TTL_SECONDS
+    magic_tokens_table.put_item(
+        Item={"token": token, "expires_at": expires_at}
+    )
+
+    link = f"{MAGIC_LINK_BASE_URL}?magic={token}"
+    ses.send_email(
+        Source=SES_SENDER_EMAIL,
+        Destination={"ToAddresses": [OWNER_EMAIL]},
+        Message={
+            "Subject": {
+                "Data": "Your blog admin sign-in link",
+                "Charset": "UTF-8",
+            },
+            "Body": {
+                "Text": {
+                    "Data": (
+                        "Sign in to the blog admin:\n\n"
+                        f"{link}\n\n"
+                        "This link expires in 15 minutes."
+                    ),
+                    "Charset": "UTF-8",
+                },
+                "Html": {
+                    "Data": (
+                        f'<p><a href="{link}">Sign in to the blog admin</a></p>'
+                        "<p>This link expires in 15 minutes.</p>"
+                    ),
+                    "Charset": "UTF-8",
+                },
+            },
+        },
+    )
+    return {"sent": True}
+
+
+def invalid_magic_token():
+    raise HTTPException(status_code=401, detail="Invalid or expired magic link")
+
+
+@app.get("/api/auth/verify")
+def verify_magic_link(token: Optional[str] = None):
+    if not token:
+        invalid_magic_token()
+
+    item = magic_tokens_table.get_item(
+        Key={"token": token}, ConsistentRead=True
+    ).get("Item")
+    if not item:
+        invalid_magic_token()
+
+    try:
+        expires_at = int(item["expires_at"])
+    except (KeyError, TypeError, ValueError):
+        magic_tokens_table.delete_item(Key={"token": token})
+        invalid_magic_token()
+
+    if expires_at <= int(time.time()):
+        magic_tokens_table.delete_item(Key={"token": token})
+        invalid_magic_token()
+
+    try:
+        magic_tokens_table.delete_item(
+            Key={"token": token},
+            ConditionExpression="attribute_exists(#token)",
+            ExpressionAttributeNames={"#token": "token"},
+        )
+    except ClientError as exc:
+        if exc.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            invalid_magic_token()
+        raise
+
+    return {"admin_token": get_admin_token()}
+
 
 @app.get("/api/posts")
 def list_posts(_: None = Depends(verify_token)):

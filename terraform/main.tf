@@ -163,9 +163,9 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      CORS_ORIGINS       = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
-      S3_BUCKET          = aws_s3_bucket.memory.id
-      USE_S3             = "true"
+      CORS_ORIGINS     = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      S3_BUCKET        = aws_s3_bucket.memory.id
+      USE_S3           = "true"
       BEDROCK_MODEL_ID = var.bedrock_model_id
       SNS_TOPIC_ARN    = aws_sns_topic.visitor_notifications.arn
     }
@@ -269,7 +269,7 @@ resource "aws_cloudfront_function" "url_rewrite" {
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "main" {
   aliases = local.aliases
-  
+
   viewer_certificate {
     acm_certificate_arn            = local.use_custom_cert ? local.cert_arn : null
     cloudfront_default_certificate = local.use_custom_cert ? false : true
@@ -462,6 +462,26 @@ resource "aws_s3_bucket_ownership_controls" "blog_content" {
   rule { object_ownership = "BucketOwnerEnforced" }
 }
 
+# ── Blog admin magic-link tokens ──────────────────────────────────────────────
+
+resource "aws_dynamodb_table" "magic_tokens" {
+  provider     = aws.us_east_2
+  name         = "twin-dev-magic-tokens"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "token"
+  tags         = local.common_tags
+
+  attribute {
+    name = "token"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
+}
+
 # ── Blog site bucket (public website — serves rendered static HTML) ───────────
 
 resource "aws_s3_bucket" "blog_site" {
@@ -482,7 +502,7 @@ resource "aws_s3_bucket_website_configuration" "blog_site" {
   bucket = aws_s3_bucket.blog_site.id
 
   index_document { suffix = "index.html" }
-  error_document { key    = "404.html" }
+  error_document { key = "404.html" }
 }
 
 resource "aws_s3_bucket_policy" "blog_site" {
@@ -557,6 +577,34 @@ resource "aws_iam_role_policy" "blog_lambda_ssm" {
   })
 }
 
+resource "aws_iam_role_policy" "blog_lambda_dynamodb" {
+  name = "${local.name_prefix}-blog-dynamodb-policy"
+  role = aws_iam_role.blog_lambda_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:DeleteItem"]
+      Resource = aws_dynamodb_table.magic_tokens.arn
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "blog_lambda_ses" {
+  name = "${local.name_prefix}-blog-ses-policy"
+  role = aws_iam_role.blog_lambda_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ses:SendEmail"]
+      Resource = "arn:aws:ses:us-east-2:${data.aws_caller_identity.current.account_id}:identity/akash.hp@icloud.com"
+    }]
+  })
+}
+
 # ── Blog Lambda function ──────────────────────────────────────────────────────
 
 resource "aws_lambda_function" "blog_api" {
@@ -574,6 +622,7 @@ resource "aws_lambda_function" "blog_api" {
     variables = {
       BLOG_CONTENT_BUCKET = aws_s3_bucket.blog_content.id
       GITHUB_REPO         = var.blog_github_repo
+      MAGIC_TOKEN_TABLE   = aws_dynamodb_table.magic_tokens.name
     }
   }
 }
@@ -592,6 +641,18 @@ resource "aws_apigatewayv2_integration" "blog_lambda" {
   api_id           = aws_apigatewayv2_api.main.id
   integration_type = "AWS_PROXY"
   integration_uri  = aws_lambda_function.blog_api.invoke_arn
+}
+
+resource "aws_apigatewayv2_route" "blog_auth_request" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /api/auth/request"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "blog_auth_verify" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /api/auth/verify"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "blog_list_posts" {
@@ -639,9 +700,9 @@ resource "aws_apigatewayv2_route" "blog_delete_post" {
 # ── Blog CloudFront distribution ──────────────────────────────────────────────
 
 locals {
-  blog_aliases    = var.blog_domain != "" ? [var.blog_domain] : []
-  blog_cert_arn   = var.blog_acm_certificate_arn != "" ? var.blog_acm_certificate_arn : local.cert_arn
-  blog_use_cert   = var.blog_domain != "" && local.blog_cert_arn != ""
+  blog_aliases  = var.blog_domain != "" ? [var.blog_domain] : []
+  blog_cert_arn = var.blog_acm_certificate_arn != "" ? var.blog_acm_certificate_arn : local.cert_arn
+  blog_use_cert = var.blog_domain != "" && local.blog_cert_arn != ""
 }
 
 resource "aws_cloudfront_distribution" "blog" {
