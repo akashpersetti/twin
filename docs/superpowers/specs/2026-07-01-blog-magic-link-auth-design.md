@@ -57,7 +57,7 @@ Terraform adds `aws_dynamodb_table.magic_tokens` with the exact name `twin-dev-m
 The blog Lambda role receives:
 
 - `dynamodb:PutItem`, `dynamodb:GetItem`, and `dynamodb:DeleteItem` on the magic-token table.
-- `ses:SendEmail` for the already-verified `akash.hp@icloud.com` identity. Terraform does not create or manage an SES identity.
+- `ses:SendEmail` on all SES identity resources because SES authorization evaluates both sender and recipient identities. The application still hardcodes `akash.hp@icloud.com` as sender and `ahadagal@alumni.iu.edu` as recipient. Terraform does not create or manage SES identities.
 
 The Lambda's existing deployment region remains `us-east-2`. Backend SDK clients explicitly use that region for SSM, DynamoDB, and SES. The Lambda environment receives the table name so the runtime value and Terraform resource cannot drift, while the code's default remains `twin-dev-magic-tokens` for tests and local execution.
 

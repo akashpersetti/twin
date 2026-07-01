@@ -600,7 +600,7 @@ resource "aws_iam_role_policy" "blog_lambda_ses" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["ses:SendEmail"]
-      Resource = "arn:aws:ses:us-east-2:${data.aws_caller_identity.current.account_id}:identity/akash.hp@icloud.com"
+      Resource = "*"
     }]
   })
 }

@@ -231,7 +231,7 @@ Add `aws_dynamodb_table.magic_tokens` near the blog storage resources with `prov
 
 - [ ] **Step 2: Add least-privilege Lambda IAM policies**
 
-Add one inline policy allowing `dynamodb:PutItem`, `dynamodb:GetItem`, and `dynamodb:DeleteItem` only on `aws_dynamodb_table.magic_tokens.arn`. Add another allowing only `ses:SendEmail` on `arn:aws:ses:us-east-2:${data.aws_caller_identity.current.account_id}:identity/akash.hp@icloud.com`.
+Add one inline policy allowing `dynamodb:PutItem`, `dynamodb:GetItem`, and `dynamodb:DeleteItem` only on `aws_dynamodb_table.magic_tokens.arn`. Add another allowing only the `ses:SendEmail` action on `Resource = "*"`; SES authorization evaluates both sender and recipient identities, while the application hardcodes both addresses.
 
 - [ ] **Step 3: Connect the table and API routes**
 
