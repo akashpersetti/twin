@@ -417,3 +417,294 @@ resource "aws_route53_record" "alias_www_ipv6" {
     evaluate_target_health = false
   }
 }
+
+# ── Blog content bucket (private — stores Markdown drafts + published) ────────
+
+resource "aws_s3_bucket" "blog_content" {
+  bucket = "${local.name_prefix}-blog-content-${data.aws_caller_identity.current.account_id}"
+  tags   = local.common_tags
+}
+
+resource "aws_s3_bucket_public_access_block" "blog_content" {
+  bucket = aws_s3_bucket.blog_content.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "blog_content" {
+  bucket = aws_s3_bucket.blog_content.id
+  rule { object_ownership = "BucketOwnerEnforced" }
+}
+
+# ── Blog site bucket (public website — serves rendered static HTML) ───────────
+
+resource "aws_s3_bucket" "blog_site" {
+  bucket = "${local.name_prefix}-blog-site-${data.aws_caller_identity.current.account_id}"
+  tags   = local.common_tags
+}
+
+resource "aws_s3_bucket_public_access_block" "blog_site" {
+  bucket = aws_s3_bucket.blog_site.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_website_configuration" "blog_site" {
+  bucket = aws_s3_bucket.blog_site.id
+
+  index_document { suffix = "index.html" }
+  error_document { key    = "404.html" }
+}
+
+resource "aws_s3_bucket_policy" "blog_site" {
+  bucket = aws_s3_bucket.blog_site.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "PublicReadGetObject"
+      Effect    = "Allow"
+      Principal = "*"
+      Action    = "s3:GetObject"
+      Resource  = "${aws_s3_bucket.blog_site.arn}/*"
+    }]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.blog_site]
+}
+
+# ── Blog Lambda IAM ───────────────────────────────────────────────────────────
+
+resource "aws_iam_role" "blog_lambda_role" {
+  name = "${local.name_prefix}-blog-lambda-role"
+  tags = local.common_tags
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "blog_lambda_basic" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.blog_lambda_role.name
+}
+
+resource "aws_iam_role_policy" "blog_lambda_s3" {
+  name = "${local.name_prefix}-blog-s3-policy"
+  role = aws_iam_role.blog_lambda_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+      Resource = [
+        aws_s3_bucket.blog_content.arn,
+        "${aws_s3_bucket.blog_content.arn}/*",
+      ]
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "blog_lambda_ssm" {
+  name = "${local.name_prefix}-blog-ssm-policy"
+  role = aws_iam_role.blog_lambda_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = ["ssm:GetParameter"]
+      Resource = [
+        "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/twin/dev/blog-admin-token",
+        "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/twin/dev/github-pat",
+      ]
+    }]
+  })
+}
+
+# ── Blog Lambda function ──────────────────────────────────────────────────────
+
+resource "aws_lambda_function" "blog_api" {
+  filename         = "${path.module}/../backend/blog-lambda.zip"
+  function_name    = "${local.name_prefix}-blog-api"
+  role             = aws_iam_role.blog_lambda_role.arn
+  handler          = "blog_lambda_handler.handler"
+  source_code_hash = filebase64sha256("${path.module}/../backend/blog-lambda.zip")
+  runtime          = "python3.12"
+  architectures    = ["x86_64"]
+  timeout          = 30
+  tags             = local.common_tags
+
+  environment {
+    variables = {
+      BLOG_CONTENT_BUCKET = aws_s3_bucket.blog_content.id
+      GITHUB_REPO         = var.blog_github_repo
+    }
+  }
+}
+
+resource "aws_lambda_permission" "blog_api_gw" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.blog_api.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+}
+
+# ── Blog API Gateway integration + routes ─────────────────────────────────────
+
+resource "aws_apigatewayv2_integration" "blog_lambda" {
+  api_id           = aws_apigatewayv2_api.main.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.blog_api.invoke_arn
+}
+
+resource "aws_apigatewayv2_route" "blog_list_posts" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /api/posts"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "blog_get_post" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /api/posts/{slug}"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "blog_create_post" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /api/posts"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "blog_update_post" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "PUT /api/posts/{slug}"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "blog_publish_post" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /api/posts/{slug}/publish"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "blog_unpublish_post" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /api/posts/{slug}/unpublish"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "blog_delete_post" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "DELETE /api/posts/{slug}"
+  target    = "integrations/${aws_apigatewayv2_integration.blog_lambda.id}"
+}
+
+# ── Blog CloudFront distribution ──────────────────────────────────────────────
+
+locals {
+  blog_aliases  = var.blog_domain != "" ? [var.blog_domain] : []
+  blog_use_cert = var.blog_domain != "" && local.use_custom_cert
+}
+
+resource "aws_cloudfront_distribution" "blog" {
+  count   = 1
+  aliases = local.blog_aliases
+
+  viewer_certificate {
+    acm_certificate_arn            = local.blog_use_cert ? local.cert_arn : null
+    cloudfront_default_certificate = local.blog_use_cert ? false : true
+    ssl_support_method             = local.blog_use_cert ? "sni-only" : null
+    minimum_protocol_version       = "TLSv1.2_2021"
+  }
+
+  origin {
+    domain_name = aws_s3_bucket_website_configuration.blog_site.website_endpoint
+    origin_id   = "S3-${aws_s3_bucket.blog_site.id}"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+  tags                = local.common_tags
+
+  ordered_cache_behavior {
+    path_pattern     = "/index.html"
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.blog_site.id}"
+
+    forwarded_values {
+      query_string = false
+      cookies { forward = "none" }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+  }
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.blog_site.id}"
+
+    forwarded_values {
+      query_string = false
+      cookies { forward = "none" }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
+  }
+
+  restrictions {
+    geo_restriction { restriction_type = "none" }
+  }
+
+  custom_error_response {
+    error_code         = 404
+    response_code      = 200
+    response_page_path = "/index.html"
+  }
+}
+
+# ── Blog Route 53 CNAME for blog.akashpersetti.com ────────────────────────────
+
+data "aws_route53_zone" "blog_zone" {
+  count        = var.blog_domain != "" ? 1 : 0
+  name         = join(".", slice(split(".", var.blog_domain), 1, length(split(".", var.blog_domain))))
+  private_zone = false
+}
+
+resource "aws_route53_record" "blog" {
+  count   = var.blog_domain != "" ? 1 : 0
+  zone_id = data.aws_route53_zone.blog_zone[0].zone_id
+  name    = var.blog_domain
+  type    = "CNAME"
+  ttl     = 300
+  records = [aws_cloudfront_distribution.blog[0].domain_name]
+}

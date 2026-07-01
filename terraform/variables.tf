@@ -69,3 +69,15 @@ variable "notification_email" {
   type        = string
   default     = ""
 }
+
+variable "blog_domain" {
+  description = "Full blog subdomain, e.g. blog.akashpersetti.com. Empty string = no custom domain."
+  type        = string
+  default     = ""
+}
+
+variable "blog_github_repo" {
+  description = "GitHub owner/repo for repository_dispatch (blog rebuild trigger)"
+  type        = string
+  default     = "akashpersetti/twin"
+}

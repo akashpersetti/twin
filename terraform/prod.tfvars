@@ -10,3 +10,6 @@ root_domain              = ""
 # Bring-your-own-cert custom domain (DNS managed externally via Namecheap)
 acm_certificate_arn = "arn:aws:acm:us-east-1:914697327092:certificate/9147fdc9-39f8-4eef-8354-bbdefda6d649"
 domain_aliases      = ["akashpersetti.com", "www.akashpersetti.com"]
+
+blog_domain      = "blog.akashpersetti.com"
+blog_github_repo = "akashpersetti/twin"

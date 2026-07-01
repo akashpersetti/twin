@@ -27,3 +27,23 @@ output "custom_domain_url" {
   description = "Root URL of the production site"
   value       = var.use_custom_domain ? "https://${var.root_domain}" : ""
 }
+
+output "blog_content_bucket" {
+  description = "S3 bucket name for blog Markdown content"
+  value       = aws_s3_bucket.blog_content.id
+}
+
+output "blog_site_bucket" {
+  description = "S3 bucket name for rendered public blog"
+  value       = aws_s3_bucket.blog_site.id
+}
+
+output "blog_cloudfront_domain" {
+  description = "CloudFront domain for blog — use as CNAME target in Route 53"
+  value       = var.blog_domain != "" ? aws_cloudfront_distribution.blog[0].domain_name : ""
+}
+
+output "blog_cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for blog — set as GitHub Actions secret BLOG_CF_DISTRIBUTION_ID"
+  value       = var.blog_domain != "" ? aws_cloudfront_distribution.blog[0].id : ""
+}
