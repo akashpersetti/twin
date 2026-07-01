@@ -3,6 +3,7 @@ name: Deploy Blog
 on:
   repository_dispatch:
     types: [blog-deploy]
+  workflow_dispatch:
 
 permissions:
   id-token: write
