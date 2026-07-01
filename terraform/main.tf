@@ -699,6 +699,11 @@ resource "aws_cloudfront_distribution" "blog" {
       cookies { forward = "none" }
     }
 
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.url_rewrite.arn
+    }
+
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 3600
