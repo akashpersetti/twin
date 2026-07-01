@@ -26,7 +26,7 @@
 
 - [ ] **Step 1: Write failing request-endpoint tests**
 
-Add tests that submit a non-owner address and assert a generic success response without AWS calls, then submit `ahadagal@iu.edu` with frozen time/token values and assert the exact DynamoDB item and SES sender, recipient, subject, text link, and HTML link:
+Add tests that submit a non-owner address and assert a generic success response without AWS calls, then submit `ahadagal@alumni.iu.edu` with frozen time/token values and assert the exact DynamoDB item and SES sender, recipient, subject, text link, and HTML link:
 
 ```python
 def test_magic_link_request_hides_non_owner_email():
@@ -51,7 +51,7 @@ def test_magic_link_request_stores_token_and_sends_email():
     )
     message = mock_ses.send_email.call_args.kwargs
     assert message["Source"] == "akash.hp@icloud.com"
-    assert message["Destination"] == {"ToAddresses": ["ahadagal@iu.edu"]}
+    assert message["Destination"] == {"ToAddresses": ["ahadagal@alumni.iu.edu"]}
     link = f"https://akashpersetti.com/blog?magic={'a' * 64}"
     assert link in message["Message"]["Body"]["Text"]["Data"]
     assert link in message["Message"]["Body"]["Html"]["Data"]
@@ -68,7 +68,7 @@ Expected: FAIL because `/api/auth/request` does not exist and module AWS clients
 In `backend/blog_server.py`, import `secrets` and `time`; change the local fallback in `AWS_REGION` from `us-east-1` to `us-east-2`; define the fixed owner, sender, URL, TTL, and table constants; create region-bound DynamoDB/SES clients; add the request model; and implement:
 
 ```python
-OWNER_EMAIL = "ahadagal@iu.edu"
+OWNER_EMAIL = "ahadagal@alumni.iu.edu"
 SES_SENDER_EMAIL = "akash.hp@icloud.com"
 MAGIC_LINK_BASE_URL = "https://akashpersetti.com/blog"
 MAGIC_TOKEN_TTL_SECONDS = 15 * 60
@@ -252,7 +252,7 @@ Expected: `Success! The configuration is valid.` No apply is run.
 
 - [ ] **Step 1: Replace token-entry state with auth-flow state**
 
-Use `email` initialized to `ahadagal@iu.edu`, `authLoading` initialized true, `authError`, `linkSent`, and `sendingLink`. Add a `useRef` initialization guard so React Strict Mode cannot consume a one-time token twice during development.
+Use `email` initialized to `ahadagal@alumni.iu.edu`, `authLoading` initialized true, `authError`, `linkSent`, and `sendingLink`. Add a `useRef` initialization guard so React Strict Mode cannot consume a one-time token twice during development.
 
 - [ ] **Step 2: Implement mount-time verification and returning login**
 

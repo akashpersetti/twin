@@ -85,7 +85,7 @@ def test_magic_link_request_stores_token_and_sends_email():
          patch("secrets.token_hex", return_value=token), \
          patch("time.time", return_value=1_000):
         response = client.post(
-            "/api/auth/request", json={"email": "ahadagal@iu.edu"}
+            "/api/auth/request", json={"email": "ahadagal@alumni.iu.edu"}
         )
 
     assert response.status_code == 200
@@ -95,7 +95,9 @@ def test_magic_link_request_stores_token_and_sends_email():
     )
     email = mock_ses.send_email.call_args.kwargs
     assert email["Source"] == "akash.hp@icloud.com"
-    assert email["Destination"] == {"ToAddresses": ["ahadagal@iu.edu"]}
+    assert email["Destination"] == {
+        "ToAddresses": ["ahadagal@alumni.iu.edu"]
+    }
     link = f"https://akashpersetti.com/blog?magic={token}"
     assert link in email["Message"]["Body"]["Text"]["Data"]
     assert link in email["Message"]["Body"]["Html"]["Data"]

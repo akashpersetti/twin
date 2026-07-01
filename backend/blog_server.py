@@ -32,7 +32,7 @@ AWS_REGION = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-2"
 
 SSM_ADMIN_TOKEN_PARAM = "/twin/dev/blog-admin-token"
 SSM_GITHUB_PAT_PARAM = "/twin/dev/github-pat"
-OWNER_EMAIL = "ahadagal@iu.edu"
+OWNER_EMAIL = "ahadagal@alumni.iu.edu"
 SES_SENDER_EMAIL = "akash.hp@icloud.com"
 MAGIC_LINK_BASE_URL = "https://akashpersetti.com/blog"
 MAGIC_TOKEN_TTL_SECONDS = 15 * 60

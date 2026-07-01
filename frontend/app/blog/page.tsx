@@ -41,7 +41,7 @@ function slugify(title: string) {
 
 export default function BlogManager() {
   const [token, setToken] = useState('');
-  const [email, setEmail] = useState('ahadagal@iu.edu');
+  const [email, setEmail] = useState('ahadagal@alumni.iu.edu');
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState('');
   const [linkSent, setLinkSent] = useState(false);

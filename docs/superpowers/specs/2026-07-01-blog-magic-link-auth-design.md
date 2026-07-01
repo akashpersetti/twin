@@ -12,7 +12,7 @@ No new Python or JavaScript dependencies are required.
 
 ## Constants
 
-- Owner email: `ahadagal@iu.edu`
+- Owner email: `ahadagal@alumni.iu.edu`
 - SES sender: `akash.hp@icloud.com`
 - Magic-link destination: `https://akashpersetti.com/blog?magic=<token>`
 - DynamoDB table: `twin-dev-magic-tokens`
@@ -28,14 +28,14 @@ No new Python or JavaScript dependencies are required.
 
 The request body is `{ "email": "..." }`. The endpoint always returns HTTP 200 with `{ "sent": true }`, regardless of whether the email matches the owner address. This prevents the API response from revealing which email is authorized.
 
-If the submitted email does not exactly match `ahadagal@iu.edu`, the endpoint performs no DynamoDB write and sends no email.
+If the submitted email does not exactly match `ahadagal@alumni.iu.edu`, the endpoint performs no DynamoDB write and sends no email.
 
 For the owner email, the endpoint:
 
 1. Generates a cryptographically secure 32-byte token represented as 64 hexadecimal characters.
 2. Computes `expires_at` as the current Unix epoch time plus 900 seconds.
 3. Stores `{ token, expires_at }` in `twin-dev-magic-tokens`.
-4. Sends an SES email from `akash.hp@icloud.com` to `ahadagal@iu.edu` using `ses:SendEmail`. Both the plain-text and HTML bodies contain a direct link to `https://akashpersetti.com/blog?magic=<token>`.
+4. Sends an SES email from `akash.hp@icloud.com` to `ahadagal@alumni.iu.edu` using `ses:SendEmail`. Both the plain-text and HTML bodies contain a direct link to `https://akashpersetti.com/blog?magic=<token>`.
 5. Returns `{ "sent": true }`.
 
 Operational AWS errors are not disguised as a successful send: they propagate as server errors so failed delivery is observable. Only owner-email matching is deliberately opaque.
@@ -74,7 +74,7 @@ The client maintains three initial authentication paths:
 
 1. If the URL contains `?magic=<token>`, verification takes precedence. The page shows a verification loading state, calls `GET /api/auth/verify?token=<encoded token>`, stores the returned `admin_token` in `localStorage.blog_token`, removes only the `magic` query parameter with `history.replaceState`, and loads the post list.
 2. Otherwise, if `localStorage.blog_token` exists, the existing returning-visitor auto-login behavior loads the post list.
-3. Otherwise, the page shows an email field pre-filled with `ahadagal@iu.edu` and a **Send magic link** button.
+3. Otherwise, the page shows an email field pre-filled with `ahadagal@alumni.iu.edu` and a **Send magic link** button.
 
 Submitting the form calls `POST /api/auth/request` with the email as JSON. A successful response replaces the form status with **Check your email**. Because the backend response is deliberately opaque, the UI uses the same confirmation for every syntactically submitted address.
 
