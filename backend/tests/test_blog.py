@@ -65,6 +65,91 @@ def test_wrong_token_returns_401():
     assert resp.status_code == 401
 
 
+def test_magic_link_request_hides_non_owner_email():
+    with patch.object(blog_module, "magic_tokens_table", create=True) as table, \
+         patch.object(blog_module, "ses", create=True) as mock_ses:
+        response = client.post(
+            "/api/auth/request", json={"email": "other@example.com"}
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"sent": True}
+    table.put_item.assert_not_called()
+    mock_ses.send_email.assert_not_called()
+
+
+def test_magic_link_request_stores_token_and_sends_email():
+    token = "a" * 64
+    with patch.object(blog_module, "magic_tokens_table", create=True) as table, \
+         patch.object(blog_module, "ses", create=True) as mock_ses, \
+         patch("secrets.token_hex", return_value=token), \
+         patch("time.time", return_value=1_000):
+        response = client.post(
+            "/api/auth/request", json={"email": "ahadagal@iu.edu"}
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"sent": True}
+    table.put_item.assert_called_once_with(
+        Item={"token": token, "expires_at": 1_900}
+    )
+    email = mock_ses.send_email.call_args.kwargs
+    assert email["Source"] == "akash.hp@icloud.com"
+    assert email["Destination"] == {"ToAddresses": ["ahadagal@iu.edu"]}
+    link = f"https://akashpersetti.com/blog?magic={token}"
+    assert link in email["Message"]["Body"]["Text"]["Data"]
+    assert link in email["Message"]["Body"]["Html"]["Data"]
+
+
+def test_magic_link_verify_consumes_valid_token():
+    with patch.object(blog_module, "magic_tokens_table") as table, \
+         patch("time.time", return_value=1_000):
+        table.get_item.return_value = {
+            "Item": {"token": "valid", "expires_at": 1_001}
+        }
+        response = client.get("/api/auth/verify?token=valid")
+
+    assert response.status_code == 200
+    assert response.json() == {"admin_token": VALID_TOKEN}
+    table.get_item.assert_called_once_with(
+        Key={"token": "valid"}, ConsistentRead=True
+    )
+    table.delete_item.assert_called_once_with(
+        Key={"token": "valid"},
+        ConditionExpression="attribute_exists(#token)",
+        ExpressionAttributeNames={"#token": "token"},
+    )
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/api/auth/verify",
+        "/api/auth/verify?token=",
+        "/api/auth/verify?token=unknown",
+    ],
+)
+def test_magic_link_verify_rejects_missing_or_unknown_token(url):
+    with patch.object(blog_module, "magic_tokens_table") as table:
+        table.get_item.return_value = {}
+        response = client.get(url)
+
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("expires_at", [1_000, "not-a-timestamp"])
+def test_magic_link_verify_rejects_and_deletes_invalid_expiry(expires_at):
+    with patch.object(blog_module, "magic_tokens_table") as table, \
+         patch("time.time", return_value=1_000):
+        table.get_item.return_value = {
+            "Item": {"token": "invalid", "expires_at": expires_at}
+        }
+        response = client.get("/api/auth/verify?token=invalid")
+
+    assert response.status_code == 401
+    table.delete_item.assert_called_once_with(Key={"token": "invalid"})
+
+
 # ── List posts ────────────────────────────────────────────────────────────────
 
 def test_list_posts_empty():
