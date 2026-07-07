@@ -108,13 +108,16 @@ def test_load_index_reads_json_file():
         json.dump(payload, f)
         temp_path = f.name
 
-    with patch.object(retrieval, "INDEX_PATH", temp_path):
-        retrieval._index_cache = None
-        chunks = retrieval.load_index()
+    try:
+        with patch.object(retrieval, "INDEX_PATH", temp_path):
+            retrieval._index_cache = None
+            chunks = retrieval.load_index()
 
-    assert len(chunks) == 1
-    assert chunks[0].chunk_id == "a"
-    os.remove(temp_path)
+        assert len(chunks) == 1
+        assert chunks[0].chunk_id == "a"
+    finally:
+        retrieval._index_cache = None
+        os.remove(temp_path)
 
 
 def test_get_chunk_returns_matching_chunk():
