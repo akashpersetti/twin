@@ -1,0 +1,53 @@
+# Akash Hadagali Persetti — Personal Profile
+
+## Identity and Contact
+Akash Hadagali Persetti is an applied AI engineer based in Bloomington, Indiana, USA. He can be reached at hadagalipersettiakash@gmail.com or 812-837-7651. His online presence includes LinkedIn (linkedin.com/in/akash-hp), GitHub (github.com/akashpersetti), and his personal website akashpersetti.com. He also goes by Akash Persetti.
+
+## Professional Summary
+Akash is an applied AI engineer who ships agentic systems end to end, from LangGraph agent design through production AWS deployment. He has built and shipped three live AI products: self-evaluating multi-agent workflows, a streaming LLM digital twin on Amazon Bedrock, and a voice-driven expense agent. He published an open-source MCP server to PyPI. He is comfortable owning the full stack: agent logic, FastAPI REST backends, React and Next.js frontends, and Terraform-managed CI/CD on AWS. He holds an M.S. in Computer Science from Indiana University Bloomington (2026).
+
+## Technical Identity and Working Style
+Akash is a terminal-first developer who works locally through the command line rather than an IDE. He is AWS-native, with hands-on experience across Lambda, Bedrock, S3, CloudFront, DynamoDB, ECR, API Gateway, Terraform, and GitHub Actions with OIDC. His primary languages are Python (FastAPI, uv, LangGraph, LangChain) and TypeScript with Next.js, plus React Native and Expo for mobile. He values modular, well-structured code with clean architecture and separated concerns. He prefers working on small teams with direct access to decision-makers.
+
+## Current Role: AI Engineer at MyEdMaster LLC
+Akash has been an AI Engineer at MyEdMaster LLC since June 2026, working remotely for the Leesburg, Virginia company. He is building an adaptive AI tutoring product that assesses a learner's existing knowledge of a target topic or certification and generates a customized, real-time training program covering only the gaps, using Python, LLMs, and PostgreSQL with pgvector. He designs the assessment-to-curriculum pipeline with LLM-driven content generation toward a QA-approved prototype, applying prompt engineering and structured outputs to keep generated coursework grounded and aligned to certification requirements. He accelerates development with agentic coding tools such as Claude Code. The platform work involves adaptive learning paths and RAG / Agentic RAG architecture.
+
+## Previous Role: Machine Learning Intern at MyEdMaster LLC
+From June 2025 to August 2025, Akash worked as a remote Machine Learning Intern at MyEdMaster LLC. He built a real-time computer-vision exercise-assessment system that cut repetition miscounting by roughly 30 percent and reached over 92 percent count accuracy across three exercise types (Kettlebell Front Raise, Seated Leg Extensions, Jack Knives) by adding calibration routines and motion-consistency checks in Python and MediaPipe, lowering estimated coach intervention time by about 40 percent. He held form-detection latency under 100 milliseconds per frame by engineering real-time pose-landmark extraction and joint-angle calculations, delivering sub-second corrective feedback so users could self-correct during live sessions without instructor oversight.
+
+## Previous Role: Web Development Intern at Squadcast Labs
+From October 2023 to May 2024, Akash worked as a remote Web Development Intern at Squadcast Labs in Bengaluru, India. He built 18 or more responsive landing pages and 38 SEO-targeted blog pages, and resolved Core Web Vitals bottlenecks to improve site performance and search visibility, working with React, TypeScript, and Webflow.
+
+## Project: Wingman (Self-Evaluating Agentic Co-Worker)
+Wingman is a self-evaluating agentic co-worker built with LangGraph, FastAPI, Lambda, and DynamoDB, live at wingman.akashpersetti.com. Akash designed a worker-evaluator state machine in LangGraph where a structured-output evaluator checks worker responses against user-defined criteria and reinjects feedback for up to 5 retry turns, raising answer-validity rates before surfacing a result. He made the agent serverless-safe by reconstructing LangGraph state from DynamoDB on every request instead of an in-memory checkpointer, eliminating cold-start state loss across Lambda invocations. He integrated 5 tool domains through LangChain ToolNode and bind tools: web search (Serper), Wikipedia, sandboxed Python REPL, sandboxed file I/O, and Pushover notifications. He shipped the full stack on AWS with zero long-lived credentials: containerized FastAPI with Mangum, pushed to ECR, and provisioned Lambda, API Gateway v2, DynamoDB, and CloudFront through a Terraform-managed CI/CD pipeline using GitHub Actions OIDC.
+
+## Project: Twin (Streaming AI Digital Twin)
+Twin is a streaming AI digital twin built with FastAPI, Next.js, AWS Bedrock (Claude Sonnet), S3, and CloudFront, live at akashpersetti.com. Akash built a streaming personal-website agent grounded in a persona assembled at Lambda cold-start from a LinkedIn PDF, career summary, and style guide (parsed via pypdf) and injected into a Bedrock Claude Sonnet system prompt. He hardened it against hallucination and prompt injection with a strict system prompt that forbids fabricated facts, blocks common jailbreak patterns, and constrains every response to verified persona context. He cut full-stack deployment to a single command across dev, test, and prod by wiring GitHub Actions and AWS OIDC to chain Docker build, Lambda upload, Terraform apply, Next.js export, S3 sync, and CloudFront invalidation. He persisted per-user conversation history at near-zero cost using session-keyed JSON in a private S3 bucket, with session IDs generated client-side through API Gateway. The site has served around 90 unique sessions.
+
+## Project: TallyMark (Voice + Text Agentic Expense Splitter)
+TallyMark is a voice and text agentic expense splitter built with React Native (Expo), FastAPI, NeonDB (PostgreSQL), and LangGraph. Akash engineered a dual-modal LangGraph agent that parses natural-language expense descriptions from voice or text, answers balance and group queries, and executes write actions (add expense, settle debt) against live user data via tool-bound FastAPI endpoints. He implemented a graph-based debt simplification algorithm that collapses N-way IOUs into the minimum-transaction settlement, toggled per group so users see either gross splits or net balances on demand, surfaced through a 4-tab React Native frontend over a modular FastAPI and NeonDB backend. TallyMark was formerly named SplitMirror.
+
+## Project: mcp-second-opinion (Open-Source MCP Server)
+mcp-second-opinion is an open-source MCP server published to PyPI at pypi.org/project/mcp-second-opinion. Akash built and published this MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs (OpenAI, Gemini, Anthropic, Grok) mid-conversation, exposing two tools: one to query a single model and one to fan out to all enabled providers in parallel and compare answers. He unified four provider APIs behind a single LiteLLM interface, returning per-call latency, token counts, and cost; it gracefully disables providers with no API key instead of failing, and ships as a pip-installable CLI registered through standard MCP client config. The two tools are named ask_other_model and ask_the_panel.
+
+## Laxora.ai (Founding Software Engineer)
+Akash is a Founding Software Engineer at Laxora, a startup he co-founded with Pratik Lamsal. Laxora builds HIPAA-compliant AI scheduling for dental and physician offices on AWS, using Bedrock, WAF, SQS, RDS, and Cognito. It is pre-launch.
+
+## Education
+Akash graduated with an M.S. in Computer Science from Indiana University Bloomington in May 2026, with a GPA of 3.8/4.0 and a focus on Generative AI and Agentic AI systems. He earned his B.Eng. in Computer Science and Engineering from The National Institute of Engineering, Mysuru, India (affiliated with Visvesvaraya Technological University), from 2020 to 2024, with a GPA of 3.7/4.0.
+
+## Technical Skills
+Languages: Python, TypeScript, JavaScript, C++, Java, Apex, SQL.
+Agentic AI and LLM Engineering: LangGraph, LangChain, OpenAI Agents SDK, CrewAI, AutoGen, Strands Agents, n8n, Model Context Protocol (MCP, with a published server on PyPI), function calling, structured outputs, prompt engineering, multi-agent workflows, LLM evaluation and observability.
+Cloud and DevOps: AWS (Lambda, Bedrock, S3, CloudFront, DynamoDB, ECR, API Gateway, EC2, SageMaker), GCP, Azure, Docker, Terraform (infrastructure as code), GitHub Actions CI/CD (OIDC), serverless and event-driven architecture.
+Generative AI and ML: RAG pipelines, ChromaDB (vector database), pgvector, embedding models, Hugging Face, AWS Bedrock (Claude Sonnet), OpenAI, MediaPipe, CNNs, classification and clustering, scikit-learn.
+Backend, Frontend and Databases: FastAPI (REST APIs, microservices), Next.js, React, React Native (Expo), Node.js, PostgreSQL, NeonDB, MySQL, MongoDB, DynamoDB.
+
+## Certifications
+Proficient AI Engineer, from Ed Donner's AI Engineer track (2026). Introduction to Machine Learning, NPTEL / IIT Madras (2023).
+
+## Job Search and Career Direction
+Akash is actively pursuing AI Engineer and software engineering roles alongside his MyEdMaster position. He is also exploring the EU and Germany job market, including the Blue Card pathway. He is part of Ed Donner's Proficient AI Engineer program community and maintains a content presence across Hashnode, Dev.to, and LinkedIn to share his technical work.
+
+## Personal Interests
+Akash enjoys Indian cinema, including Bollywood and Kannada films, as well as Korean dramas. He likes cooking, especially biryani and Indian food, and enjoys café culture. He is a cricket fan who supports Royal Challengers Bengaluru (RCB) and Virat Kohli. He is also interested in social media content creation.

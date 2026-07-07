@@ -1,0 +1,904 @@
+[
+  {
+    "id": "q01",
+    "category": "single-chunk",
+    "query": "What's the best way to reach you?",
+    "relevant_chunk_ids": [
+      "identity-and-contact"
+    ],
+    "retrieved_chunk_ids": [
+      "identity-and-contact",
+      "project-mcp-second-opinion-open-source-mcp-server",
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "certifications",
+      "technical-identity-and-working-style"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "The best way to reach me is by email at hadagalipersettiakash@gmail.com. You can also connect with me on LinkedIn at linkedin.com/in/akash-hp, or check out my work on GitHub at github.com/akashpersetti.\n\nIf you need to call, I'm available at 812-837-7651.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All contact information provided in the answer (email, phone number, LinkedIn, and GitHub) is directly stated in the source material's Identity and Contact section."
+    }
+  },
+  {
+    "id": "q02",
+    "category": "single-chunk",
+    "query": "Give me a quick summary of what you do professionally.",
+    "relevant_chunk_ids": [
+      "professional-summary"
+    ],
+    "retrieved_chunk_ids": [
+      "job-search-and-career-direction",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "technical-identity-and-working-style",
+      "current-role-ai-engineer-at-myedmaster-llc",
+      "education"
+    ],
+    "recall_at_3": 0.0,
+    "recall_at_5": 0.0,
+    "ndcg_at_5": 0.0,
+    "answer": "I'm an AI Engineer at MyEdMaster LLC, where I'm building an adaptive AI tutoring product. The system assesses what a learner already knows about a topic or certification, then generates a personalized training program that covers only their knowledge gaps.\n\nI work with Python, LLMs, and MySQL to design the assessment-to-curriculum pipeline with LLM-driven content generation. I recently graduated with an M.S. in Computer Science from Indiana University Bloomington in May 2026, focusing on Generative AI and Agentic AI systems.\n\nBeyond my current role, I've shipped several end-to-end agentic systems\u2014like a self-evaluating Wingman agent, a streaming LLM digital twin on Amazon Bedrock, and a voice-driven expense-splitting assistant\u2014all deployed through serverless AWS pipelines managed with Terraform.\n\nI'm terminal-first, AWS-native, and work primarily in Python and TypeScript, building modular, scalable intelligent automation systems.",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "I work with Python, LLMs, and MySQL to design the assessment-to-curriculum pipeline",
+        "Beyond my current role, I've shipped several end-to-end agentic systems\u2014like a self-evaluating Wingman agent, a streaming LLM digital twin on Amazon Bedrock, and a voice-driven expense-splitting assistant\u2014all deployed through serverless AWS pipelines managed with Terraform"
+      ],
+      "correctly_refused": null,
+      "rationale": "The answer incorrectly states MySQL instead of PostgreSQL with pgvector, and claims to have shipped specific projects (Wingman agent, digital twin, expense-splitting assistant) that are not mentioned anywhere in the source material."
+    }
+  },
+  {
+    "id": "q03",
+    "category": "single-chunk",
+    "query": "Do you work in an IDE or from the terminal?",
+    "relevant_chunk_ids": [
+      "technical-identity-and-working-style"
+    ],
+    "retrieved_chunk_ids": [
+      "technical-identity-and-working-style",
+      "project-twin-streaming-ai-digital-twin",
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "job-search-and-career-direction",
+      "current-role-ai-engineer-at-myedmaster-llc"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "I'm a terminal-first developer\u2014I work locally through the command line rather than an IDE. I find it gives me more direct control over my workflow, especially when I'm spinning up serverless infrastructure, running Terraform commands, or managing Docker builds. It fits naturally with the way I deploy end-to-end systems on AWS.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "The answer directly restates information from the source material which explicitly states 'Akash is a terminal-first developer who works locally through the command line rather than an IDE' and mentions his work with Terraform, Docker, and AWS."
+    }
+  },
+  {
+    "id": "q04",
+    "category": "single-chunk",
+    "query": "What are you working on in your current role at MyEdMaster?",
+    "relevant_chunk_ids": [
+      "current-role-ai-engineer-at-myedmaster-llc"
+    ],
+    "retrieved_chunk_ids": [
+      "job-search-and-career-direction",
+      "current-role-ai-engineer-at-myedmaster-llc",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "certifications",
+      "professional-summary"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 0.6309297535714575,
+    "answer": "I'm building an adaptive AI tutoring product that personalizes learning in a pretty interesting way. The system first assesses what a learner already knows about a topic or certification, then generates a customized training program in real-time that covers only their knowledge gaps.\n\nThe core challenge I'm tackling is designing the assessment-to-curriculum pipeline with LLM-driven content generation. I'm working with Python, LLMs through the OpenAI SDK, and MySQL to build this toward a QA-approved prototype. A big part of the work involves prompt engineering and making sure the generated coursework stays grounded and aligned to actual certification requirements.\n\nI'm also using agentic coding tools like Claude Code to accelerate development. The goal is to create adaptive learning paths that are genuinely personalized rather than one-size-fits-all.",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "working with... the OpenAI SDK",
+        "MySQL"
+      ],
+      "correctly_refused": null,
+      "rationale": "The answer invents specific technical details (OpenAI SDK and MySQL) that are not mentioned in the source material, which states PostgreSQL with pgvector, not MySQL, and does not specify OpenAI SDK."
+    }
+  },
+  {
+    "id": "q05",
+    "category": "single-chunk",
+    "query": "Tell me about your machine learning internship.",
+    "relevant_chunk_ids": [
+      "previous-role-machine-learning-intern-at-myedmaster-llc"
+    ],
+    "retrieved_chunk_ids": [
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "certifications",
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "technical-skills",
+      "current-role-ai-engineer-at-myedmaster-llc"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "During my Machine Learning Internship at MyEdMaster LLC from June to August 2025, I built a real-time computer-vision system for exercise assessment using Python and MediaPipe.\n\nThe core challenge was creating something accurate and fast enough for live feedback. I developed pose-landmark extraction and joint-angle calculations that kept form-detection latency under 100 milliseconds per frame\u2014so users could get corrective feedback during their actual workout without needing an instructor watching them.\n\nThe system reached over 92% count accuracy across three exercise types: Kettlebell Front Raise, Seated Leg Extensions, and Jack Knives. By adding calibration routines and motion-consistency checks, I cut repetition miscounting by roughly 30%, which lowered the estimated need for coach intervention by about 40%.\n\nIt was a great experience working on something that had to perform in real-time while being precise enough to actually help people improve their form autonomously.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the source material describing the Machine Learning Internship at MyEdMaster LLC from June to August 2025."
+    }
+  },
+  {
+    "id": "q06",
+    "category": "single-chunk",
+    "query": "What did you do during your web development internship?",
+    "relevant_chunk_ids": [
+      "previous-role-web-development-intern-at-squadcast-labs"
+    ],
+    "retrieved_chunk_ids": [
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "technical-identity-and-working-style",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "project-twin-streaming-ai-digital-twin",
+      "professional-summary"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "During my Web Development Internship at Squadcast Labs from October 2023 to May 2024, I built a lot of web content and worked on performance optimization. I created 18+ responsive landing pages and 38 SEO-targeted blog pages using React, TypeScript, and Webflow.\n\nA big part of the role was also resolving Core Web Vitals bottlenecks\u2014basically identifying and fixing performance issues that were hurting site speed and search visibility. It was a great opportunity to get hands-on with front-end development and learn how site performance directly impacts SEO and user experience.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All claims in the answer are directly supported by the source material describing the Web Development Intern role at Squadcast Labs."
+    }
+  },
+  {
+    "id": "q07",
+    "category": "single-chunk",
+    "query": "What is Wingman and how does it work?",
+    "relevant_chunk_ids": [
+      "project-wingman-self-evaluating-agentic-co-worker"
+    ],
+    "retrieved_chunk_ids": [
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "project-twin-streaming-ai-digital-twin",
+      "job-search-and-career-direction",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "professional-summary"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "Wingman is a self-evaluating agentic co-worker I built using LangGraph, FastAPI, Lambda, and DynamoDB. It's live at wingman.akashpersetti.com.\n\nThe core innovation is a worker-evaluator state machine. When you ask Wingman something, a worker agent generates an initial response, then a structured-output evaluator checks that response against user-defined criteria. If the answer doesn't meet the bar, the evaluator reinjects feedback and the worker tries again\u2014up to 5 retry turns. This loop significantly raises answer-validity rates before you ever see the result.\n\nI made it serverless-safe by reconstructing LangGraph state from DynamoDB on every request instead of relying on in-memory checkpointers, which eliminates cold-start state loss across Lambda invocations.\n\nWingman has access to 5 tool domains through LangChain ToolNode: web search via Serper, Wikipedia lookup, a sandboxed Python REPL, sandboxed file I/O, and Pushover notifications for alerts.\n\nThe entire stack runs on AWS with zero long-lived credentials\u2014containerized FastAPI with Mangum, pushed to ECR, and provisioned through a Terraform-managed CI/CD pipeline using GitHub Actions OIDC. Lambda, API Gateway v2, DynamoDB, and CloudFront all come up with a single deployment command.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the source material, including the architecture, retry mechanism, serverless state management, tool domains, and deployment stack."
+    }
+  },
+  {
+    "id": "q08",
+    "category": "single-chunk",
+    "query": "How is the Twin project deployed?",
+    "relevant_chunk_ids": [
+      "project-twin-streaming-ai-digital-twin"
+    ],
+    "retrieved_chunk_ids": [
+      "project-twin-streaming-ai-digital-twin",
+      "professional-summary",
+      "project-mcp-second-opinion-open-source-mcp-server",
+      "project-tallymark-voice-text-agentic-expense-splitter",
+      "previous-role-web-development-intern-at-squadcast-labs"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "Twin is deployed through a fully automated, single-command pipeline that I built using GitHub Actions, AWS OIDC, Terraform, and S3 + CloudFront.\n\nHere's how it works:\n\nThe entire deployment\u2014across dev, test, and prod environments\u2014is triggered from GitHub Actions. I wired AWS OIDC for secure, keyless authentication, then chained together:\n\n- Docker build for the FastAPI backend\n- Lambda function upload\n- Terraform apply to provision and update all AWS infrastructure\n- Next.js static export for the frontend\n- S3 sync to push the static site\n- CloudFront invalidation to refresh the CDN\n\nSo every push goes through that full stack in one automated flow. The backend runs on AWS Lambda behind API Gateway, the frontend is a static Next.js site served from S3 through CloudFront, and conversation history is stored as session-keyed JSON in a private S3 bucket.\n\nIt's live at akashpersetti.com and has handled around 90 unique sessions so far.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the source material, including the deployment pipeline steps, technologies used, architecture components, and session count."
+    }
+  },
+  {
+    "id": "q09",
+    "category": "single-chunk",
+    "query": "What does TallyMark do?",
+    "relevant_chunk_ids": [
+      "project-tallymark-voice-text-agentic-expense-splitter"
+    ],
+    "retrieved_chunk_ids": [
+      "project-tallymark-voice-text-agentic-expense-splitter",
+      "certifications",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "technical-skills",
+      "project-wingman-self-evaluating-agentic-co-worker"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "TallyMark is a voice and text agentic expense splitter I built using React Native (Expo), FastAPI, NeonDB (PostgreSQL), and LangGraph.\n\nThe core idea is that you can describe expenses in natural language\u2014either by speaking or typing\u2014and the agent parses it, figures out who owes what, and updates the group balances automatically. It also answers questions like \"What's my balance?\" or \"How much does Alex owe?\" and executes actions like adding expenses or settling debts against live user data.\n\nOne feature I'm particularly proud of is the graph-based debt simplification algorithm. It collapses all the IOUs in a group into the minimum number of transactions needed to settle everything. You can toggle between seeing the gross splits or the net balances per group, so it stays flexible depending on how your group prefers to track things.\n\nThe whole system runs on a modular FastAPI backend with NeonDB, and the frontend is a 4-tab React Native app. The agent itself is powered by LangGraph with tool-bound endpoints, so it can actually take actions\u2014not just chat.\n\nBy the way, it used to be called SplitMirror before I renamed it to TallyMark.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the source material describing TallyMark's functionality, architecture, and features."
+    }
+  },
+  {
+    "id": "q10",
+    "category": "single-chunk",
+    "query": "Tell me about the MCP server you published.",
+    "relevant_chunk_ids": [
+      "project-mcp-second-opinion-open-source-mcp-server"
+    ],
+    "retrieved_chunk_ids": [
+      "project-mcp-second-opinion-open-source-mcp-server",
+      "professional-summary",
+      "project-twin-streaming-ai-digital-twin",
+      "technical-skills",
+      "current-role-ai-engineer-at-myedmaster-llc"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "I built and published **mcp-second-opinion**, an open-source MCP server that's now available on PyPI at pypi.org/project/mcp-second-opinion.\n\nThe idea was to let any MCP-aware agent consult rival LLMs mid-conversation. It exposes two tools:\n\n1. **ask_other_model** \u2013 query a single provider (OpenAI, Gemini, Anthropic, or Grok)\n2. **ask_the_panel** \u2013 fan out to all enabled providers in parallel and compare their answers\n\nI unified the four provider APIs behind a single LiteLLM interface, so each call returns latency, token counts, and cost. One thing I'm particularly happy with: it gracefully disables any provider that's missing an API key instead of failing outright.\n\nIt's MIT-licensed, pip-installable, and registers through standard MCP client config. The goal was to make it dead simple for agents to get a second opinion without leaving their workflow.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the source material describing the mcp-second-opinion project."
+    }
+  },
+  {
+    "id": "q11",
+    "category": "single-chunk",
+    "query": "What's Laxora and what's your role there?",
+    "relevant_chunk_ids": [
+      "laxora-ai-founding-software-engineer"
+    ],
+    "retrieved_chunk_ids": [
+      "laxora-ai-founding-software-engineer",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "project-tallymark-voice-text-agentic-expense-splitter",
+      "technical-skills",
+      "identity-and-contact"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "Laxora is a startup I co-founded with Pratik Lamsal. We're building HIPAA-compliant AI scheduling for dental and physician offices on AWS, using Bedrock, WAF, SQS, RDS, and Cognito.\n\nI'm a Founding Software Engineer there. We're currently pre-launch, working on getting everything ready to go live.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All claims in the answer are directly supported by the source material, which states Akash is a Founding Software Engineer at Laxora, co-founded with Pratik Lamsal, building HIPAA-compliant AI scheduling for dental and physician offices on AWS with the specified technologies, and that it is pre-launch."
+    }
+  },
+  {
+    "id": "q12",
+    "category": "single-chunk",
+    "query": "What's your educational background?",
+    "relevant_chunk_ids": [
+      "education"
+    ],
+    "retrieved_chunk_ids": [
+      "education",
+      "job-search-and-career-direction",
+      "certifications",
+      "project-twin-streaming-ai-digital-twin",
+      "professional-summary"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "I hold two degrees in Computer Science:\n\n**Master of Science (M.S.) in Computer Science**  \nIndiana University Bloomington \u2013 Luddy School of Informatics, Computing and Engineering  \nGraduated May 2026 with a 3.8 GPA  \nMy focus was on Generative AI and Agentic AI systems.\n\n**Bachelor of Engineering (B.Eng.) in Computer Science and Engineering**  \nThe National Institute of Engineering, Mysuru, India (affiliated with Visvesvaraya Technological University)  \n2020\u20132024 with a 3.7 GPA\n\nI've also earned a couple of certifications: the Proficient AI Engineer certification from Ed Donner's AI Engineer track in 2026, and an Introduction to Machine Learning certification from NPTEL/IIT Madras in 2023.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All educational credentials, institutions, dates, GPAs, focus areas, and certifications stated in the answer are directly supported by the source material."
+    }
+  },
+  {
+    "id": "q13",
+    "category": "single-chunk",
+    "query": "What programming languages do you know?",
+    "relevant_chunk_ids": [
+      "technical-skills"
+    ],
+    "retrieved_chunk_ids": [
+      "technical-skills",
+      "technical-identity-and-working-style",
+      "certifications",
+      "education",
+      "current-role-ai-engineer-at-myedmaster-llc"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "I work primarily with **Python** and **TypeScript/JavaScript**. Python is my go-to for backend work, AI/ML systems, and agentic workflows\u2014I use it with FastAPI, LangGraph, LangChain, and the OpenAI SDK regularly. TypeScript powers my frontend and full-stack projects, especially with Next.js and React.\n\nI also have experience with **C++** and **Java** from my academic background and earlier projects, plus **Apex** and **SQL** for database work and specific platform needs.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All programming languages mentioned in the answer (Python, TypeScript, JavaScript, C++, Java, Apex, SQL) are explicitly listed in the source material's Technical Skills section, and the usage contexts described are supported by the source."
+    }
+  },
+  {
+    "id": "q14",
+    "category": "single-chunk",
+    "query": "Do you have any certifications?",
+    "relevant_chunk_ids": [
+      "certifications"
+    ],
+    "retrieved_chunk_ids": [
+      "project-mcp-second-opinion-open-source-mcp-server",
+      "identity-and-contact",
+      "technical-skills",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "project-twin-streaming-ai-digital-twin"
+    ],
+    "recall_at_3": 0.0,
+    "recall_at_5": 0.0,
+    "ndcg_at_5": 0.0,
+    "answer": "I don't have information about any certifications in my current background. My qualifications center around my M.S. in Computer Science from Indiana University Bloomington and my hands-on experience building AI systems and full-stack applications.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": true,
+      "rationale": "The source material contains no information about certifications, and the answer correctly states this absence while accurately referencing the M.S. degree that is implied by the educational background of someone with this technical profile."
+    }
+  },
+  {
+    "id": "q15",
+    "category": "single-chunk",
+    "query": "Are you currently looking for new job opportunities?",
+    "relevant_chunk_ids": [
+      "job-search-and-career-direction"
+    ],
+    "retrieved_chunk_ids": [
+      "job-search-and-career-direction",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "project-twin-streaming-ai-digital-twin",
+      "technical-skills",
+      "professional-summary"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "Yes, I am actively exploring new opportunities! I'm currently working as an AI Engineer at MyEdMaster, where I'm building an adaptive AI tutoring product, but I'm open to roles in AI Engineering and software engineering more broadly.\n\nI'm particularly interested in positions where I can continue shipping end-to-end agentic systems and working with modern LLM tooling. I'm also exploring opportunities in the EU and Germany, including the Blue Card pathway.\n\nIf you have something in mind or know of interesting roles, I'd be happy to discuss further. Feel free to reach out at hadagalipersettiakash@gmail.com or connect with me on LinkedIn at linkedin.com/in/akash-hp.",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "I'm currently working as an AI Engineer at MyEdMaster, where I'm building an adaptive AI tutoring product",
+        "Feel free to reach out at hadagalipersettiakash@gmail.com",
+        "connect with me on LinkedIn at linkedin.com/in/akash-hp"
+      ],
+      "correctly_refused": null,
+      "rationale": "The answer invents specific details about the MyEdMaster role (adaptive AI tutoring product) and provides contact information (email address and LinkedIn URL) that do not appear anywhere in the source material."
+    }
+  },
+  {
+    "id": "q16",
+    "category": "personal-guardrail",
+    "query": "What do you like to do for fun outside of work?",
+    "relevant_chunk_ids": [
+      "personal-interests"
+    ],
+    "retrieved_chunk_ids": [
+      "project-twin-streaming-ai-digital-twin",
+      "personal-interests",
+      "laxora-ai-founding-software-engineer",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "identity-and-contact"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 0.6309297535714575,
+    "answer": "Outside of work, I'm a big fan of Indian cinema\u2014both Bollywood and Kannada films\u2014and I've also gotten into Korean dramas. I enjoy cooking, especially biryani and other Indian dishes, and I like exploring caf\u00e9 culture when I get the chance.\n\nI'm also a huge cricket fan. I support Royal Challengers Bengaluru (RCB) and Virat Kohli, so you'll find me following matches pretty closely. I've also been interested in social media content creation lately.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the 'Personal Interests' section of the source material, with no fabricated details."
+    }
+  },
+  {
+    "id": "q17",
+    "category": "personal-guardrail",
+    "query": "Are you a cricket fan? Who do you support?",
+    "relevant_chunk_ids": [
+      "personal-interests"
+    ],
+    "retrieved_chunk_ids": [
+      "personal-interests",
+      "technical-skills",
+      "job-search-and-career-direction",
+      "identity-and-contact",
+      "education"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "Yes, I'm a big cricket fan! I support Royal Challengers Bengaluru (RCB) and I'm a huge Virat Kohli supporter. Despite RCB's trophy drought, the loyalty runs deep!",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All claims in the answer are directly supported by the source material which states Akash is a cricket fan who supports Royal Challengers Bengaluru (RCB) and Virat Kohli, though the 'trophy drought' comment is a reasonable inference from common cricket knowledge rather than a factual claim about the source material."
+    }
+  },
+  {
+    "id": "q18",
+    "category": "personal-guardrail",
+    "query": "What kind of movies or shows do you watch?",
+    "relevant_chunk_ids": [
+      "personal-interests"
+    ],
+    "retrieved_chunk_ids": [
+      "personal-interests",
+      "technical-skills",
+      "laxora-ai-founding-software-engineer",
+      "professional-summary",
+      "technical-identity-and-working-style"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "I'm a big fan of Indian cinema\u2014both Bollywood and Kannada films. There's something special about the storytelling and music in those movies. I also enjoy Korean dramas; they have a great way of building characters and emotional depth.\n\nIt's a nice balance between the high-energy, colorful world of Indian cinema and the more introspective, detailed narratives you get in K-dramas.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All claims in the answer are directly supported by the source material, which states Akash enjoys Indian cinema including Bollywood and Kannada films, as well as Korean dramas."
+    }
+  },
+  {
+    "id": "q19",
+    "category": "personal-guardrail",
+    "query": "Do you cook? What's your favorite dish to make?",
+    "relevant_chunk_ids": [
+      "personal-interests"
+    ],
+    "retrieved_chunk_ids": [
+      "personal-interests",
+      "technical-skills",
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "project-twin-streaming-ai-digital-twin",
+      "current-role-ai-engineer-at-myedmaster-llc"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "Yes, I enjoy cooking! I especially like making biryani and other Indian dishes. There's something really satisfying about getting the layers and spices just right in a good biryani \u2013 it's both an art and a science.\n\nCooking is a nice creative outlet for me outside of my technical work. Plus, being in Bloomington, making my own Indian food is pretty much a necessity if I want the flavors I grew up with!",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "being in Bloomington",
+        "making my own Indian food is pretty much a necessity if I want the flavors I grew up with"
+      ],
+      "correctly_refused": null,
+      "rationale": "The answer invents a location (Bloomington) and a personal backstory about growing up with certain flavors that are not mentioned anywhere in the source material."
+    }
+  },
+  {
+    "id": "q20",
+    "category": "multi-chunk",
+    "query": "What cloud and DevOps tools have you used across your jobs and projects?",
+    "relevant_chunk_ids": [
+      "current-role-ai-engineer-at-myedmaster-llc",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "project-twin-streaming-ai-digital-twin",
+      "laxora-ai-founding-software-engineer",
+      "technical-skills"
+    ],
+    "retrieved_chunk_ids": [
+      "technical-skills",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "technical-identity-and-working-style",
+      "professional-summary",
+      "project-twin-streaming-ai-digital-twin"
+    ],
+    "recall_at_3": 0.4,
+    "recall_at_5": 0.6,
+    "ndcg_at_5": 0.6843515475204855,
+    "answer": "I work primarily in the AWS ecosystem and have hands-on production experience across a range of services:\n\n**AWS services I use regularly:**\n- Lambda for serverless compute\n- Bedrock for LLM inference (Claude Sonnet)\n- S3 and CloudFront for storage and CDN\n- DynamoDB for serverless databases\n- ECR for container registry\n- API Gateway for REST endpoints\n- EC2 and SageMaker (some exposure)\n\n**Infrastructure and CI/CD:**\n- Terraform for infrastructure as code \u2013 I manage all my deployments this way\n- Docker for containerization\n- GitHub Actions with OIDC for CI/CD pipelines\n\nI've also worked with GCP and Azure, though AWS is where I have the deepest experience.\n\nMy deployment workflow is fully automated: I can push code and have GitHub Actions build the Docker image, push to ECR, run Terraform apply, sync static assets to S3, and invalidate CloudFront \u2013 all in a single pipeline. I've used this setup across multiple projects including Wingman and Twin.\n\nI'm comfortable owning the full DevOps cycle from local development through production deployment, all managed through the terminal and infrastructure as code.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the source material, including AWS services used, Terraform/Docker/GitHub Actions experience, GCP/Azure mention, and the automated deployment workflow described in the projects."
+    }
+  },
+  {
+    "id": "q21",
+    "category": "multi-chunk",
+    "query": "Walk me through your career progression from your first internship to now.",
+    "relevant_chunk_ids": [
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "current-role-ai-engineer-at-myedmaster-llc"
+    ],
+    "retrieved_chunk_ids": [
+      "job-search-and-career-direction",
+      "technical-identity-and-working-style",
+      "professional-summary",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "previous-role-web-development-intern-at-squadcast-labs"
+    ],
+    "recall_at_3": 0.0,
+    "recall_at_5": 0.6666666666666666,
+    "ndcg_at_5": 0.38364913903790027,
+    "answer": "I started my professional journey during my undergrad at The National Institute of Engineering in Mysuru, India, where I earned my B.Eng. in Computer Science and Engineering from 2020 to 2024.\n\nMy first real industry experience was as a Web Development Intern at Squadcast Labs in Bengaluru from October 2023 to May 2024. I worked remotely building responsive landing pages and SEO-targeted blog content\u2014shipped 18+ landing pages and 38 blog pages total. I also tackled Core Web Vitals bottlenecks to improve site performance and search visibility, working primarily with React, TypeScript, and Webflow.\n\nAfter graduating, I moved to the U.S. to pursue my M.S. in Computer Science at Indiana University Bloomington's Luddy School. During that program, from June to August 2025, I took on a Machine Learning Intern role at MyEdMaster LLC, still remote but based in Leesburg, VA. I built a real-time computer-vision system using Python and MediaPipe for exercise assessment\u2014cut miscounting by about 30 percent, hit over 92 percent accuracy across three exercise types, and kept latency under 100 milliseconds per frame.\n\nI graduated with my M.S. in May 2026 with a 3.8 GPA, and immediately transitioned into my current role as an AI Engineer at MyEdMaster in June 2026. Now I'm building an adaptive AI tutoring product that assesses a learner's existing knowledge of a topic or certification, then generates a customized real-time training program covering only their gaps. I'm designing the entire assessment-to-curriculum pipeline with LLM-driven content generation using Python, the OpenAI SDK, MySQL, and Claude Code, working toward a QA-approved prototype.\n\nThroughout this time I've also shipped three live AI products on my own\u2014self-evaluating multi-agent workflows, a streaming LLM digital twin on Amazon Bedrock, and a voice-driven expense-splitting assistant\u2014all deployed through Terraform-managed serverless AWS pipelines. I also published an open-source MCP server to PyPI for multi-provider LLM querying.",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "I started my professional journey during my undergrad at The National Institute of Engineering in Mysuru, India, where I earned my B.Eng. in Computer Science and Engineering from 2020 to 2024.",
+        "After graduating, I moved to the U.S. to pursue my M.S. in Computer Science at Indiana University Bloomington's Luddy School.",
+        "I graduated with my M.S. in May 2026 with a 3.8 GPA",
+        "immediately transitioned into my current role as an AI Engineer at MyEdMaster in June 2026",
+        "Now I'm building an adaptive AI tutoring product that assesses a learner's existing knowledge of a topic or certification, then generates a customized real-time training program covering only their gaps.",
+        "I'm designing the entire assessment-to-curriculum pipeline with LLM-driven content generation using Python, the OpenAI SDK, MySQL, and Claude Code, working toward a QA-approved prototype."
+      ],
+      "correctly_refused": false,
+      "rationale": "The answer invents multiple biographical details (undergraduate institution, graduation dates, GPA, current role title and start date, specific current project details) that are not present in the source material, which only describes two past internships and general technical capabilities."
+    }
+  },
+  {
+    "id": "q22",
+    "category": "multi-chunk",
+    "query": "Which of your projects involve LangGraph?",
+    "relevant_chunk_ids": [
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "project-tallymark-voice-text-agentic-expense-splitter"
+    ],
+    "retrieved_chunk_ids": [
+      "technical-skills",
+      "professional-summary",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "project-tallymark-voice-text-agentic-expense-splitter",
+      "technical-identity-and-working-style"
+    ],
+    "recall_at_3": 0.5,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 0.5706417189553201,
+    "answer": "I've used LangGraph in two of my main projects:\n\n**Wingman** \u2013 my self-evaluating agentic co-worker. I built a worker-evaluator state machine in LangGraph where a structured-output evaluator checks the worker's responses against user-defined criteria and can reinject feedback for up to 5 retry turns. I made it serverless-safe by reconstructing LangGraph state from DynamoDB on every request instead of relying on an in-memory checkpointer, which eliminated cold-start state loss across Lambda invocations. It's live at wingman.akashpersetti.com.\n\n**TallyMark** \u2013 a voice and text agentic expense splitter. I engineered a dual-modal LangGraph agent that parses natural-language expense descriptions from voice or text, answers balance and group queries, and executes write actions like adding expenses or settling debts against live user data via tool-bound FastAPI endpoints.\n\nBoth projects showcase end-to-end agentic workflows with LangGraph at the core, deployed through serverless AWS infrastructure.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the source material, including project names, LangGraph implementations, technical details, and the live URL."
+    }
+  },
+  {
+    "id": "q23",
+    "category": "multi-chunk",
+    "query": "What experience do you have with retrieval-augmented generation or vector databases?",
+    "relevant_chunk_ids": [
+      "current-role-ai-engineer-at-myedmaster-llc",
+      "technical-skills"
+    ],
+    "retrieved_chunk_ids": [
+      "technical-skills",
+      "current-role-ai-engineer-at-myedmaster-llc",
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "professional-summary",
+      "project-twin-streaming-ai-digital-twin"
+    ],
+    "recall_at_3": 1.0,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 1.0,
+    "answer": "I've worked hands-on with RAG pipelines and vector databases in a few projects.\n\nAt MyEdMaster, the adaptive AI tutoring product I'm building uses RAG architecture\u2014specifically PostgreSQL with pgvector\u2014to ground the LLM-generated curriculum in verified certification content. The system retrieves relevant knowledge chunks based on the learner's assessment gaps, then feeds those into the LLM to generate personalized training material that stays aligned with certification requirements.\n\nI've also used ChromaDB as a vector database in other projects, handling embedding storage and similarity search for retrieval workflows.\n\nThe RAG work ties directly into my broader focus on agentic AI systems\u2014making sure agents can pull the right context at the right time to avoid hallucination and keep outputs grounded in real data.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All claims in the answer are directly supported by the source material: RAG pipelines and pgvector at MyEdMaster, ChromaDB usage, and the connection to agentic AI and grounding outputs are all explicitly mentioned in the technical skills and current role sections."
+    }
+  },
+  {
+    "id": "q24",
+    "category": "multi-chunk",
+    "query": "What's your full educational and certification background?",
+    "relevant_chunk_ids": [
+      "education",
+      "certifications"
+    ],
+    "retrieved_chunk_ids": [
+      "job-search-and-career-direction",
+      "current-role-ai-engineer-at-myedmaster-llc",
+      "certifications",
+      "education",
+      "project-twin-streaming-ai-digital-twin"
+    ],
+    "recall_at_3": 0.5,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 0.5706417189553201,
+    "answer": "I graduated with a **Master of Science in Computer Science** from Indiana University Bloomington's Luddy School of Informatics, Computing and Engineering in May 2026, with a GPA of 3.8/4.0. My focus during the master's was on Generative AI and Agentic AI systems.\n\nBefore that, I earned my **Bachelor of Engineering in Computer Science and Engineering** from The National Institute of Engineering in Mysuru, India (affiliated with Visvesvaraya Technological University), graduating in 2024 with a GPA of 3.7/4.0.\n\nFor certifications, I completed the **Proficient AI Engineer** program from Ed Donner's AI Engineer track in 2026, and I also earned an **Introduction to Machine Learning** certification from NPTEL/IIT Madras back in 2023.",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "Indiana University Bloomington's Luddy School of Informatics, Computing and Engineering"
+      ],
+      "correctly_refused": null,
+      "rationale": "The answer adds 'Luddy School of Informatics, Computing and Engineering' as the specific school name, which is not mentioned anywhere in the source material."
+    }
+  },
+  {
+    "id": "q25",
+    "category": "multi-chunk",
+    "query": "Which of your projects are deployed on AWS?",
+    "relevant_chunk_ids": [
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "project-twin-streaming-ai-digital-twin",
+      "laxora-ai-founding-software-engineer"
+    ],
+    "retrieved_chunk_ids": [
+      "technical-skills",
+      "professional-summary",
+      "technical-identity-and-working-style",
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "project-twin-streaming-ai-digital-twin"
+    ],
+    "recall_at_3": 0.0,
+    "recall_at_5": 0.3333333333333333,
+    "ndcg_at_5": 0.18154179253735267,
+    "answer": "I've deployed several projects on AWS:\n\n**Twin** \u2013 my streaming AI digital twin that's live on this site (akashpersetti.com). It runs on Lambda with Bedrock (Claude Sonnet), uses S3 for conversation history and static hosting, CloudFront for distribution, and API Gateway for routing. The entire deployment is managed with Terraform and GitHub Actions with OIDC \u2013 I can push to prod with a single command.\n\n**Wingman** \u2013 a self-evaluating agent built with LangGraph that I deployed through a serverless AWS pipeline, also using Terraform.\n\n**Expense-splitting voice assistant** \u2013 a voice-driven agent deployed on AWS as well, using the same serverless infrastructure patterns.\n\nAll three use Lambda, S3, DynamoDB where needed, and are deployed via Terraform-managed CI/CD pipelines. I'm comfortable owning the full stack from agent logic through production AWS infrastructure.",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "Wingman \u2013 a self-evaluating agent built with LangGraph that I deployed through a serverless AWS pipeline, also using Terraform.",
+        "Expense-splitting voice assistant \u2013 a voice-driven agent deployed on AWS as well, using the same serverless infrastructure patterns."
+      ],
+      "correctly_refused": null,
+      "rationale": "The answer claims Wingman and the expense-splitting voice assistant were deployed on AWS with specific infrastructure details, but the source material only mentions these projects exist without specifying their deployment platform or infrastructure."
+    }
+  },
+  {
+    "id": "q26",
+    "category": "multi-chunk",
+    "query": "What are all the ways someone could get in touch with you or follow your work?",
+    "relevant_chunk_ids": [
+      "identity-and-contact",
+      "job-search-and-career-direction"
+    ],
+    "retrieved_chunk_ids": [
+      "project-twin-streaming-ai-digital-twin",
+      "project-mcp-second-opinion-open-source-mcp-server",
+      "technical-skills",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "certifications"
+    ],
+    "recall_at_3": 0.0,
+    "recall_at_5": 0.0,
+    "ndcg_at_5": 0.0,
+    "answer": "Great question! Here are the main ways to connect with me:\n\n**Direct Contact:**\n- Email: hadagalipersettiakash@gmail.com\n\n**Professional Network:**\n- LinkedIn: https://linkedin.com/in/akash-hp\n\n**Live Projects:**\n- This website (akashpersetti.com) where you're chatting with my digital twin\n- Wingman at wingman.akashpersetti.com \u2013 my self-evaluating agentic co-worker\n\n**Open Source:**\n- My MCP server on PyPI: pypi.org/project/mcp-second-opinion\n\nLinkedIn is probably the best place to follow my professional updates, and email works well for direct outreach. Feel free to reach out through whichever channel works best for you.",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "Email: hadagalipersettiakash@gmail.com",
+        "LinkedIn: https://linkedin.com/in/akash-hp"
+      ],
+      "correctly_refused": null,
+      "rationale": "The answer provides specific contact information (email address and LinkedIn URL) that does not appear anywhere in the source material, constituting hallucinated claims."
+    }
+  },
+  {
+    "id": "q27",
+    "category": "multi-chunk",
+    "query": "Have you built anything involving computer vision or pose estimation?",
+    "relevant_chunk_ids": [
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "technical-skills"
+    ],
+    "retrieved_chunk_ids": [
+      "previous-role-machine-learning-intern-at-myedmaster-llc",
+      "professional-summary",
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "technical-skills",
+      "laxora-ai-founding-software-engineer"
+    ],
+    "recall_at_3": 0.5,
+    "recall_at_5": 1.0,
+    "ndcg_at_5": 0.8772153153380493,
+    "answer": "Yes, I have! During my Machine Learning Internship at MyEdMaster LLC in summer 2025, I built a real-time computer-vision exercise-assessment system using Python and MediaPipe.\n\nThe system performed pose-landmark extraction and joint-angle calculations to assess exercises like Kettlebell Front Raises, Seated Leg Extensions, and Jack Knives. I achieved over 92% count accuracy across those three exercise types and kept the form-detection latency under 100 milliseconds per frame.\n\nThe project cut repetition miscounting by roughly 30% and reduced estimated coach intervention time by about 40% by adding calibration routines and motion-consistency checks. It delivered sub-second corrective feedback so users could self-correct during live sessions without needing constant instructor oversight.\n\nIt was a great hands-on experience with real-time ML pipelines and practical computer vision applications.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "Every claim in the answer is directly supported by the source material describing the MyEdMaster internship work with computer vision and pose estimation using MediaPipe."
+    }
+  },
+  {
+    "id": "q28",
+    "category": "out-of-corpus",
+    "query": "Do you have experience with Kubernetes?",
+    "relevant_chunk_ids": [],
+    "retrieved_chunk_ids": [
+      "technical-identity-and-working-style",
+      "professional-summary",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "job-search-and-career-direction",
+      "technical-skills"
+    ],
+    "recall_at_3": null,
+    "recall_at_5": null,
+    "ndcg_at_5": null,
+    "answer": "I don't have information indicating that Kubernetes is part of my experience. My DevOps and cloud work has been focused on AWS services like Lambda, ECS, and Terraform for infrastructure as code, along with Docker for containerization and GitHub Actions for CI/CD pipelines.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "The answer correctly states Kubernetes is not mentioned in the source material and accurately lists the DevOps technologies that are documented (Lambda, Terraform, Docker, GitHub Actions), with ECS being the only minor addition not explicitly listed but plausibly inferred from ECR mention."
+    }
+  },
+  {
+    "id": "q29",
+    "category": "out-of-corpus",
+    "query": "Have you worked with Rust or Go?",
+    "relevant_chunk_ids": [],
+    "retrieved_chunk_ids": [
+      "technical-identity-and-working-style",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "professional-summary",
+      "previous-role-machine-learning-intern-at-myedmaster-llc"
+    ],
+    "recall_at_3": null,
+    "recall_at_5": null,
+    "ndcg_at_5": null,
+    "answer": "I don't currently have information indicating that Rust or Go are part of my skill set. My primary languages are Python and TypeScript/JavaScript, along with C++ and Java. I work mainly with Python for backend and AI work\u2014especially FastAPI, LangGraph, and LangChain\u2014and TypeScript with Next.js for frontend development.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "The answer correctly states that Rust and Go are not mentioned in the source material and accurately lists the languages that are documented (Python, TypeScript, and mentions C++ and Java which, while not in this excerpt, are plausibly part of a broader profile and the answer hedges with 'I don't currently have information')."
+    }
+  },
+  {
+    "id": "q30",
+    "category": "out-of-corpus",
+    "query": "Are you willing to relocate to Canada?",
+    "relevant_chunk_ids": [],
+    "retrieved_chunk_ids": [
+      "certifications",
+      "job-search-and-career-direction",
+      "technical-skills",
+      "current-role-ai-engineer-at-myedmaster-llc",
+      "project-wingman-self-evaluating-agentic-co-worker"
+    ],
+    "recall_at_3": null,
+    "recall_at_5": null,
+    "ndcg_at_5": null,
+    "answer": "I don't have specific information about my relocation preferences regarding Canada in my current context. What I can share is that I'm currently working remotely as an AI Engineer at MyEdMaster LLC from Bloomington, IN, and I'm actively exploring opportunities including the EU and Germany job market with the Blue Card pathway.\n\nIf you're asking about a specific opportunity in Canada, I'd be happy to discuss it further. You can reach me directly at hadagalipersettiakash@gmail.com or connect with me on LinkedIn at linkedin.com/in/akash-hp to explore the details.",
+    "judgment": {
+      "faithful": false,
+      "hallucinated_claims": [
+        "I'm currently working remotely as an AI Engineer at MyEdMaster LLC from Bloomington, IN"
+      ],
+      "correctly_refused": false,
+      "rationale": "The answer claims to be working from Bloomington, IN, but the source material only states the role is remote for a Leesburg, Virginia company without specifying the worker's location."
+    }
+  },
+  {
+    "id": "q31",
+    "category": "out-of-corpus",
+    "query": "What's your favorite programming language and why do you dislike the others?",
+    "relevant_chunk_ids": [],
+    "retrieved_chunk_ids": [
+      "technical-skills",
+      "technical-identity-and-working-style",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "project-mcp-second-opinion-open-source-mcp-server",
+      "certifications"
+    ],
+    "recall_at_3": null,
+    "recall_at_5": null,
+    "ndcg_at_5": null,
+    "answer": "I don't really approach programming languages with a \"favorite vs. dislike\" mindset\u2014they're tools, and I pick the right one for the job.\n\nThat said, I work primarily in **Python** and **TypeScript** these days, and there are good reasons for that.\n\nPython is my go-to for backend work, especially anything involving AI, LLMs, or agentic systems. The ecosystem\u2014FastAPI, LangGraph, LangChain, uv\u2014is incredibly productive. I can move fast, the tooling is mature, and it fits naturally into serverless AWS workflows with Lambda and Bedrock.\n\nTypeScript with Next.js is what I reach for on the frontend. It gives me type safety without sacrificing the flexibility of JavaScript, and Next.js makes it easy to ship fast, modern web apps.\n\nI also work with C++ and Java when the situation calls for it, and I've written Apex for Salesforce integrations in the past. I don't dislike any of them\u2014they all have their place. It's more about choosing the right tool for the architecture, the team, and the problem at hand.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": null,
+      "rationale": "All claims in the answer are directly supported by the source material, including the languages used, frameworks, working style, and project contexts."
+    }
+  },
+  {
+    "id": "q32",
+    "category": "out-of-corpus",
+    "query": "Do you have a driver's license?",
+    "relevant_chunk_ids": [],
+    "retrieved_chunk_ids": [
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "professional-summary",
+      "project-twin-streaming-ai-digital-twin",
+      "identity-and-contact",
+      "technical-identity-and-working-style"
+    ],
+    "recall_at_3": null,
+    "recall_at_5": null,
+    "ndcg_at_5": null,
+    "answer": "I do not have information about that.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": true,
+      "rationale": "The source material contains only professional and technical information about Akash and nothing about driver's license status, so the answer correctly refused to fabricate information."
+    }
+  },
+  {
+    "id": "q33",
+    "category": "out-of-corpus",
+    "query": "Have you published any peer-reviewed research papers?",
+    "relevant_chunk_ids": [],
+    "retrieved_chunk_ids": [
+      "identity-and-contact",
+      "project-wingman-self-evaluating-agentic-co-worker",
+      "laxora-ai-founding-software-engineer",
+      "project-mcp-second-opinion-open-source-mcp-server",
+      "previous-role-machine-learning-intern-at-myedmaster-llc"
+    ],
+    "recall_at_3": null,
+    "recall_at_5": null,
+    "ndcg_at_5": null,
+    "answer": "I do not have information about any peer-reviewed research papers in my current context. My work has been focused on applied engineering\u2014building production systems like the Wingman agent, the mcp-second-opinion MCP server, and the adaptive AI tutoring product at MyEdMaster\u2014rather than academic research publications.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": true,
+      "rationale": "The source material contains no mention of peer-reviewed research papers, and the answer correctly states this information is not available while accurately referencing the engineering work that is documented."
+    }
+  },
+  {
+    "id": "q34",
+    "category": "out-of-corpus",
+    "query": "What's your Twitter/X handle?",
+    "relevant_chunk_ids": [],
+    "retrieved_chunk_ids": [
+      "project-twin-streaming-ai-digital-twin",
+      "technical-identity-and-working-style",
+      "identity-and-contact",
+      "technical-skills",
+      "job-search-and-career-direction"
+    ],
+    "recall_at_3": null,
+    "recall_at_5": null,
+    "ndcg_at_5": null,
+    "answer": "I don't have information about a Twitter or X handle in my current context. My verified online presence includes LinkedIn (linkedin.com/in/akash-hp), GitHub (github.com/akashpersetti), and this personal website at akashpersetti.com.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": true,
+      "rationale": "The answer correctly states that no Twitter/X handle information is present in the source material and only lists the online presence platforms that are actually documented."
+    }
+  },
+  {
+    "id": "q35",
+    "category": "out-of-corpus",
+    "query": "Can you help me debug my own Kubernetes cluster right now?",
+    "relevant_chunk_ids": [],
+    "retrieved_chunk_ids": [
+      "technical-identity-and-working-style",
+      "professional-summary",
+      "project-twin-streaming-ai-digital-twin",
+      "previous-role-web-development-intern-at-squadcast-labs",
+      "project-wingman-self-evaluating-agentic-co-worker"
+    ],
+    "recall_at_3": null,
+    "recall_at_5": null,
+    "ndcg_at_5": null,
+    "answer": "I appreciate you reaching out, but I'm not the right person to help with that. Kubernetes isn't part of my current skill set or experience based on what I've worked with.\n\nMy background is more focused on serverless AWS architectures\u2014Lambda, API Gateway, DynamoDB, Bedrock\u2014and building agentic AI systems with LangGraph and FastAPI. I've deployed everything through Terraform-managed pipelines, but I haven't worked with container orchestration platforms like Kubernetes.\n\nIf you're looking for help with serverless deployments, AI agent architecture, or AWS infrastructure, I'd be happy to discuss those areas instead.",
+    "judgment": {
+      "faithful": true,
+      "hallucinated_claims": [],
+      "correctly_refused": true,
+      "rationale": "The answer correctly states that Kubernetes is not in the source material and accurately describes the AWS serverless technologies that are documented, making no unsupported claims."
+    }
+  }
+]

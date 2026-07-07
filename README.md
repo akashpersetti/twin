@@ -72,6 +72,14 @@ The twin's personality and knowledge are assembled in `backend/context.py` from 
 | `backend/data/style.txt` | Communication tone and personality guidance |
 | `backend/data/linkedin.pdf` | Full work history and project details |
 
+Retrieval index: `backend/data/profile_index.json` is a precomputed embedding index built from
+`backend/data/akash_persetti_profile.txt`. Regenerate it whenever that file changes:
+
+```bash
+cd backend
+uv run python build_profile_index.py
+```
+
 These are composed into a system prompt at request time with the current date injected. The prompt enforces three hard rules:
 
 1. **No hallucination** - if the answer isn't in the context, the twin says so.

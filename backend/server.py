@@ -11,6 +11,7 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 from context import prompt
+import retrieval
 
 # Load environment variables
 load_dotenv()
@@ -121,7 +122,13 @@ def save_conversation(session_id: str, messages: List[Dict]):
 
 def build_bedrock_messages(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> List[Dict]:
     """Build the messages list for Bedrock in the correct format."""
-    system = prompt()
+    if user_message == "__greet__":
+        relevant_chunks = [retrieval.get_chunk("professional-summary")]
+    else:
+        relevant_chunks = [chunk for chunk, score in retrieval.retrieve(user_message, k=5)]
+
+    profile_context = "\n\n".join(f"## {c.section_title}\n{c.text}" for c in relevant_chunks)
+    system = prompt(profile_context=profile_context)
     if user_name:
         system += (
             "\n\n---\n\nVISITOR CONTEXT\n\n"
