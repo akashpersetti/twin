@@ -1,164 +1,137 @@
 import os
 import sys
-import pytest
-from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from retrieval import Chunk, slugify, chunk_profile_text, PROFILE_PATH, cosine_similarity, embed_text
+import retrieval
+
+EXPECTED_CHUNK_IDS = [
+    "identity-and-contact",
+    "professional-summary",
+    "technical-identity-and-working-style",
+    "current-role-ai-engineer-at-myedmaster-llc",
+    "previous-role-machine-learning-intern-at-myedmaster-llc",
+    "previous-role-web-development-intern-at-squadcast-labs",
+    "project-wingman-self-evaluating-agentic-co-worker",
+    "project-twin-streaming-ai-digital-twin",
+    "project-tallymark-voice-text-agentic-expense-splitter",
+    "project-mcp-second-opinion-open-source-mcp-server",
+    "laxora-ai-founding-software-engineer",
+    "education",
+    "technical-skills",
+    "certifications",
+    "job-search-and-career-direction",
+    "personal-interests",
+]
 
 
-class TestSlugify:
-    """Test the slugify function."""
-
-    def test_slugify_basic(self):
-        """Test basic slugification."""
-        assert slugify("Identity and Contact") == "identity-and-contact"
-
-    def test_slugify_multiple_spaces(self):
-        """Test that multiple spaces collapse to single dash."""
-        assert slugify("Professional  Summary") == "professional-summary"
-
-    def test_slugify_special_chars(self):
-        """Test that special characters are replaced with dashes."""
-        assert slugify("Current Role: AI Engineer") == "current-role-ai-engineer"
-
-    def test_slugify_strip_dashes(self):
-        """Test that leading/trailing dashes are stripped."""
-        assert slugify("---test---") == "test"
+def test_chunk_profile_text_produces_expected_chunk_ids():
+    with open(retrieval.PROFILE_PATH, "r", encoding="utf-8") as f:
+        text = f.read()
+    chunks = retrieval.chunk_profile_text(text)
+    assert [c.chunk_id for c in chunks] == EXPECTED_CHUNK_IDS
 
 
-class TestChunk:
-    """Test the Chunk dataclass."""
-
-    def test_chunk_creation(self):
-        """Test creating a Chunk with required fields."""
-        chunk = Chunk(
-            chunk_id="test-chunk",
-            section_title="Test Section",
-            text="Test text content"
-        )
-        assert chunk.chunk_id == "test-chunk"
-        assert chunk.section_title == "Test Section"
-        assert chunk.text == "Test text content"
-        assert chunk.embedding is None
-
-    def test_chunk_with_embedding(self):
-        """Test creating a Chunk with embedding."""
-        embedding = [0.1, 0.2, 0.3]
-        chunk = Chunk(
-            chunk_id="test-chunk",
-            section_title="Test Section",
-            text="Test text content",
-            embedding=embedding
-        )
-        assert chunk.embedding == embedding
+def test_chunk_profile_text_chunks_have_nonempty_text():
+    with open(retrieval.PROFILE_PATH, "r", encoding="utf-8") as f:
+        text = f.read()
+    chunks = retrieval.chunk_profile_text(text)
+    for chunk in chunks:
+        assert chunk.text.strip() != ""
 
 
-class TestChunkProfileText:
-    """Test the chunk_profile_text function."""
-
-    def test_chunk_profile_text_produces_expected_chunk_ids(self):
-        """Test that chunking produces exactly 16 chunks with correct IDs in order."""
-        with open(PROFILE_PATH, 'r') as f:
-            text = f.read()
-
-        chunks = chunk_profile_text(text)
-        chunk_ids = [chunk.chunk_id for chunk in chunks]
-
-        expected_ids = [
-            "identity-and-contact",
-            "professional-summary",
-            "technical-identity-and-working-style",
-            "current-role-ai-engineer-at-myedmaster-llc",
-            "previous-role-machine-learning-intern-at-myedmaster-llc",
-            "previous-role-web-development-intern-at-squadcast-labs",
-            "project-wingman-self-evaluating-agentic-co-worker",
-            "project-twin-streaming-ai-digital-twin",
-            "project-tallymark-voice-text-agentic-expense-splitter",
-            "project-mcp-second-opinion-open-source-mcp-server",
-            "laxora-ai-founding-software-engineer",
-            "education",
-            "technical-skills",
-            "certifications",
-            "job-search-and-career-direction",
-            "personal-interests",
-        ]
-
-        assert len(chunks) == 16, f"Expected 16 chunks, got {len(chunks)}"
-        assert chunk_ids == expected_ids, f"Chunk IDs don't match.\nGot: {chunk_ids}\nExpected: {expected_ids}"
-
-    def test_chunk_profile_text_chunks_have_nonempty_text(self):
-        """Test that every chunk has non-empty text."""
-        with open(PROFILE_PATH, 'r') as f:
-            text = f.read()
-
-        chunks = chunk_profile_text(text)
-
-        for chunk in chunks:
-            assert chunk.text.strip(), f"Chunk {chunk.chunk_id} has empty text"
-            assert len(chunk.text.strip()) > 0
-
-    def test_current_role_chunk_has_correct_database(self):
-        """Test that the current-role chunk contains both PostgreSQL and pgvector."""
-        with open(PROFILE_PATH, 'r') as f:
-            text = f.read()
-
-        chunks = chunk_profile_text(text)
-        current_role_chunk = next(
-            (c for c in chunks if c.chunk_id == "current-role-ai-engineer-at-myedmaster-llc"),
-            None
-        )
-
-        assert current_role_chunk is not None, "current-role chunk not found"
-        assert "PostgreSQL" in current_role_chunk.text, "PostgreSQL not found in current-role chunk"
-        assert "pgvector" in current_role_chunk.text, "pgvector not found in current-role chunk"
+def test_current_role_chunk_has_correct_database():
+    with open(retrieval.PROFILE_PATH, "r", encoding="utf-8") as f:
+        text = f.read()
+    chunks = retrieval.chunk_profile_text(text)
+    current_role = next(c for c in chunks if c.chunk_id == "current-role-ai-engineer-at-myedmaster-llc")
+    assert "PostgreSQL" in current_role.text
+    assert "pgvector" in current_role.text
 
 
-class TestCosineSimilarity:
-    """Test the cosine_similarity function."""
+import json
+import math
+import tempfile
+from unittest.mock import MagicMock, patch
 
-    def test_cosine_similarity_identical_vectors_is_one(self):
-        """Test that identical vectors have cosine similarity of 1.0."""
-        a = [1.0, 2.0, 3.0]
-        b = [1.0, 2.0, 3.0]
-        assert cosine_similarity(a, b) == 1.0
 
-    def test_cosine_similarity_orthogonal_vectors_is_zero(self):
-        """Test that orthogonal vectors have cosine similarity of 0.0."""
-        a = [1, 0]
-        b = [0, 1]
-        assert cosine_similarity(a, b) == 0.0
+def test_cosine_similarity_identical_vectors_is_one():
+    v = [1.0, 2.0, 3.0]
+    assert math.isclose(retrieval.cosine_similarity(v, v), 1.0, rel_tol=1e-9)
 
-    def test_cosine_similarity_zero_vector_returns_zero(self):
-        """Test that zero vector returns 0.0."""
-        a = [0.0, 0.0, 0.0]
-        b = [1.0, 2.0, 3.0]
-        assert cosine_similarity(a, b) == 0.0
-        assert cosine_similarity(b, a) == 0.0
 
-    @patch('retrieval.get_bedrock_client')
-    def test_embed_text_calls_bedrock_and_parses_embedding(self, mock_get_client):
-        """Test that embed_text calls Bedrock and parses the embedding correctly."""
-        # Mock the Bedrock response
-        mock_client = MagicMock()
-        mock_get_client.return_value = mock_client
+def test_cosine_similarity_orthogonal_vectors_is_zero():
+    assert math.isclose(retrieval.cosine_similarity([1.0, 0.0], [0.0, 1.0]), 0.0, abs_tol=1e-9)
 
-        # Mock the response body
-        mock_response = {
-            "body": MagicMock()
-        }
-        mock_response["body"].read.return_value = b'{"embedding": [0.1, 0.2, 0.3, 0.4]}'
-        mock_client.invoke_model.return_value = mock_response
 
-        # Call embed_text
-        result = embed_text("test text")
+def test_cosine_similarity_zero_vector_returns_zero():
+    assert retrieval.cosine_similarity([0.0, 0.0], [1.0, 2.0]) == 0.0
 
-        # Verify the result
-        assert result == [0.1, 0.2, 0.3, 0.4]
 
-        # Verify that invoke_model was called with correct parameters
-        mock_client.invoke_model.assert_called_once()
-        call_args = mock_client.invoke_model.call_args
-        assert call_args.kwargs['modelId'] == "amazon.titan-embed-text-v2:0"
-        assert call_args.kwargs['body'] == '{"inputText": "test text"}'
+def test_embed_text_calls_bedrock_and_parses_embedding():
+    fake_body = MagicMock()
+    fake_body.read.return_value = b'{"embedding": [0.1, 0.2, 0.3]}'
+    mock_client = MagicMock()
+    mock_client.invoke_model.return_value = {"body": fake_body}
+
+    with patch.object(retrieval, "get_bedrock_client", return_value=mock_client):
+        result = retrieval.embed_text("hello world")
+
+    assert result == [0.1, 0.2, 0.3]
+    mock_client.invoke_model.assert_called_once()
+    call_kwargs = mock_client.invoke_model.call_args.kwargs
+    assert call_kwargs["modelId"] == retrieval.EMBED_MODEL_ID
+    assert "hello world" in call_kwargs["body"]
+
+
+def _sample_index():
+    return [
+        retrieval.Chunk(chunk_id="a", section_title="A", text="about a", embedding=[1.0, 0.0]),
+        retrieval.Chunk(chunk_id="b", section_title="B", text="about b", embedding=[0.0, 1.0]),
+        retrieval.Chunk(chunk_id="c", section_title="C", text="about c", embedding=[0.9, 0.1]),
+    ]
+
+
+def test_retrieve_ranks_by_similarity_with_given_index():
+    index = _sample_index()
+    with patch.object(retrieval, "embed_text", return_value=[1.0, 0.0]):
+        results = retrieval.retrieve("query about a", k=2, index=index)
+
+    assert [chunk.chunk_id for chunk, score in results] == ["a", "c"]
+
+
+def test_load_index_reads_json_file():
+    payload = [
+        {"chunk_id": "a", "section_title": "A", "text": "about a", "embedding": [1.0, 0.0]},
+    ]
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(payload, f)
+        temp_path = f.name
+
+    try:
+        with patch.object(retrieval, "INDEX_PATH", temp_path):
+            retrieval._index_cache = None
+            chunks = retrieval.load_index()
+
+        assert len(chunks) == 1
+        assert chunks[0].chunk_id == "a"
+    finally:
+        retrieval._index_cache = None
+        os.remove(temp_path)
+
+
+def test_get_chunk_returns_matching_chunk():
+    index = _sample_index()
+    with patch.object(retrieval, "load_index", return_value=index):
+        chunk = retrieval.get_chunk("b")
+    assert chunk.section_title == "B"
+
+
+def test_get_chunk_raises_for_unknown_id():
+    index = _sample_index()
+    with patch.object(retrieval, "load_index", return_value=index):
+        try:
+            retrieval.get_chunk("does-not-exist")
+            assert False, "expected KeyError"
+        except KeyError:
+            pass

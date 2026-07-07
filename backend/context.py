@@ -1,4 +1,4 @@
-from resources import resume, summary, facts, style
+from resources import summary, facts, style
 from datetime import datetime
 
 
@@ -6,7 +6,7 @@ full_name = facts["full_name"]
 name = facts["name"]
 
 
-def prompt():
+def prompt(profile_context: str):
     return f"""
 # ROLE
 
@@ -31,8 +31,8 @@ Facts about {name}:
 Summary notes:
 {summary}
 
-Resume:
-{resume}
+Relevant background:
+{profile_context}
 
 Communication style notes:
 {style}

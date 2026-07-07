@@ -5,8 +5,24 @@ from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 import server as server_module
 from server import app, build_bedrock_messages
+import retrieval
+from unittest.mock import patch
+import pytest
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def mock_retrieval():
+    fake_chunk = retrieval.Chunk(
+        chunk_id="professional-summary",
+        section_title="Professional Summary",
+        text="Applied AI engineer summary.",
+        embedding=[0.1, 0.2],
+    )
+    with patch.object(retrieval, "retrieve", return_value=[(fake_chunk, 0.9)]), \
+         patch.object(retrieval, "get_chunk", return_value=fake_chunk):
+        yield
 
 
 def test_no_user_name_leaves_system_prompt_unchanged():
@@ -85,3 +101,27 @@ def test_visitor_returns_ok_on_sns_failure():
 
         assert resp.status_code == 200
         assert resp.json()["status"] in ("ok", "error")
+
+
+def test_greet_sentinel_skips_retrieval_and_uses_summary_chunk():
+    with patch.object(retrieval, "retrieve") as mock_retrieve:
+        msgs = build_bedrock_messages([], "__greet__")
+    mock_retrieve.assert_not_called()
+    system_text = msgs[0]["content"][0]["text"]
+    assert "Applied AI engineer summary." in system_text
+
+
+def test_regular_message_calls_retrieve_with_user_message():
+    with patch.object(retrieval, "retrieve") as mock_retrieve:
+        fake_chunk = retrieval.Chunk(
+            chunk_id="project-twin-streaming-ai-digital-twin",
+            section_title="Project: Twin",
+            text="Twin details.",
+            embedding=[0.1, 0.2],
+        )
+        mock_retrieve.return_value = [(fake_chunk, 0.95)]
+        msgs = build_bedrock_messages([], "Tell me about Twin")
+
+    mock_retrieve.assert_called_once_with("Tell me about Twin", k=5)
+    system_text = msgs[0]["content"][0]["text"]
+    assert "Twin details." in system_text

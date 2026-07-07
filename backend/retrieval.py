@@ -1,36 +1,17 @@
-import os
-import re
 import json
 import math
-import boto3
+import os
+import re
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+import boto3
 
 PROFILE_PATH = os.path.join(os.path.dirname(__file__), "data", "akash_persetti_profile.txt")
-EMBED_MODEL_ID = os.getenv("EMBED_MODEL_ID", "amazon.titan-embed-text-v2:0")
-
-# Global Bedrock client cache
-_bedrock_client = None
-
-
-def get_bedrock_client():
-    """
-    Get or create a cached boto3 bedrock-runtime client.
-
-    Uses lazy initialization with a global module-level cache.
-    """
-    global _bedrock_client
-    if _bedrock_client is None:
-        _bedrock_client = boto3.client(
-            service_name="bedrock-runtime",
-            region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1")
-        )
-    return _bedrock_client
 
 
 @dataclass
 class Chunk:
-    """Represents a chunk of profile text."""
     chunk_id: str
     section_title: str
     text: str
@@ -38,84 +19,82 @@ class Chunk:
 
 
 def slugify(title: str) -> str:
-    """
-    Convert a title to a slug.
-
-    - Lowercase the title
-    - Replace non-alphanumeric runs (spaces, special chars) with single dashes
-    - Strip leading/trailing dashes
-    """
-    # Lowercase
     slug = title.lower()
-    # Replace non-alphanumeric runs with single dash
-    slug = re.sub(r'[^a-z0-9]+', '-', slug)
-    # Strip leading/trailing dashes
-    slug = slug.strip('-')
-    return slug
+    slug = re.sub(r"[^a-z0-9]+", "-", slug)
+    return slug.strip("-")
 
 
 def chunk_profile_text(text: str) -> List[Chunk]:
-    """
-    Split profile text into chunks by section headers.
-
-    Splits on '## ' headers and produces one Chunk per section.
-    """
+    """Split profile text into one Chunk per '## ' section header."""
+    sections = re.split(r"(?m)^## ", text)
     chunks = []
-
-    # Split on '## ' headers
-    sections = text.split('## ')
-
-    # First section (before first ##) is typically preamble, skip it
-    for section in sections[1:]:
-        lines = section.split('\n', 1)
-        section_title = lines[0].strip()
-        section_text = lines[1].strip() if len(lines) > 1 else ""
-
-        chunk_id = slugify(section_title)
-
-        chunks.append(Chunk(
-            chunk_id=chunk_id,
-            section_title=section_title,
-            text=section_text
-        ))
-
+    for section in sections[1:]:  # sections[0] is the '# Title' preamble before the first '##'
+        lines = section.split("\n", 1)
+        title = lines[0].strip()
+        body = lines[1].strip() if len(lines) > 1 else ""
+        chunks.append(Chunk(chunk_id=slugify(title), section_title=title, text=body))
     return chunks
 
 
-def cosine_similarity(a: List[float], b: List[float]) -> float:
-    """
-    Compute cosine similarity between two vectors.
+EMBED_MODEL_ID = os.getenv("EMBED_MODEL_ID", "amazon.titan-embed-text-v2:0")
 
-    Returns the cosine of the angle between vectors a and b.
-    Returns 0.0 if either vector has zero norm.
-    """
-    # Compute dot product
-    dot_product = sum(x * y for x, y in zip(a, b))
+_bedrock_client = None
 
-    # Compute norms
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(x * x for x in b))
 
-    # Return 0.0 if either norm is zero, otherwise return cosine similarity
-    if norm_a == 0.0 or norm_b == 0.0:
-        return 0.0
-
-    return dot_product / (norm_a * norm_b)
+def get_bedrock_client():
+    global _bedrock_client
+    if _bedrock_client is None:
+        _bedrock_client = boto3.client(
+            service_name="bedrock-runtime",
+            region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1"),
+        )
+    return _bedrock_client
 
 
 def embed_text(text: str) -> List[float]:
-    """
-    Generate embeddings for text using AWS Bedrock.
-
-    Calls the Bedrock embedding service and returns the embedding vector.
-    """
     client = get_bedrock_client()
-
-    body = json.dumps({"inputText": text})
     response = client.invoke_model(
         modelId=EMBED_MODEL_ID,
-        body=body
+        body=json.dumps({"inputText": text}),
     )
+    payload = json.loads(response["body"].read())
+    return payload["embedding"]
 
-    response_body = json.loads(response["body"].read())
-    return response_body["embedding"]
+
+def cosine_similarity(a: List[float], b: List[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(y * y for y in b))
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+INDEX_PATH = os.path.join(os.path.dirname(__file__), "data", "profile_index.json")
+
+_index_cache: Optional[List[Chunk]] = None
+
+
+def load_index() -> List[Chunk]:
+    global _index_cache
+    if _index_cache is None:
+        with open(INDEX_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        _index_cache = [Chunk(**item) for item in data]
+    return _index_cache
+
+
+def get_chunk(chunk_id: str) -> Chunk:
+    for chunk in load_index():
+        if chunk.chunk_id == chunk_id:
+            return chunk
+    raise KeyError(f"No chunk with id {chunk_id!r}")
+
+
+def retrieve(query: str, k: int = 5, index: Optional[List[Chunk]] = None) -> List[Tuple[Chunk, float]]:
+    if index is None:
+        index = load_index()
+    query_embedding = embed_text(query)
+    scored = [(chunk, cosine_similarity(query_embedding, chunk.embedding)) for chunk in index]
+    scored.sort(key=lambda pair: pair[1], reverse=True)
+    return scored[:k]
