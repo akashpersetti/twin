@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 
@@ -35,6 +36,7 @@ def run_all(queries):
             "answer": answer,
             "judgment": judgment,
         })
+        time.sleep(2)
     return results
 
 

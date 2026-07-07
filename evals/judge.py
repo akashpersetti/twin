@@ -1,4 +1,5 @@
 import json
+import re
 
 import server
 
@@ -35,5 +36,8 @@ def judge_answer(query: str, retrieved_text: str, answer: str) -> dict:
         messages=[{"role": "user", "content": [{"text": _build_judge_prompt(query, retrieved_text, answer)}]}],
         inferenceConfig={"maxTokens": 500, "temperature": 0.0},
     )
-    raw = response["output"]["message"]["content"][0]["text"]
+    raw = response["output"]["message"]["content"][0]["text"].strip()
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+    if match:
+        raw = match.group(0)
     return json.loads(raw)
