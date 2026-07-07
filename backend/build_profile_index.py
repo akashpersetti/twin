@@ -4,7 +4,7 @@ from dataclasses import asdict
 
 import retrieval
 
-INDEX_PATH = os.path.join(os.path.dirname(__file__), "data", "profile_index.json")
+INDEX_PATH = retrieval.INDEX_PATH
 
 
 def build_index(profile_text: str):

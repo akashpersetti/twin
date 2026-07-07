@@ -49,7 +49,9 @@ def test_current_role_chunk_has_correct_database():
     assert "pgvector" in current_role.text
 
 
+import json
 import math
+import tempfile
 from unittest.mock import MagicMock, patch
 
 
@@ -80,3 +82,53 @@ def test_embed_text_calls_bedrock_and_parses_embedding():
     call_kwargs = mock_client.invoke_model.call_args.kwargs
     assert call_kwargs["modelId"] == retrieval.EMBED_MODEL_ID
     assert "hello world" in call_kwargs["body"]
+
+
+def _sample_index():
+    return [
+        retrieval.Chunk(chunk_id="a", section_title="A", text="about a", embedding=[1.0, 0.0]),
+        retrieval.Chunk(chunk_id="b", section_title="B", text="about b", embedding=[0.0, 1.0]),
+        retrieval.Chunk(chunk_id="c", section_title="C", text="about c", embedding=[0.9, 0.1]),
+    ]
+
+
+def test_retrieve_ranks_by_similarity_with_given_index():
+    index = _sample_index()
+    with patch.object(retrieval, "embed_text", return_value=[1.0, 0.0]):
+        results = retrieval.retrieve("query about a", k=2, index=index)
+
+    assert [chunk.chunk_id for chunk, score in results] == ["a", "c"]
+
+
+def test_load_index_reads_json_file():
+    payload = [
+        {"chunk_id": "a", "section_title": "A", "text": "about a", "embedding": [1.0, 0.0]},
+    ]
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(payload, f)
+        temp_path = f.name
+
+    with patch.object(retrieval, "INDEX_PATH", temp_path):
+        retrieval._index_cache = None
+        chunks = retrieval.load_index()
+
+    assert len(chunks) == 1
+    assert chunks[0].chunk_id == "a"
+    os.remove(temp_path)
+
+
+def test_get_chunk_returns_matching_chunk():
+    index = _sample_index()
+    with patch.object(retrieval, "load_index", return_value=index):
+        chunk = retrieval.get_chunk("b")
+    assert chunk.section_title == "B"
+
+
+def test_get_chunk_raises_for_unknown_id():
+    index = _sample_index()
+    with patch.object(retrieval, "load_index", return_value=index):
+        try:
+            retrieval.get_chunk("does-not-exist")
+            assert False, "expected KeyError"
+        except KeyError:
+            pass
