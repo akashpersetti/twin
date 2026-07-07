@@ -279,7 +279,7 @@ git commit -m "feat(retrieval): add Titan embedding call and cosine similarity"
 
 **Interfaces:**
 - Consumes: `retrieval.PROFILE_PATH`, `retrieval.chunk_profile_text`, `retrieval.embed_text`, `retrieval.Chunk` (Task 1, 2).
-- Produces: `build_index(profile_text: str, embed_fn=retrieval.embed_text) -> List[dict]`, `INDEX_PATH` constant, and writes `backend/data/profile_index.json` when run as a script.
+- Produces: `build_index(profile_text: str) -> List[dict]`, `INDEX_PATH` constant, and writes `backend/data/profile_index.json` when run as a script.
 
 - [ ] **Step 1: Write the failing test**
 
