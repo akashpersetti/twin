@@ -38,6 +38,10 @@ MEMORY_DIR = os.getenv("MEMORY_DIR", "../memory")
 if USE_S3:
     s3_client = boto3.client("s3")
 
+# Eval capture configuration (separate from chat-memory S3 storage above)
+EVALS_BUCKET = os.getenv("EVALS_BUCKET", "")
+evals_s3_client = boto3.client("s3")
+
 # SNS notification configuration
 SNS_TOPIC_ARN = os.getenv("SNS_TOPIC_ARN", "")
 sns_client = boto3.client("sns", region_name=os.getenv("AWS_DEFAULT_REGION", os.getenv("DEFAULT_AWS_REGION", "us-east-1")))
@@ -161,6 +165,31 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
             raise HTTPException(status_code=500, detail=f"Bedrock error: {str(e)}")
 
 
+def capture_live_eval(query: str, retrieved_chunks: List, answer: str) -> None:
+    """Fire-and-forget capture of a real chat exchange for async faithfulness judging. Never raises."""
+    if not EVALS_BUCKET:
+        return
+    try:
+        retrieved_chunk_ids = [chunk.chunk_id for chunk, score in retrieved_chunks]
+        retrieved_text = "\n\n".join(f"## {chunk.section_title}\n{chunk.text}" for chunk, score in retrieved_chunks)
+        key = f"live/raw/{datetime.now().isoformat()}-{uuid.uuid4()}.json"
+        body = {
+            "timestamp": datetime.now().isoformat(),
+            "query": query,
+            "retrieved_chunk_ids": retrieved_chunk_ids,
+            "retrieved_text": retrieved_text,
+            "answer": answer,
+        }
+        evals_s3_client.put_object(
+            Bucket=EVALS_BUCKET,
+            Key=key,
+            Body=json.dumps(body),
+            ContentType="application/json",
+        )
+    except Exception as e:
+        print(f"Live eval capture failed (non-fatal): {e}")
+
+
 def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str, user_name: Optional[str] = None) -> Generator[str, None, None]:
     """Stream response from AWS Bedrock and save conversation when done."""
     messages = build_bedrock_messages(conversation, user_message, user_name)
@@ -186,6 +215,11 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str,
     except ClientError as e:
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
         return
+
+    # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
+    if user_message != "__greet__":
+        retrieved_chunks = retrieval.retrieve(user_message, k=5)
+        capture_live_eval(user_message, retrieved_chunks, full_response)
 
     # Save completed conversation
     conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat()})
@@ -245,6 +279,11 @@ async def chat(request: ChatRequest):
 
         # Call Bedrock for response
         assistant_response = call_bedrock(conversation, request.message, user_name=request.user_name)
+
+        # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
+        if request.message != "__greet__":
+            retrieved_chunks = retrieval.retrieve(request.message, k=5)
+            capture_live_eval(request.message, retrieved_chunks, assistant_response)
 
         # Update conversation history
         conversation.append(
