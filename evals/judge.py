@@ -37,7 +37,15 @@ def judge_answer(query: str, retrieved_text: str, answer: str) -> dict:
         inferenceConfig={"maxTokens": 500, "temperature": 0.0},
     )
     raw = response["output"]["message"]["content"][0]["text"].strip()
-    match = re.search(r"\{.*\}", raw, re.DOTALL)
-    if match:
-        raw = match.group(0)
+    start = raw.find("{")
+    if start != -1:
+        depth = 0
+        for i, ch in enumerate(raw[start:], start=start):
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    raw = raw[start:i + 1]
+                    break
     return json.loads(raw)
