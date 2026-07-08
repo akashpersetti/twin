@@ -12,6 +12,7 @@ import boto3
 from botocore.exceptions import ClientError
 from context import prompt
 import retrieval
+from bedrock_client import bedrock_client, BEDROCK_MODEL_ID
 
 # Load environment variables
 load_dotenv()
@@ -27,20 +28,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
-
-# Initialize Bedrock client
-bedrock_client = boto3.client(
-    service_name="bedrock-runtime", 
-    region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1")
-)
-
-# Bedrock model selection
-# Available models:
-# - amazon.nova-micro-v1:0  (fastest, cheapest)
-# - amazon.nova-lite-v1:0   (balanced - default)
-# - amazon.nova-pro-v1:0    (most capable, higher cost)
-# Remember the Heads up: you might need to add us. or eu. prefix to the below model id
-BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-5-20250929-v1:0")
 
 # Memory storage configuration
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"

@@ -1,7 +1,7 @@
 import json
 import re
 
-import server
+import bedrock_client
 
 JUDGE_SYSTEM_PROMPT = """You are grading whether an AI-generated answer is faithful to the provided source material. Be strict: any claim in the answer not directly supported by the source material counts as a hallucination, even if it sounds plausible.
 
@@ -30,8 +30,8 @@ Grade the answer now."""
 
 
 def judge_answer(query: str, retrieved_text: str, answer: str) -> dict:
-    response = server.bedrock_client.converse(
-        modelId=server.BEDROCK_MODEL_ID,
+    response = bedrock_client.bedrock_client.converse(
+        modelId=bedrock_client.BEDROCK_MODEL_ID,
         system=[{"text": JUDGE_SYSTEM_PROMPT}],
         messages=[{"role": "user", "content": [{"text": _build_judge_prompt(query, retrieved_text, answer)}]}],
         inferenceConfig={"maxTokens": 500, "temperature": 0.0},
