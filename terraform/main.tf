@@ -168,6 +168,7 @@ resource "aws_lambda_function" "api" {
       USE_S3           = "true"
       BEDROCK_MODEL_ID = var.bedrock_model_id
       SNS_TOPIC_ARN    = aws_sns_topic.visitor_notifications.arn
+      EVALS_BUCKET     = aws_s3_bucket.evals.id
     }
   }
 
@@ -236,6 +237,24 @@ resource "aws_apigatewayv2_route" "get_health" {
 resource "aws_apigatewayv2_route" "post_visitor" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "POST /visitor"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_evals_synthetic" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /evals/synthetic"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_evals_synthetic_detail" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /evals/synthetic/{key+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_evals_live" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /evals/live"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
@@ -443,6 +462,26 @@ resource "aws_route53_record" "alias_www_ipv6" {
 
 # ── Blog content bucket (private — stores Markdown drafts + published) ────────
 
+# S3 bucket for eval data (synthetic snapshots + live faithfulness) — no lifecycle, permanent history
+resource "aws_s3_bucket" "evals" {
+  bucket = "${local.name_prefix}-evals-${data.aws_caller_identity.current.account_id}"
+  tags   = local.common_tags
+}
+
+resource "aws_s3_bucket_public_access_block" "evals" {
+  bucket = aws_s3_bucket.evals.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "evals" {
+  bucket = aws_s3_bucket.evals.id
+  rule { object_ownership = "BucketOwnerEnforced" }
+}
+
 resource "aws_s3_bucket" "blog_content" {
   bucket = "${local.name_prefix}-blog-content-${data.aws_caller_identity.current.account_id}"
   tags   = local.common_tags
@@ -524,6 +563,60 @@ resource "aws_s3_bucket_policy" "blog_site" {
 
 # ── Blog Lambda IAM ───────────────────────────────────────────────────────────
 
+resource "aws_iam_role" "live_judge_role" {
+  name = "${local.name_prefix}-live-judge-role"
+  tags = local.common_tags
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "live_judge_basic" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.live_judge_role.name
+}
+
+resource "aws_iam_role_policy" "live_judge_bedrock" {
+  name = "${local.name_prefix}-live-judge-bedrock-policy"
+  role = aws_iam_role.live_judge_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["bedrock:InvokeModel", "bedrock:Converse"]
+      Resource = "*"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "live_judge_s3" {
+  name = "${local.name_prefix}-live-judge-s3-policy"
+  role = aws_iam_role.live_judge_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = "${aws_s3_bucket.evals.arn}/live/raw/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
+        Resource = "${aws_s3_bucket.evals.arn}/live/judged/*"
+      },
+    ]
+  })
+}
+
 resource "aws_iam_role" "blog_lambda_role" {
   name = "${local.name_prefix}-blog-lambda-role"
   tags = local.common_tags
@@ -603,6 +696,46 @@ resource "aws_iam_role_policy" "blog_lambda_ses" {
       Resource = "*"
     }]
   })
+}
+
+# ── Live judge Lambda function (triggered by S3) ────────────────────────────────
+
+resource "aws_lambda_function" "live_judge" {
+  filename         = "${path.module}/../backend/live-judge-lambda.zip"
+  function_name    = "${local.name_prefix}-live-judge"
+  role             = aws_iam_role.live_judge_role.arn
+  handler          = "live_judge_handler.handler"
+  source_code_hash = filebase64sha256("${path.module}/../backend/live-judge-lambda.zip")
+  runtime          = "python3.12"
+  architectures    = ["x86_64"]
+  timeout          = 30
+  tags             = local.common_tags
+
+  environment {
+    variables = {
+      BEDROCK_MODEL_ID = var.bedrock_model_id
+    }
+  }
+}
+
+resource "aws_lambda_permission" "live_judge_s3" {
+  statement_id  = "AllowExecutionFromEvalsBucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.live_judge.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.evals.arn
+}
+
+resource "aws_s3_bucket_notification" "evals_live_raw" {
+  bucket = aws_s3_bucket.evals.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.live_judge.arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "live/raw/"
+  }
+
+  depends_on = [aws_lambda_permission.live_judge_s3]
 }
 
 # ── Blog Lambda function ──────────────────────────────────────────────────────

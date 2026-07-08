@@ -12,6 +12,7 @@ import boto3
 from botocore.exceptions import ClientError
 from context import prompt
 import retrieval
+from bedrock_client import bedrock_client, BEDROCK_MODEL_ID
 
 # Load environment variables
 load_dotenv()
@@ -28,20 +29,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Bedrock client
-bedrock_client = boto3.client(
-    service_name="bedrock-runtime", 
-    region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1")
-)
-
-# Bedrock model selection
-# Available models:
-# - amazon.nova-micro-v1:0  (fastest, cheapest)
-# - amazon.nova-lite-v1:0   (balanced - default)
-# - amazon.nova-pro-v1:0    (most capable, higher cost)
-# Remember the Heads up: you might need to add us. or eu. prefix to the below model id
-BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-5-20250929-v1:0")
-
 # Memory storage configuration
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
 S3_BUCKET = os.getenv("S3_BUCKET", "")
@@ -50,6 +37,10 @@ MEMORY_DIR = os.getenv("MEMORY_DIR", "../memory")
 # Initialize S3 client if needed
 if USE_S3:
     s3_client = boto3.client("s3")
+
+# Eval capture configuration (separate from chat-memory S3 storage above)
+EVALS_BUCKET = os.getenv("EVALS_BUCKET", "")
+evals_s3_client = boto3.client("s3")
 
 # SNS notification configuration
 SNS_TOPIC_ARN = os.getenv("SNS_TOPIC_ARN", "")
@@ -174,6 +165,31 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
             raise HTTPException(status_code=500, detail=f"Bedrock error: {str(e)}")
 
 
+def capture_live_eval(query: str, retrieved_chunks: List, answer: str) -> None:
+    """Fire-and-forget capture of a real chat exchange for async faithfulness judging. Never raises."""
+    if not EVALS_BUCKET:
+        return
+    try:
+        retrieved_chunk_ids = [chunk.chunk_id for chunk, score in retrieved_chunks]
+        retrieved_text = "\n\n".join(f"## {chunk.section_title}\n{chunk.text}" for chunk, score in retrieved_chunks)
+        key = f"live/raw/{datetime.now().isoformat()}-{uuid.uuid4()}.json"
+        body = {
+            "timestamp": datetime.now().isoformat(),
+            "query": query,
+            "retrieved_chunk_ids": retrieved_chunk_ids,
+            "retrieved_text": retrieved_text,
+            "answer": answer,
+        }
+        evals_s3_client.put_object(
+            Bucket=EVALS_BUCKET,
+            Key=key,
+            Body=json.dumps(body),
+            ContentType="application/json",
+        )
+    except Exception as e:
+        print(f"Live eval capture failed (non-fatal): {e}")
+
+
 def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str, user_name: Optional[str] = None) -> Generator[str, None, None]:
     """Stream response from AWS Bedrock and save conversation when done."""
     messages = build_bedrock_messages(conversation, user_message, user_name)
@@ -199,6 +215,11 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str,
     except ClientError as e:
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
         return
+
+    # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
+    if user_message != "__greet__":
+        retrieved_chunks = retrieval.retrieve(user_message, k=5)
+        capture_live_eval(user_message, retrieved_chunks, full_response)
 
     # Save completed conversation
     conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat()})
@@ -259,6 +280,11 @@ async def chat(request: ChatRequest):
         # Call Bedrock for response
         assistant_response = call_bedrock(conversation, request.message, user_name=request.user_name)
 
+        # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
+        if request.message != "__greet__":
+            retrieved_chunks = retrieval.retrieve(request.message, k=5)
+            capture_live_eval(request.message, retrieved_chunks, assistant_response)
+
         # Update conversation history
         conversation.append(
             {"role": "user", "content": request.message, "timestamp": datetime.now().isoformat()}
@@ -308,6 +334,63 @@ async def get_conversation(session_id: str):
         return {"session_id": session_id, "messages": conversation}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _list_s3_keys(prefix: str) -> List[str]:
+    if not EVALS_BUCKET:
+        return []
+    paginator = evals_s3_client.get_paginator("list_objects_v2")
+    keys = []
+    for page in paginator.paginate(Bucket=EVALS_BUCKET, Prefix=prefix):
+        for obj in page.get("Contents", []):
+            keys.append(obj["Key"])
+    return sorted(keys, reverse=True)
+
+
+def _get_s3_json(key: str) -> dict:
+    response = evals_s3_client.get_object(Bucket=EVALS_BUCKET, Key=key)
+    return json.loads(response["Body"].read().decode("utf-8"))
+
+
+@app.get("/evals/synthetic")
+async def get_evals_synthetic():
+    snapshots = []
+    for key in _list_s3_keys("synthetic/"):
+        data = _get_s3_json(key)
+        snapshots.append({
+            "key": key,
+            "timestamp": data.get("timestamp"),
+            "commit_sha": data.get("commit_sha"),
+            "commit_message": data.get("commit_message"),
+            "aggregate": data.get("aggregate"),
+        })
+    return {"snapshots": snapshots}
+
+
+@app.get("/evals/synthetic/{key:path}")
+async def get_evals_synthetic_detail(key: str):
+    try:
+        return _get_s3_json(key)
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "NoSuchKey":
+            raise HTTPException(status_code=404, detail="Snapshot not found")
+        raise
+
+
+@app.get("/evals/live")
+async def get_evals_live():
+    entries = []
+    for key in _list_s3_keys("live/judged/"):
+        data = _get_s3_json(key)
+        entries.append({
+            "key": key,
+            "timestamp": data.get("timestamp"),
+            "query": data.get("query"),
+            "answer": data.get("answer"),
+            "judgment": data.get("judgment"),
+            "judgment_error": data.get("judgment_error"),
+        })
+    return {"entries": entries}
 
 
 if __name__ == "__main__":
