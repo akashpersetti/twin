@@ -78,3 +78,76 @@ def test_chat_endpoint_still_200s_when_capture_fails():
         resp = client.post("/chat", json={"message": "What does Akash do?"})
 
     assert resp.status_code == 200
+
+
+def test_get_evals_synthetic_returns_empty_list_when_no_objects():
+    mock_s3 = MagicMock()
+    mock_s3.get_paginator.return_value.paginate.return_value = [{"Contents": []}]
+    with patch.object(server, "evals_s3_client", mock_s3), \
+         patch.object(server, "EVALS_BUCKET", "test-evals-bucket"):
+        resp = client.get("/evals/synthetic")
+    assert resp.status_code == 200
+    assert resp.json() == {"snapshots": []}
+
+
+def test_get_evals_synthetic_lists_snapshots_without_full_results():
+    mock_s3 = MagicMock()
+    mock_s3.get_paginator.return_value.paginate.return_value = [
+        {"Contents": [{"Key": "synthetic/2026-07-08T12:00:00Z-abc1234.json"}]}
+    ]
+    snapshot_body = json.dumps({
+        "timestamp": "2026-07-08T12:00:00Z", "commit_sha": "abc1234", "commit_message": "fix: x",
+        "results": [{"id": "q01"}], "aggregate": {"overall": {"recall_at_5_avg": 0.9}},
+    })
+    mock_s3.get_object.return_value = {"Body": MagicMock(read=lambda: snapshot_body.encode())}
+    with patch.object(server, "evals_s3_client", mock_s3), \
+         patch.object(server, "EVALS_BUCKET", "test-evals-bucket"):
+        resp = client.get("/evals/synthetic")
+    assert resp.status_code == 200
+    snapshots = resp.json()["snapshots"]
+    assert len(snapshots) == 1
+    assert snapshots[0]["commit_sha"] == "abc1234"
+    assert "results" not in snapshots[0]
+
+
+def test_get_evals_synthetic_detail_returns_full_results():
+    mock_s3 = MagicMock()
+    snapshot_body = json.dumps({
+        "timestamp": "2026-07-08T12:00:00Z", "commit_sha": "abc1234", "commit_message": "fix: x",
+        "results": [{"id": "q01"}], "aggregate": {"overall": {"recall_at_5_avg": 0.9}},
+    })
+    mock_s3.get_object.return_value = {"Body": MagicMock(read=lambda: snapshot_body.encode())}
+    with patch.object(server, "evals_s3_client", mock_s3), \
+         patch.object(server, "EVALS_BUCKET", "test-evals-bucket"):
+        resp = client.get("/evals/synthetic/synthetic%2F2026-07-08T12%3A00%3A00Z-abc1234.json")
+    assert resp.status_code == 200
+    assert resp.json()["results"] == [{"id": "q01"}]
+
+
+def test_get_evals_live_returns_empty_list_when_no_objects():
+    mock_s3 = MagicMock()
+    mock_s3.get_paginator.return_value.paginate.return_value = [{"Contents": []}]
+    with patch.object(server, "evals_s3_client", mock_s3), \
+         patch.object(server, "EVALS_BUCKET", "test-evals-bucket"):
+        resp = client.get("/evals/live")
+    assert resp.status_code == 200
+    assert resp.json() == {"entries": []}
+
+
+def test_get_evals_live_lists_judged_entries():
+    mock_s3 = MagicMock()
+    mock_s3.get_paginator.return_value.paginate.return_value = [
+        {"Contents": [{"Key": "live/judged/2026-07-08T12:00:00Z-uuid1.json"}]}
+    ]
+    entry_body = json.dumps({
+        "timestamp": "2026-07-08T12:00:00Z", "query": "q", "retrieved_chunk_ids": ["a"],
+        "retrieved_text": "t", "answer": "ans", "judgment": {"faithful": True},
+    })
+    mock_s3.get_object.return_value = {"Body": MagicMock(read=lambda: entry_body.encode())}
+    with patch.object(server, "evals_s3_client", mock_s3), \
+         patch.object(server, "EVALS_BUCKET", "test-evals-bucket"):
+        resp = client.get("/evals/live")
+    assert resp.status_code == 200
+    entries = resp.json()["entries"]
+    assert len(entries) == 1
+    assert entries[0]["judgment"] == {"faithful": True}

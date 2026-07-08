@@ -336,6 +336,63 @@ async def get_conversation(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+def _list_s3_keys(prefix: str) -> List[str]:
+    if not EVALS_BUCKET:
+        return []
+    paginator = evals_s3_client.get_paginator("list_objects_v2")
+    keys = []
+    for page in paginator.paginate(Bucket=EVALS_BUCKET, Prefix=prefix):
+        for obj in page.get("Contents", []):
+            keys.append(obj["Key"])
+    return sorted(keys, reverse=True)
+
+
+def _get_s3_json(key: str) -> dict:
+    response = evals_s3_client.get_object(Bucket=EVALS_BUCKET, Key=key)
+    return json.loads(response["Body"].read().decode("utf-8"))
+
+
+@app.get("/evals/synthetic")
+async def get_evals_synthetic():
+    snapshots = []
+    for key in _list_s3_keys("synthetic/"):
+        data = _get_s3_json(key)
+        snapshots.append({
+            "key": key,
+            "timestamp": data.get("timestamp"),
+            "commit_sha": data.get("commit_sha"),
+            "commit_message": data.get("commit_message"),
+            "aggregate": data.get("aggregate"),
+        })
+    return {"snapshots": snapshots}
+
+
+@app.get("/evals/synthetic/{key:path}")
+async def get_evals_synthetic_detail(key: str):
+    try:
+        return _get_s3_json(key)
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "NoSuchKey":
+            raise HTTPException(status_code=404, detail="Snapshot not found")
+        raise
+
+
+@app.get("/evals/live")
+async def get_evals_live():
+    entries = []
+    for key in _list_s3_keys("live/judged/"):
+        data = _get_s3_json(key)
+        entries.append({
+            "key": key,
+            "timestamp": data.get("timestamp"),
+            "query": data.get("query"),
+            "answer": data.get("answer"),
+            "judgment": data.get("judgment"),
+            "judgment_error": data.get("judgment_error"),
+        })
+    return {"entries": entries}
+
+
 if __name__ == "__main__":
     import uvicorn
 
