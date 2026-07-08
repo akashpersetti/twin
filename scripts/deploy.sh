@@ -14,6 +14,9 @@ echo "📦 Building Lambda package..."
 echo "📦 Building blog Lambda package..."
 (cd backend && uv run blog_deploy.py)
 
+echo "📦 Building live-judge Lambda package..."
+(cd backend && uv run live_judge_deploy.py)
+
 # 2. Terraform workspace & apply
 cd terraform
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
