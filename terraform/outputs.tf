@@ -23,6 +23,11 @@ output "s3_memory_bucket" {
   value       = aws_s3_bucket.memory.id
 }
 
+output "evals_bucket" {
+  description = "Name of the S3 bucket for eval data (synthetic snapshots + live faithfulness)"
+  value       = aws_s3_bucket.evals.id
+}
+
 output "lambda_function_name" {
   description = "Name of the Lambda function"
   value       = aws_lambda_function.api.function_name
