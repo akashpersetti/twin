@@ -13,7 +13,7 @@ export default function Contact() {
   ];
 
   return (
-    <section className="py-24 px-6" style={{ background: 'var(--bg-alt)' }}>
+    <section className="py-24 px-6">
       <div className="max-w-2xl mx-auto">
         <SectionHeader
           eyebrow="Get in touch"
