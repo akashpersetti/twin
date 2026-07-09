@@ -75,7 +75,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.22 }}
         >
           I&apos;m {resume.basics.name.split(' ')[0]}, an AI Engineer building an adaptive tutoring
-          product at MyEdMaster — plus agentic systems and streaming LLM apps on AWS.
+          product at MyEdMaster, plus agentic systems and streaming LLM apps on AWS.
         </motion.p>
 
         {/* Credential line */}
@@ -86,7 +86,7 @@ export default function Hero() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          M.S. Computer Science, Indiana University Bloomington — Graduated May 2026
+          M.S. Computer Science, Indiana University Bloomington - Graduated May 2026
         </motion.p>
 
         {/* CTAs */}

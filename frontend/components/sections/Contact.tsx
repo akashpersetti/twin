@@ -68,7 +68,7 @@ export default function Contact() {
                 Chat with my AI Twin
               </p>
               <p className="text-sm" style={{ color: 'var(--accent-hover)' }}>
-                Ask about my experience, projects, or anything else — click the chat button in the bottom-right corner.
+                Ask about my experience, projects, or anything else, click the chat button in the bottom-right corner.
               </p>
             </div>
           </div>

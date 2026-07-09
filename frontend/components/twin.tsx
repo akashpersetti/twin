@@ -393,7 +393,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Skip banner — only shown during onboarding */}
+            {/* Skip banner - only shown during onboarding */}
             {onboardingStep !== 'done' && (
                 <div style={{
                     borderTop: '1px solid var(--border-glass)',

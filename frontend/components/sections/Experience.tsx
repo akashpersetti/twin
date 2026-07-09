@@ -17,7 +17,7 @@ export default function Experience() {
         <SectionHeader
           eyebrow="Where I've worked"
           title="Experience"
-          description="From applied ML internships to building production AI products — shipping end-to-end, in production."
+          description="From applied ML internships to building production AI products, shipping end-to-end, in production."
         />
 
         <div className="relative">

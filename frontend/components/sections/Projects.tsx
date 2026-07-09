@@ -103,7 +103,7 @@ export default function Projects() {
         <SectionHeader
           eyebrow="Selected work"
           title="Projects"
-          description="Agentic systems, LLM products, and ML pipelines — most shipped serverless on AWS via Terraform and GitHub Actions."
+          description="Agentic systems, LLM products, and ML pipelines, most shipped serverless on AWS via Terraform and GitHub Actions."
         />
         <p className="text-sm mb-8 -mt-6 mono" style={{ color: 'var(--text-secondary)' }}>Tap any card to read the details.</p>
 

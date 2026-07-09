@@ -55,7 +55,7 @@ export default function EvalsPage() {
           <h1 className="text-3xl font-semibold mb-2">Eval Dashboard</h1>
           <p className="text-sm text-[var(--text-secondary)]">
             Two independent streams: a synthetic 35-query eval re-run on every backend push (not a
-            reproducible replay — chat generation uses temperature 0.7), and continuous faithfulness
+            reproducible replay, chat generation uses temperature 0.7), and continuous faithfulness
             judging of real visitor conversations.
           </p>
         </div>
