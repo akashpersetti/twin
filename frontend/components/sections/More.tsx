@@ -7,7 +7,7 @@ const ACCENT = '#0d9488';
 
 export default function More() {
   return (
-    <section className="py-24 px-6">
+    <section className="py-24 px-6" style={{ background: 'var(--bg-alt)' }}>
       <div className="max-w-4xl mx-auto">
         <SectionHeader eyebrow="Elsewhere" title="More" />
 

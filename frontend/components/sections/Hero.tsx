@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { Download, ArrowRight, Github } from 'lucide-react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { resume } from '@/data/resume';
+import { EncryptedText } from '@/components/ui/encrypted-text';
 
 const downloadFilename = `${resume.basics.name.replace(/\s+/g, '_')}_Resume.pdf`;
 
@@ -49,9 +50,20 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.08, ease: 'easeOut' }}
         >
-          Building adaptive AI
-          <br className="hidden sm:block" /> that meets people{' '}
-          <span style={{ color: 'var(--accent)' }}>where they are.</span>
+          <EncryptedText
+            text="Building adaptive AI that meets people"
+            revealDelayMs={22}
+            flipDelayMs={30}
+            encryptedClassName="opacity-40"
+          />
+          <br className="hidden sm:block" />{' '}
+          <EncryptedText
+            text="where they are."
+            revealDelayMs={22}
+            flipDelayMs={30}
+            encryptedClassName="opacity-40"
+            revealedClassName="text-[var(--accent)]"
+          />
         </motion.h1>
 
         {/* Subhead */}
