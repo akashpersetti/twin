@@ -49,7 +49,7 @@ CLAUDE.md
 .worktrees/
 
 # Local design docs
-docs/AGENTS.md
+docs/
 
 # caveman files
 .agents/

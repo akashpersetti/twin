@@ -13,6 +13,7 @@ import Projects from '@/components/sections/Projects';
 import Skills from '@/components/sections/Skills';
 import Education from '@/components/sections/Education';
 import Certifications from '@/components/sections/Certifications';
+import More from '@/components/sections/More';
 import Contact from '@/components/sections/Contact';
 import TwinFloatingButton from '@/components/widgets/TwinFloatingButton';
 
@@ -52,6 +53,9 @@ export default function Home() {
             </section>
             <section id="certifications">
               <Certifications />
+            </section>
+            <section id="more">
+              <More />
             </section>
             <section id="contact">
               <Contact />

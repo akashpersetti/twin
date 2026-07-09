@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { id: 'skills', label: 'Skills' },
   { id: 'education', label: 'Education' },
   { id: 'certifications', label: 'Certs & Activities' },
+  { id: 'more', label: 'More' },
   { id: 'contact', label: 'Contact' },
 ];
 
