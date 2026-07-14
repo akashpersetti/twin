@@ -13,3 +13,7 @@ def test_bedrock_client_is_configured():
 def test_bedrock_model_id_has_default():
     assert bedrock_client.BEDROCK_MODEL_ID  # non-empty string
     assert "claude" in bedrock_client.BEDROCK_MODEL_ID.lower()
+
+
+def test_judge_model_id_has_default():
+    assert bedrock_client.JUDGE_MODEL_ID  # non-empty string

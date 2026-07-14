@@ -31,7 +31,7 @@ Grade the answer now."""
 
 def judge_answer(query: str, retrieved_text: str, answer: str) -> dict:
     response = bedrock_client.bedrock_client.converse(
-        modelId=bedrock_client.BEDROCK_MODEL_ID,
+        modelId=bedrock_client.JUDGE_MODEL_ID,
         system=[{"text": JUDGE_SYSTEM_PROMPT}],
         messages=[{"role": "user", "content": [{"text": _build_judge_prompt(query, retrieved_text, answer)}]}],
         inferenceConfig={"maxTokens": 500, "temperature": 0.0},

@@ -17,9 +17,15 @@ variable "environment" {
 }
 
 variable "bedrock_model_id" {
-  description = "Bedrock model ID"
+  description = "Bedrock model ID used for answering chat messages"
   type        = string
   default     = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
+}
+
+variable "judge_model_id" {
+  description = "Bedrock model ID used for faithfulness judging (cheaper/lighter than the answering model)"
+  type        = string
+  default     = "amazon.nova-lite-v1:0"
 }
 
 variable "lambda_timeout" {

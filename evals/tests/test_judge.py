@@ -38,7 +38,7 @@ def test_judge_answer_parses_response_json():
     }
     mock_client.converse.assert_called_once()
     call_kwargs = mock_client.converse.call_args.kwargs
-    assert call_kwargs["modelId"] == bedrock_client.BEDROCK_MODEL_ID
+    assert call_kwargs["modelId"] == bedrock_client.JUDGE_MODEL_ID
 
 
 def test_judge_answer_strips_markdown_fences():

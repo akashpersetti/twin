@@ -713,7 +713,7 @@ resource "aws_lambda_function" "live_judge" {
 
   environment {
     variables = {
-      BEDROCK_MODEL_ID = var.bedrock_model_id
+      JUDGE_MODEL_ID = var.judge_model_id
     }
   }
 }

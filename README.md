@@ -130,6 +130,8 @@ The twin runs on **Claude Sonnet 4** via AWS Bedrock (`us.anthropic.claude-sonne
 
 > Some models require a regional prefix - e.g. `us.amazon.nova-lite-v1:0`.
 
+Faithfulness judging (both the synthetic eval suite and the live-traffic judge Lambda) uses a separate, cheaper model configured via `JUDGE_MODEL_ID` (defaults to `amazon.nova-lite-v1:0`). Grading is a bounded structured-output classification task, so it doesn't need the answering model's reasoning power — decoupling it also spares the answering model's Bedrock quota from judge traffic.
+
 ---
 
 ## API Reference
@@ -314,6 +316,7 @@ Go to **Actions → Deploy Digital Twin → Run workflow** and select `prod`. Th
 ```env
 DEFAULT_AWS_REGION=us-east-1
 BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-20250514-v1:0
+JUDGE_MODEL_ID=amazon.nova-lite-v1:0  # used for faithfulness judging (evals + live judge Lambda)
 USE_S3=false          # true in production (set automatically by Terraform)
 S3_BUCKET=            # set by Terraform in production
 MEMORY_DIR=../memory  # local dev only
