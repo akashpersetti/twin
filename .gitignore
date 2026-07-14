@@ -54,3 +54,8 @@ docs/
 # caveman files
 .agents/
 skills-lock.json
+
+# graphify machine-local state and cache
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/cache/
