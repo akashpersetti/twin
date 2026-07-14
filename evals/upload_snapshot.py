@@ -17,10 +17,16 @@ def _avg(values):
 def _category_stats(results):
     recall_vals = [r["recall_at_5"] for r in results]
     ndcg_vals = [r["ndcg_at_5"] for r in results]
+    precision_vals = [r.get("precision_at_5") for r in results]
+    f1_vals = [r.get("f1_at_5") for r in results]
+    mrr_vals = [r.get("mrr") for r in results]
     faithful_vals = [1.0 if r["judgment"].get("faithful") else 0.0 for r in results]
     return {
         "recall_at_5_avg": _avg(recall_vals),
         "ndcg_at_5_avg": _avg(ndcg_vals),
+        "precision_at_5_avg": _avg(precision_vals),
+        "f1_at_5_avg": _avg(f1_vals),
+        "mrr_avg": _avg(mrr_vals),
         "faithful_rate": round(sum(faithful_vals) / len(faithful_vals), 4) if faithful_vals else None,
         "n": len(results),
     }

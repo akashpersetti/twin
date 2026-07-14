@@ -60,6 +60,36 @@ export default function EvalsPage() {
           </p>
         </div>
 
+        <section className="glass p-5 mb-8">
+          <h2 className="eyebrow mb-3">What these metrics mean</h2>
+          <dl className="text-sm text-[var(--text-secondary)] space-y-3">
+            <div>
+              <dt className="font-semibold text-[var(--text-primary)]">Recall@5</dt>
+              <dd>Of all the chunks that are actually relevant to a query, what fraction did retrieval find in its top 5 results.</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-[var(--text-primary)]">nDCG@5</dt>
+              <dd>Normalized Discounted Cumulative Gain. Like recall, but rewards putting relevant chunks near the top of the top 5 instead of at the bottom.</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-[var(--text-primary)]">Precision@5</dt>
+              <dd>Of the top 5 chunks retrieval returned, what fraction were actually relevant.</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-[var(--text-primary)]">F1@5</dt>
+              <dd>The harmonic mean of Precision@5 and Recall@5, a single score that balances both.</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-[var(--text-primary)]">MRR</dt>
+              <dd>Mean Reciprocal Rank. How high up the first relevant chunk appeared, 1.0 if it was the top result, 0.5 if it was second, and so on.</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-[var(--text-primary)]">Faithful rate</dt>
+              <dd>Fraction of answers an LLM judge confirmed were grounded in the retrieved context, with no fabricated claims.</dd>
+            </div>
+          </dl>
+        </section>
+
         <div className="mb-6">
           <DateRangeFilter onChange={setRange} />
         </div>

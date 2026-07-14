@@ -8,7 +8,15 @@ export interface SnapshotSummary {
   commit_sha: string;
   commit_message: string;
   aggregate: {
-    overall: { recall_at_5_avg: number | null; ndcg_at_5_avg: number | null; faithful_rate: number | null; n: number };
+    overall: {
+      recall_at_5_avg: number | null;
+      ndcg_at_5_avg: number | null;
+      precision_at_5_avg: number | null;
+      f1_at_5_avg: number | null;
+      mrr_avg: number | null;
+      faithful_rate: number | null;
+      n: number;
+    };
   };
 }
 
@@ -27,6 +35,9 @@ export default function SyntheticTrendChart({
       commit: s.commit_sha,
       recall_at_5: s.aggregate.overall.recall_at_5_avg,
       ndcg_at_5: s.aggregate.overall.ndcg_at_5_avg,
+      precision_at_5: s.aggregate.overall.precision_at_5_avg,
+      f1_at_5: s.aggregate.overall.f1_at_5_avg,
+      mrr: s.aggregate.overall.mrr_avg,
       faithful_rate: s.aggregate.overall.faithful_rate,
     }));
 
@@ -42,10 +53,13 @@ export default function SyntheticTrendChart({
         <YAxis domain={[0, 1]} stroke="var(--text-secondary)" fontSize={12} />
         <Tooltip
           contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }}
-          formatter={(value: any) => value?.toFixed?.(2) ?? '—'}
+          formatter={(value: any) => value?.toFixed?.(2) ?? 'n/a'}
         />
         <Line type="monotone" dataKey="recall_at_5" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3 }} name="Recall@5" />
         <Line type="monotone" dataKey="ndcg_at_5" stroke="var(--accent-soft)" strokeWidth={2} dot={{ r: 3 }} name="nDCG@5" />
+        <Line type="monotone" dataKey="precision_at_5" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} name="Precision@5" />
+        <Line type="monotone" dataKey="f1_at_5" stroke="#a855f7" strokeWidth={2} dot={{ r: 3 }} name="F1@5" />
+        <Line type="monotone" dataKey="mrr" stroke="#ec4899" strokeWidth={2} dot={{ r: 3 }} name="MRR" />
         <Line type="monotone" dataKey="faithful_rate" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} name="Faithful rate" />
       </LineChart>
     </ResponsiveContainer>

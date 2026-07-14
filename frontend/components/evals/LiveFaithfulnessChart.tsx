@@ -41,7 +41,7 @@ export default function LiveFaithfulnessChart({ entries }: { entries: LiveEntry[
         <YAxis domain={[0, 1]} stroke="var(--text-secondary)" fontSize={12} />
         <Tooltip
           contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }}
-          formatter={(value: any) => value?.toFixed?.(2) ?? '—'}
+          formatter={(value: any) => value?.toFixed?.(2) ?? 'n/a'}
         />
         <Line type="monotone" dataKey="faithful_rate" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3 }} name="Faithful rate" />
       </LineChart>

@@ -9,6 +9,9 @@ interface QueryResult {
   retrieved_chunk_ids: string[];
   recall_at_5: number | null;
   ndcg_at_5: number | null;
+  precision_at_5: number | null;
+  f1_at_5: number | null;
+  mrr: number | null;
   answer: string;
   judgment: { faithful: boolean; hallucinated_claims: string[]; rationale: string };
 }
@@ -53,6 +56,9 @@ export default function SnapshotDrilldown({
                 <th className="py-2 pr-2">Category</th>
                 <th className="py-2 pr-2">Recall@5</th>
                 <th className="py-2 pr-2">nDCG@5</th>
+                <th className="py-2 pr-2">Precision@5</th>
+                <th className="py-2 pr-2">F1@5</th>
+                <th className="py-2 pr-2">MRR</th>
                 <th className="py-2 pr-2">Faithful</th>
               </tr>
             </thead>
@@ -61,8 +67,11 @@ export default function SnapshotDrilldown({
                 <tr key={r.id} className="border-b border-[var(--border)] align-top">
                   <td className="py-2 pr-2">{r.query}</td>
                   <td className="py-2 pr-2 mono text-xs">{r.category}</td>
-                  <td className="py-2 pr-2">{r.recall_at_5 ?? '—'}</td>
-                  <td className="py-2 pr-2">{r.ndcg_at_5 ?? '—'}</td>
+                  <td className="py-2 pr-2">{r.recall_at_5 ?? 'n/a'}</td>
+                  <td className="py-2 pr-2">{r.ndcg_at_5 ?? 'n/a'}</td>
+                  <td className="py-2 pr-2">{r.precision_at_5 ?? 'n/a'}</td>
+                  <td className="py-2 pr-2">{r.f1_at_5 ?? 'n/a'}</td>
+                  <td className="py-2 pr-2">{r.mrr ?? 'n/a'}</td>
                   <td className="py-2 pr-2">{r.judgment.faithful ? '✓' : '✗'}</td>
                 </tr>
               ))}
