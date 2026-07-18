@@ -369,10 +369,12 @@ def main() -> None:
         sys.exit(1)
 
     if not args.dry_run and not (
-        os.environ.get("AWS_ACCESS_KEY_ID") or os.environ.get("AWS_PROFILE")
+        os.environ.get("AWS_ACCESS_KEY_ID")
+        or os.environ.get("AWS_PROFILE")
+        or (Path.home() / ".aws/credentials").exists()
     ):
         print(
-            "Error: no AWS credentials found (AWS_ACCESS_KEY_ID or AWS_PROFILE). "
+            "Error: no AWS credentials found (env vars or ~/.aws/credentials). "
             "Needed to rebuild profile_index.json via Bedrock.",
             file=sys.stderr,
         )
