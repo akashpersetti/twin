@@ -1,4 +1,4 @@
-import { Mail, Phone, Linkedin, Github, Bot } from 'lucide-react';
+import { Mail, Linkedin, Github, Rss, Bot } from 'lucide-react';
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -7,9 +7,11 @@ import GlassCard from '@/components/ui/GlassCard';
 export default function Contact() {
   const links = [
     { icon: Mail, label: resume.basics.email, href: `mailto:${resume.basics.email}` },
-    { icon: Phone, label: resume.basics.phone, href: `tel:${resume.basics.phone}` },
     { icon: Linkedin, label: resume.basics.linkedin, href: resume.basics.linkedinUrl },
     { icon: Github, label: resume.basics.github, href: resume.basics.githubUrl },
+    { icon: Rss, label: resume.basics.devTo, href: resume.basics.devToUrl },
+    { icon: Rss, label: resume.basics.hashnode, href: resume.basics.hashnodeUrl },
+    { icon: Rss, label: resume.basics.coderLegion, href: resume.basics.coderLegionUrl },
   ];
 
   return (

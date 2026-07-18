@@ -1,7 +1,7 @@
 # Akash Hadagali Persetti — Personal Profile
 
 ## Identity and Contact
-Akash Hadagali Persetti is an applied AI engineer based in Bloomington, Indiana, USA. He can be reached at hadagalipersettiakash@gmail.com or 812-837-7651. His online presence includes LinkedIn (linkedin.com/in/akash-hp), GitHub (github.com/akashpersetti), and his personal website akashpersetti.com. He also goes by Akash Persetti.
+Akash Hadagali Persetti is an applied AI engineer based in Bloomington, Indiana, USA. He can be reached at hadagalipersettiakash@gmail.com. His online presence includes LinkedIn (linkedin.com/in/akash-hp), GitHub (github.com/akashpersetti), and his personal website akashpersetti.com. He also writes at dev.to/akashpersetti, akashpersetti.hashnode.dev, and coderlegion.com/user/akashpersetti. He also goes by Akash Persetti.
 
 ## Professional Summary
 Akash is an applied AI engineer building reliable agentic systems, LLM evaluation infrastructure, and production AI applications on AWS. He has built and shipped multiple live AI products including a Terraform-generating agent gated by real validation, a multi-provider evaluation platform with confidence intervals, and an open-source MCP server published to PyPI. He is comfortable owning the full stack: agent logic, FastAPI REST backends, Next.js frontends, and Terraform-managed CI/CD on AWS. He holds an M.S. in Computer Science from Indiana University Bloomington (2026).

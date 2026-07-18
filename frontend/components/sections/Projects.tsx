@@ -5,7 +5,42 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
-import { Calendar, RotateCcw } from 'lucide-react';
+import { Calendar, RotateCcw, Github, ExternalLink } from 'lucide-react';
+
+function ProjectLinks({ project }: { project: typeof resume.projects[number] }) {
+  const githubUrl = 'githubUrl' in project ? project.githubUrl : undefined;
+  const liveUrl = 'liveUrl' in project ? project.liveUrl : undefined;
+
+  if (!githubUrl && !liveUrl) return null;
+  return (
+    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+      {githubUrl && (
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${project.title} on GitHub`}
+          className="inline-flex items-center justify-center w-7 h-7 rounded-full transition-opacity hover:opacity-70"
+          style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
+        >
+          <Github size={13} />
+        </a>
+      )}
+      {liveUrl && (
+        <a
+          href={liveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${project.title} live link`}
+          className="inline-flex items-center justify-center w-7 h-7 rounded-full transition-opacity hover:opacity-70"
+          style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
+        >
+          <ExternalLink size={13} />
+        </a>
+      )}
+    </div>
+  );
+}
 
 function FlipCard({ project, index }: { project: typeof resume.projects[number]; index: number }) {
   const [flipped, setFlipped] = useState(false);
@@ -37,16 +72,14 @@ function FlipCard({ project, index }: { project: typeof resume.projects[number];
                 {project.subtitle}
               </p>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <span
                 className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
                 style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
               >
                 <Calendar size={10} /> {project.period}
               </span>
-              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                Tap to expand →
-              </span>
+              <ProjectLinks project={project} />
             </div>
           </div>
 
@@ -136,6 +169,9 @@ export default function Projects() {
                   >
                     <Calendar size={10} /> {project.period}
                   </span>
+                  <div className="mt-2">
+                    <ProjectLinks project={project} />
+                  </div>
                 </div>
                 <motion.span
                   animate={{ rotate: expandedMobile === i ? 180 : 0 }}

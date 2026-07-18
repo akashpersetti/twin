@@ -5,12 +5,17 @@ export const resume = {
     location: "Bloomington, IN",
     address: "421 W Hoosier Court Ave, Bloomington, IN - 47404",
     email: "hadagalipersettiakash@gmail.com",
-    phone: "812-837-7651",
     linkedin: "linkedin.com/in/akash-hp",
     linkedinUrl: "https://linkedin.com/in/akash-hp",
     github: "github.com/akashpersetti",
     githubUrl: "https://github.com/akashpersetti",
     website: "https://akashpersetti.com",
+    devTo: "dev.to/akashpersetti",
+    devToUrl: "https://dev.to/akashpersetti",
+    hashnode: "akashpersetti.hashnode.dev",
+    hashnodeUrl: "https://akashpersetti.hashnode.dev",
+    coderLegion: "coderlegion.com/user/akashpersetti",
+    coderLegionUrl: "https://coderlegion.com/user/akashpersetti",
   },
 
   impact: [
@@ -76,6 +81,8 @@ export const resume = {
       title: "TerraformAgent",
       subtitle: "Multi-Agent IaC Generator",
       period: "Not specified",
+      githubUrl: "https://github.com/akashpersetti/terraform-agent",
+      liveUrl: "https://terraform-agent.akashpersetti.com",
       tech: [
         "LangGraph",
         "FastAPI",
@@ -92,6 +99,8 @@ export const resume = {
       title: "EvalBench",
       subtitle: "Multi-Provider LLM Eval Platform",
       period: "Not specified",
+      githubUrl: "https://github.com/akashpersetti/evalbench",
+      liveUrl: "https://evalbench.akashpersetti.com",
       tech: [
         "FastAPI",
         "LiteLLM",
@@ -109,6 +118,8 @@ export const resume = {
       title: "Wingman",
       subtitle: "Self-Evaluating Agentic Co-Worker",
       period: "Not specified",
+      githubUrl: "https://github.com/akashpersetti/wingman",
+      liveUrl: "https://wingman.akashpersetti.com",
       tech: [
         "LangGraph",
         "FastAPI",
@@ -125,6 +136,8 @@ export const resume = {
       title: "Twin",
       subtitle: "AI Digital Twin + Live Eval Dashboard",
       period: "Not specified",
+      githubUrl: "https://github.com/akashpersetti/twin",
+      liveUrl: "https://akashpersetti.com",
       tech: [
         "FastAPI",
         "Next.js",
@@ -142,6 +155,7 @@ export const resume = {
       title: "mcp-second-opinion",
       subtitle: "Open-Source MCP Server, Published to PyPI",
       period: "Not specified",
+      liveUrl: "https://pypi.org/project/mcp-second-opinion",
       tech: ["Python"],
       bullets: [
         "Built and published an MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs mid-conversation.",
