@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["pypdf>=6.7.0", "openai-agents>=0.0.19"]
+# dependencies = ["pypdf>=6.7.0", "openai-agents>=0.0.19", "boto3>=1.34"]
 # ///
 
 """
@@ -10,7 +10,7 @@ Usage:
     uv run scripts/update-resume.py <pdf> [--dry-run] [--model MODEL]
 
 After running, commit and push:
-    git add frontend/data/resume.ts frontend/public/resume.pdf backend/data/resume.pdf backend/data/facts.json backend/data/summary.txt
+    git add frontend/data/resume.ts frontend/public/resume.pdf backend/data/resume.pdf backend/data/facts.json backend/data/summary.txt backend/data/akash_persetti_profile.txt backend/data/profile_index.json
     git commit -m "update resume"
     git push
 """
@@ -21,6 +21,7 @@ import os
 import shutil
 import sys
 import tempfile
+from dataclasses import asdict
 from pathlib import Path
 
 from agents import Agent, OpenAIChatCompletionsModel, Runner
@@ -29,11 +30,16 @@ from pypdf import PdfReader
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
+sys.path.insert(0, str(ROOT / "backend"))
+import retrieval  # noqa: E402
+
 FRONTEND_PDF = ROOT / "frontend/public/resume.pdf"
 BACKEND_PDF = ROOT / "backend/data/resume.pdf"
 RESUME_TS = ROOT / "frontend/data/resume.ts"
 FACTS_JSON = ROOT / "backend/data/facts.json"
 SUMMARY_TXT = ROOT / "backend/data/summary.txt"
+PROFILE_TXT = ROOT / "backend/data/akash_persetti_profile.txt"
+PROFILE_INDEX = ROOT / "backend/data/profile_index.json"
 
 TOP_LEVEL_KEYS = [
     "basics",
@@ -48,8 +54,7 @@ TOP_LEVEL_KEYS = [
     "communityService",
 ]
 
-DEFAULT_MODEL = "openai/gpt-oss-120b:free"
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_MODEL = "gpt-4o-mini"
 
 
 def extract_pdf_text(pdf_path: Path) -> str:
@@ -255,21 +260,126 @@ def update_summary_txt(pdf_text: str, current_summary: str, model: str, dry_run:
     return True
 
 
+def update_profile_txt(pdf_text: str, current_profile: str, model: str, dry_run: bool, client: AsyncOpenAI) -> bool:
+    truncated = pdf_text[:12000] if len(pdf_text) > 12000 else pdf_text
+
+    instructions = (
+        "You are an editor maintaining a narrative personal-profile document used as a RAG knowledge base "
+        "for an AI digital twin chatbot. "
+        "Output ONLY the updated profile text — no markdown fences, no commentary, no explanation. "
+        "Preserve the exact structure: a leading '# Title' line, then '## Section Title' headers with "
+        "prose paragraphs underneath, written in third person. "
+        "Keep ALL existing section headers unless the resume PDF clearly makes one obsolete. "
+        "Update facts (roles, dates, employers, skills, projects, education) to match the new resume PDF. "
+        "Keep sections that aren't covered by the resume (e.g. Personal Interests, Job Search) unchanged. "
+        "Preserve the existing prose tone and style."
+    )
+
+    user_message = (
+        f"Here is the current profile document:\n\n{current_profile}\n\n"
+        f"Here is the extracted text from the new resume PDF:\n\n{truncated}\n\n"
+        "Generate the updated profile document, keeping the same '# Title' / '## Section' structure."
+    )
+
+    agent = Agent(
+        name="ProfileUpdater",
+        instructions=instructions,
+        model=OpenAIChatCompletionsModel(model=model, openai_client=client),
+    )
+
+    print("Calling model to generate profile document...")
+    result = Runner.run_sync(agent, user_message)
+    raw = result.final_output.strip()
+
+    if raw.startswith("```"):
+        lines = raw.splitlines()
+        raw = "\n".join(lines[1:])
+        if raw.rstrip().endswith("```"):
+            raw = raw.rstrip()[:-3].rstrip()
+
+    if not raw.startswith("# "):
+        print(f"\nprofile.txt validation failed: does not start with '# '", file=sys.stderr)
+        Path("/tmp/profile_txt_failed.txt").write_text(raw, encoding="utf-8")
+        print("Raw output saved to /tmp/profile_txt_failed.txt", file=sys.stderr)
+        return False
+
+    if "## " not in raw:
+        print(f"\nprofile.txt validation failed: no '## ' section headers found", file=sys.stderr)
+        Path("/tmp/profile_txt_failed.txt").write_text(raw, encoding="utf-8")
+        print("Raw output saved to /tmp/profile_txt_failed.txt", file=sys.stderr)
+        return False
+
+    if dry_run:
+        print("\n--- Generated profile document (dry run) ---")
+        print(raw)
+        print("--- End ---\n")
+        return True
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", suffix=".txt", delete=False
+    ) as tmp:
+        tmp.write(raw + "\n")
+        tmp_path = tmp.name
+
+    os.replace(tmp_path, PROFILE_TXT)
+    print(f"  Written: {PROFILE_TXT}")
+    return True
+
+
+def rebuild_profile_index(dry_run: bool) -> bool:
+    if dry_run:
+        print("  [dry-run] Skipping profile_index.json rebuild")
+        return True
+
+    print("Rebuilding profile_index.json (calls Bedrock for embeddings)...")
+    try:
+        profile_text = PROFILE_TXT.read_text(encoding="utf-8")
+        chunks = retrieval.chunk_profile_text(profile_text)
+        index = []
+        for chunk in chunks:
+            chunk.embedding = retrieval.embed_text(chunk.text)
+            index.append(asdict(chunk))
+    except Exception as e:
+        print(f"\nprofile_index.json rebuild failed: {e}", file=sys.stderr)
+        return False
+
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", suffix=".json", delete=False
+    ) as tmp:
+        json.dump(index, tmp, indent=2)
+        tmp.write("\n")
+        tmp_path = tmp.name
+
+    os.replace(tmp_path, PROFILE_INDEX)
+    print(f"  Written: {PROFILE_INDEX} ({len(index)} chunks)")
+    return True
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Update resume pipeline from a PDF.")
     parser.add_argument("pdf", type=Path, help="Path to the new resume PDF")
     parser.add_argument("--dry-run", action="store_true", help="Generate but don't write files")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"OpenRouter model (default: {DEFAULT_MODEL})")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"OpenAI model (default: {DEFAULT_MODEL})")
     args = parser.parse_args()
 
     # 1. Validate API key
-    api_key = os.environ.get("OPENROUTER_API_KEY")
+    api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        print("Error: OPENROUTER_API_KEY environment variable is not set.", file=sys.stderr)
+        print("Error: OPENAI_API_KEY environment variable is not set.", file=sys.stderr)
         sys.exit(1)
 
-    # 2. Configure OpenRouter client
-    openrouter_client = AsyncOpenAI(api_key=api_key, base_url=OPENROUTER_BASE_URL)
+    if not args.dry_run and not (
+        os.environ.get("AWS_ACCESS_KEY_ID") or os.environ.get("AWS_PROFILE")
+    ):
+        print(
+            "Error: no AWS credentials found (AWS_ACCESS_KEY_ID or AWS_PROFILE). "
+            "Needed to rebuild profile_index.json via Bedrock.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # 2. Configure OpenAI client
+    openai_client = AsyncOpenAI(api_key=api_key)
 
     # 3. Validate PDF path
     pdf_path: Path = args.pdf.resolve()
@@ -308,27 +418,42 @@ def main() -> None:
 
     # 6. Update resume.ts
     current_ts = RESUME_TS.read_text(encoding="utf-8")
-    ts_ok = update_resume_ts(pdf_text, current_ts, args.model, args.dry_run, openrouter_client)
+    ts_ok = update_resume_ts(pdf_text, current_ts, args.model, args.dry_run, openai_client)
     if not ts_ok:
         sys.exit(1)
 
     # 7. Update facts.json
     current_facts = FACTS_JSON.read_text(encoding="utf-8")
-    facts_ok = update_facts_json(pdf_text, current_facts, args.model, args.dry_run, openrouter_client)
+    facts_ok = update_facts_json(pdf_text, current_facts, args.model, args.dry_run, openai_client)
     if not facts_ok:
         sys.exit(1)
 
     # 8. Update summary.txt
     current_summary = SUMMARY_TXT.read_text(encoding="utf-8")
-    summary_ok = update_summary_txt(pdf_text, current_summary, args.model, args.dry_run, openrouter_client)
+    summary_ok = update_summary_txt(pdf_text, current_summary, args.model, args.dry_run, openai_client)
     if not summary_ok:
         sys.exit(1)
 
-    # 9. Done
+    # 9. Update RAG profile document
+    current_profile = PROFILE_TXT.read_text(encoding="utf-8")
+    profile_ok = update_profile_txt(pdf_text, current_profile, args.model, args.dry_run, openai_client)
+    if not profile_ok:
+        sys.exit(1)
+
+    # 10. Rebuild RAG embedding index
+    index_ok = rebuild_profile_index(args.dry_run)
+    if not index_ok:
+        sys.exit(1)
+
+    # 11. Done
     print("\nDone!")
     if not args.dry_run:
         print("\nNext steps:")
-        print("  git add frontend/data/resume.ts frontend/public/resume.pdf backend/data/resume.pdf backend/data/facts.json backend/data/summary.txt")
+        print(
+            "  git add frontend/data/resume.ts frontend/public/resume.pdf backend/data/resume.pdf "
+            "backend/data/facts.json backend/data/summary.txt backend/data/akash_persetti_profile.txt "
+            "backend/data/profile_index.json"
+        )
         print('  git commit -m "update resume"')
         print("  git push   # GitHub Actions auto-deploys everything")
 
