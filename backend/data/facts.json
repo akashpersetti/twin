@@ -6,6 +6,8 @@
   "location": "Bloomington, IN, United States",
   "email": "hadagalipersettiakash@gmail.com",
   "linkedin": "https://linkedin.com/in/akash-hp",
+  "github": "https://github.com/akashpersetti",
+  "website": "https://akashpersetti.com",
   "specialties": [
     "Software Engineering",
     "Full Stack Development",
@@ -27,9 +29,22 @@
       "company": "MyEdMaster LLC",
       "location": "Leesburg, VA, United States",
       "type": "Remote",
-      "period": "June 2026 - Present",
-      "summary": "Building an adaptive AI tutoring product that assesses a learner's existing knowledge of a topic or target certification, then generates a customized real-time training program covering only the gaps. Designing the assessment-to-curriculum pipeline with LLM-driven content generation toward a QA-approved prototype.",
-      "stack": ["Python", "LLMs (OpenAI SDK)", "MySQL", "Claude Code"]
+      "period": "Jun 2026 - Present",
+      "summary": "Building an adaptive AI tutoring product that assesses a learner's existing knowledge of a target topic or certification and generates a customized, real-time training program covering only the gaps, using Python, LLMs (OpenAI SDK), and MySQL. Developed the initial assessment and curriculum-generation services using structured outputs, Pydantic validation schemas, and automated test cases, keeping generated coursework grounded and aligned to certification requirements while enabling rapid prototype iteration toward a QA-approved milestone.",
+      "stack": [
+        "Python",
+        "LLMs (OpenAI SDK)",
+        "MySQL",
+        "Claude Code"
+      ]
+    },
+    {
+      "title": "Software Development Intern",
+      "company": "Humaximus Inc.",
+      "location": "Dallas, TX, United States",
+      "type": "Remote/Hybrid",
+      "period": "Jul 2026 - Present",
+      "summary": "Contributing frontend, backend, API-integration, and workflow-debugging work to an early-stage healthcare coordination platform preparing its MVP for pilot partnerships; researching FHIR, HL7, and EHR integration requirements to guide implementation, working across GitHub and Jira."
     },
     {
       "title": "Machine Learning Intern",
@@ -37,19 +52,106 @@
       "location": "Leesburg, VA, United States",
       "type": "Remote",
       "period": "Jun 2025 - Aug 2025",
-      "summary": "Built a real-time virtual coach for exercise assessment using Python and MediaPipe."
+      "summary": "Built a real-time computer-vision exercise-assessment system that cut repetition miscounting by roughly 30% and reached over 92% count accuracy across 3 exercise types (Kettlebell Front Raise, Seated Leg Extensions, Jack Knives) by adding calibration routines and motion-consistency checks in Python and MediaPipe, lowering estimated coach intervention time by about 40%. Held form-detection latency under 100ms per frame by engineering real-time pose-landmark extraction and joint-angle calculations, delivering sub-second corrective feedback so users could self-correct during live sessions without instructor oversight."
     }
   ],
   "education": [
     {
       "degree": "Bachelor of Engineering (B.Eng.) in Computer Science and Engineering",
       "institution": "The National Institute of Engineering, Mysuru, India",
-      "year": "2020 - 2024"
+      "year": "2020 - 2024",
+      "gpa": "3.7/4.0"
     },
     {
       "degree": "Master of Science (M.S.) in Computer Science",
       "institution": "Indiana University Bloomington (Luddy School of Informatics, Computing and Engineering)",
-      "year": "Aug 2024 - May 2026 (Graduated)"
+      "year": "Aug 2024 - May 2026 (Graduated)",
+      "gpa": "3.8/4.0"
     }
-  ]
+  ],
+  "projects": [
+    {
+      "name": "TerraformAgent",
+      "description": "Built a 6-node LangGraph pipeline that turns a natural-language infrastructure request into validated Terraform, with a conditional edge that reruns only the domains a review flags for up to a capped number of targeted retries.",
+      "url": "terraform-agent.akashpersetti.com"
+    },
+    {
+      "name": "EvalBench",
+      "description": "Architected a pluggable-suite eval harness where every benchmark emits one shared MetricRecord contract persisted to a single JSON-column table.",
+      "url": "evalbench.akashpersetti.com"
+    },
+    {
+      "name": "Wingman",
+      "description": "Designed a worker-evaluator state machine in LangGraph that checks worker responses against user-defined criteria and reinjects feedback for up to 5 retry turns.",
+      "url": "wingman.akashpersetti.com"
+    },
+    {
+      "name": "Twin",
+      "description": "Built a streaming personal-website agent using Titan-embedding retrieval over a persona corpus.",
+      "url": "akashpersetti.com"
+    },
+    {
+      "name": "mcp-second-opinion",
+      "description": "Built and published an MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs mid-conversation.",
+      "url": "https://pypi.org/project/mcp-second-opinion"
+    }
+  ],
+  "certifications": [
+    {
+      "title": "Proficient AI Engineer",
+      "issuer": "Ed Donner",
+      "year": 2026,
+      "credential": null
+    },
+    {
+      "title": "Introduction to Machine Learning",
+      "issuer": "NPTEL / IIT Madras",
+      "year": 2023,
+      "credential": "certificate"
+    }
+  ],
+  "technical_skills": {
+    "languages": [
+      "Python",
+      "TypeScript",
+      "JavaScript",
+      "SQL",
+      "C++"
+    ],
+    "agentic_ai_llm_engineering": [
+      "LangGraph",
+      "LangChain",
+      "OpenAI SDK",
+      "Model Context Protocol (MCP)",
+      "RAG",
+      "function calling",
+      "structured outputs",
+      "prompt engineering",
+      "multi-agent workflows",
+      "LLM evaluation and observability"
+    ],
+    "cloud_devops": [
+      "AWS (Lambda, Bedrock, API Gateway, DynamoDB, S3, CloudFront, ECR)",
+      "Docker",
+      "Terraform (IaC)",
+      "GitHub Actions CI/CD (OIDC)",
+      "serverless and event-driven architecture"
+    ],
+    "generative_ai_ml": [
+      "vector databases",
+      "embedding models",
+      "Hugging Face",
+      "scikit-learn",
+      "MediaPipe"
+    ],
+    "backend_frontend_databases": [
+      "FastAPI (REST APIs, microservices)",
+      "Next.js",
+      "React",
+      "Node.js",
+      "PostgreSQL",
+      "MySQL",
+      "DynamoDB"
+    ]
+  }
 }
