@@ -74,8 +74,9 @@ export default function Hero() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.22 }}
         >
-          I&apos;m {resume.basics.name.split(' ')[0]}, an AI Engineer building an adaptive tutoring
-          product at MyEdMaster, plus agentic systems and streaming LLM apps on AWS.
+          LLM evaluation &amp; agentic systems | Building EvalBench: multi-provider benchmarks for
+          structured output, latency/cost, RAG | LangGraph, FastAPI, AWS Bedrock | Open to AI
+          Engineer &amp; SWE roles
         </motion.p>
 
         {/* Credential line */}
