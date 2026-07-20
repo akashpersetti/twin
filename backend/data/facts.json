@@ -1,7 +1,7 @@
 {
   "full_name": "Akash Hadagali Persetti",
   "name": "Akash",
-  "current_role": "AI Engineer at MyEdMaster LLC (Leesburg, VA, Remote), building an adaptive AI tutoring product",
+  "current_role": "Applied AI Engineer, building reliable agentic systems, LLM evaluation infrastructure, and production AI applications on AWS.",
   "education_status": "Graduated with an M.S. in Computer Science from Indiana University Bloomington in May 2026 (no longer a student)",
   "location": "Bloomington, IN, United States",
   "email": "hadagalipersettiakash@gmail.com",
@@ -13,13 +13,13 @@
     "Full Stack Development",
     "AI/ML",
     "Agentic AI",
-    "Cloud Computing (AWS, GCP, Azure)",
+    "Cloud Computing (AWS)",
     "Machine Learning",
     "Generative AI",
     "LLM Engineering",
     "RAG Systems",
     "LangChain / LangGraph",
-    "Serverless & AWS (Lambda, API Gateway, DynamoDB, S3, CloudFront, Bedrock)",
+    "Serverless & AWS (Lambda, API Gateway, DynamoDB, S3, CloudFront)",
     "DevOps & CI/CD (Docker, Terraform, GitHub Actions)"
   ],
   "years_experience": 2,
@@ -39,20 +39,20 @@
       ]
     },
     {
-      "title": "Software Development Intern",
-      "company": "Humaximus Inc.",
-      "location": "Dallas, TX, United States",
-      "type": "Remote/Hybrid",
-      "period": "Jul 2026 - Present",
-      "summary": "Contributing frontend, backend, API-integration, and workflow-debugging work to an early-stage healthcare coordination platform preparing its MVP for pilot partnerships; researching FHIR, HL7, and EHR integration requirements to guide implementation, working across GitHub and Jira."
-    },
-    {
       "title": "Machine Learning Intern",
       "company": "MyEdMaster LLC",
       "location": "Leesburg, VA, United States",
       "type": "Remote",
       "period": "Jun 2025 - Aug 2025",
       "summary": "Built a real-time computer-vision exercise-assessment system that cut repetition miscounting by roughly 30% and reached over 92% count accuracy across 3 exercise types (Kettlebell Front Raise, Seated Leg Extensions, Jack Knives) by adding calibration routines and motion-consistency checks in Python and MediaPipe, lowering estimated coach intervention time by about 40%. Held form-detection latency under 100ms per frame by engineering real-time pose-landmark extraction and joint-angle calculations, delivering sub-second corrective feedback so users could self-correct during live sessions without instructor oversight."
+    },
+    {
+      "title": "Software Development Intern",
+      "company": "Humaximus Inc.",
+      "location": "Dallas, TX, United States",
+      "type": "Remote/Hybrid",
+      "period": "Jul 2026 - Present",
+      "summary": "Contributing frontend, backend, API-integration, and workflow-debugging work to an early-stage healthcare coordination platform preparing its MVP for pilot partnerships; researching FHIR, HL7, and EHR integration requirements to guide implementation, working across GitHub and Jira."
     }
   ],
   "education": [
@@ -72,27 +72,27 @@
   "projects": [
     {
       "name": "TerraformAgent",
-      "description": "Built a 6-node LangGraph pipeline that turns a natural-language infrastructure request into validated Terraform, with a conditional edge that reruns only the domains a review flags for up to a capped number of targeted retries.",
+      "description": "Built a 6-node LangGraph pipeline (orchestrator, researcher, parallel domain subagents, aggregator, reviewer, evaluator) that turns a natural-language infrastructure request into validated Terraform, with a conditional edge that reruns only the domains a review flags for up to a capped number of targeted retries. Gated output on a real evaluator that writes the generated code to disk and runs terraform fmt and terraform validate against a provider cache baked into the Docker image, reaching full offline validation by copying the read-only cache into a writable path once per execution environment. Hardened the review step with a multi-LLM fan-out (reusing my mcp-second-opinion pattern) that queries OpenAI and Anthropic in parallel and blocks on any security veto.",
       "url": "terraform-agent.akashpersetti.com"
     },
     {
       "name": "EvalBench",
-      "description": "Architected a pluggable-suite eval harness where every benchmark emits one shared MetricRecord contract persisted to a single JSON-column table.",
+      "description": "Architected a pluggable-suite eval harness where every benchmark emits one shared MetricRecord contract persisted to a single JSON-column table, so adding a suite is a three-file change that never touches the runner, store, or dashboard core. Shipped 3 benchmark suites on that harness: structured-output reliability (schema-valid rate, retries-to-valid, retry-only cost accounting), latency/cost with pairwise judge scoring, and RAG with recall@k, nDCG@k, and faithfulness across swappable chunking strategies.",
       "url": "evalbench.akashpersetti.com"
     },
     {
       "name": "Wingman",
-      "description": "Designed a worker-evaluator state machine in LangGraph that checks worker responses against user-defined criteria and reinjects feedback for up to 5 retry turns.",
+      "description": "Designed a worker-evaluator state machine in LangGraph where a structured-output evaluator checks worker responses against user-defined criteria and reinjects feedback for up to 5 retry turns, raising answer-validity rates before surfacing a result. Integrated 5 tool domains through LangChain ToolNode and bind tools: web search (Serper), Wikipedia, sandboxed Python REPL, sandboxed file I/O, and Pushover notifications.",
       "url": "wingman.akashpersetti.com"
     },
     {
       "name": "Twin",
-      "description": "Built a streaming personal-website agent using Titan-embedding retrieval over a persona corpus.",
+      "description": "Built a streaming personal-website agent using Titan-embedding retrieval over a persona corpus, grounded in a profile assembled at Lambda cold-start from a LinkedIn PDF, career summary, and style guide (parsed via pypdf) and injected into a Bedrock Claude Sonnet system prompt.",
       "url": "akashpersetti.com"
     },
     {
       "name": "mcp-second-opinion",
-      "description": "Built and published an MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs mid-conversation.",
+      "description": "Built and published an MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs (OpenAI, Gemini, Anthropic, Grok) mid-conversation, exposing two tools: one to query a single model and one to fan out to all enabled providers in parallel and compare answers.",
       "url": "https://pypi.org/project/mcp-second-opinion"
     }
   ],
@@ -101,7 +101,7 @@
       "title": "Proficient AI Engineer",
       "issuer": "Ed Donner",
       "year": 2026,
-      "credential": null
+      "credential": "credential"
     },
     {
       "title": "Introduction to Machine Learning",

@@ -26,17 +26,6 @@ export const resume = {
 
   experience: [
     {
-      role: "Software Development Intern",
-      company: "Humaximus Inc.",
-      location: "Dallas, TX",
-      type: "Remote/Hybrid",
-      period: "Jul 2026 – Present",
-      project: "Healthcare Coordination Platform",
-      bullets: [
-        "Contributing frontend, backend, API-integration, and workflow-debugging work to an early-stage healthcare coordination platform preparing its MVP for pilot partnerships; researching FHIR, HL7, and EHR integration requirements to guide implementation, working across GitHub and Jira.",
-      ],
-    },
-    {
       role: "AI Engineer",
       company: "MyEdMaster LLC",
       location: "Leesburg, Virginia, United States",
@@ -60,20 +49,6 @@ export const resume = {
         "Held form-detection latency under 100ms per frame by engineering real-time pose-landmark extraction and joint-angle calculations, delivering sub-second corrective feedback so users could self-correct during live sessions without instructor oversight.",
       ],
     },
-    {
-      role: "Web Development Intern",
-      company: "Squadcast Labs",
-      location: "Bengaluru, India",
-      type: "Remote",
-      period: "Oct 2023 – May 2024",
-      project: "SEO-Driven Web Performance and Content Optimization",
-      bullets: [
-        "Increased organic search visibility by an estimated 25% by designing and developing 18+ responsive landing and solution pages in Webflow with Core Web Vitals optimization, reducing average page load time below 2.5 seconds",
-        "Boosted projected monthly organic traffic by 20% by authoring and optimizing 38 SEO-targeted blog pages through structured keyword research and on-page optimization, directly improving domain keyword rankings",
-        "Improved Largest Contentful Paint (LCP) scores by ~15% by implementing script-delay techniques to defer and optimize third-party scripts, reducing render-blocking resource load time across all high-traffic pages",
-        "Identified and resolved 10+ performance bottlenecks by conducting SEO analysis using Google Search Console and PageSpeed Insights, directly improving Core Web Vitals scores across key landing pages",
-      ],
-    },
   ],
 
   projects: [
@@ -89,10 +64,10 @@ export const resume = {
         "Step Functions",
       ],
       bullets: [
-        "Built a 6-node LangGraph pipeline (orchestrator, researcher, parallel domain subagents, aggregator, reviewer, evaluator) that turns a natural-language infrastructure request into validated Terraform.",
+        "Built a 6-node LangGraph pipeline (orchestrator, researcher, parallel domain subagents, aggregator, reviewer, evaluator) that turns a natural-language infrastructure request into validated Terraform, with a conditional edge that reruns only the domains a review flags for up to a capped number of targeted retries.",
         "Gated output on a real evaluator that writes the generated code to disk and runs terraform fmt and terraform validate against a provider cache baked into the Docker image, reaching full offline validation by copying the read-only cache into a writable path once per execution environment.",
-        "Hardened the review step with a multi-LLM fan-out that queries OpenAI and Anthropic in parallel and blocks on any security veto, falling back to single-LLM review.",
-        "Deployed the containerized service on Lambda and Step Functions with JWT authentication, DynamoDB state, SQS failure handling, and Secrets Manager; provisioned the stack through Terraform and GitHub Actions OIDC.",
+        "Hardened the review step with a multi-LLM fan-out (reusing my mcp-second-opinion pattern) that queries OpenAI and Anthropic in parallel and blocks on any security veto, falling back to single-LLM review so a provider outage degrades quality instead of failing the run.",
+        "Deployed the containerized service on Lambda and Step Functions with JWT authentication, DynamoDB state, SQS failure handling, and Secrets Manager; provisioned the stack through Terraform and GitHub Actions OIDC, with 94 passing tests and no long-lived AWS credentials.",
       ],
     },
     {
@@ -108,10 +83,11 @@ export const resume = {
         "Terraform",
       ],
       bullets: [
-        "Architected a pluggable-suite eval harness where every benchmark emits one shared MetricRecord contract persisted to a single JSON-column table.",
-        "Shipped 3 benchmark suites on that harness: structured-output reliability, latency/cost with pairwise judge scoring, and RAG with recall@k, nDCG@k, and faithfulness across swappable chunking strategies.",
-        "Ran 27 evaluation runs across 75 tasks and 7 model/config variants, exposing an 8-point first-attempt schema-validity gap between providers on structured output.",
-        "Deployed serverless on AWS: dual Lambda (API plus async runner), API Gateway v2, CloudFront, DynamoDB run tracking, and SES magic-link auth.",
+        "Architected a pluggable-suite eval harness where every benchmark emits one shared MetricRecord contract persisted to a single JSON-column table, so adding a suite is a three-file change that never touches the runner, store, or dashboard core.",
+        "Shipped 3 benchmark suites on that harness: structured-output reliability (schema-valid rate, retries-to-valid, retry-only cost accounting), latency/cost with pairwise judge scoring, and RAG with recall@k, nDCG@k, and faithfulness across swappable chunking strategies.",
+        "Ran 27 evaluation runs across 75 tasks and 7 model/config variants, surfacing an 8-point first-attempt schema-validity gap between providers on structured output and a p95 latency spread of 6.0s vs 9.4s; found that semantic chunking doubled RAG context precision (0.13 to 0.26) over fixed-window at comparable faithfulness.",
+        "Hand-implemented statistically honest aggregation, attaching 95% Wilson intervals to proportions and binomial order-statistic intervals to p95 latency, with per-metric sample sizes on every leaderboard cell so no aggregate renders as a bare mean.",
+        "Deployed serverless on AWS: dual Lambda (API plus async runner), API Gateway v2, CloudFront, DynamoDB run tracking, and SES magic-link auth; backed by 262 passing tests using injected LiteLLM callables and temporary SQLite databases, running the full suite with no provider calls or model cost.",
       ],
     },
     {
@@ -127,9 +103,9 @@ export const resume = {
         "DynamoDB",
       ],
       bullets: [
-        "Designed a worker-evaluator state machine in LangGraph where a structured-output evaluator checks worker responses against user-defined criteria and reinjects feedback for up to 5 retry turns.",
-        "Made the agent serverless-safe by reconstructing LangGraph state from DynamoDB on every request instead of an in-memory checkpointer.",
-        "Integrated 5 tool domains through LangChain ToolNode and bind tools, shipped the full serverless stack via the same OIDC pipeline.",
+        "Designed a worker-evaluator state machine in LangGraph where a structured-output evaluator checks worker responses against user-defined criteria and reinjects feedback for up to 5 retry turns, raising answer-validity rates before surfacing a result.",
+        "Made the agent serverless-safe by reconstructing LangGraph state from DynamoDB on every request instead of an in-memory checkpointer, eliminating cold-start state loss across Lambda invocations.",
+        "Integrated 5 tool domains through LangChain ToolNode and bind tools: web search (Serper), Wikipedia, sandboxed Python REPL, sandboxed file I/O, and Pushover notifications, and shipped the full serverless stack (containerized FastAPI on ECR, Lambda, API Gateway v2, CloudFront) via the same OIDC pipeline.",
       ],
     },
     {
@@ -146,9 +122,9 @@ export const resume = {
         "S3",
       ],
       bullets: [
-        "Built a streaming personal-website agent using Titan-embedding retrieval over a persona corpus, grounded in a profile assembled at Lambda cold-start from a LinkedIn PDF and style guide.",
-        "Shipped a public evals dashboard scoring retrieval quality on 35 labeled queries per push and LLM-judged faithfulness on live traffic.",
-        "Cut full-stack deployment to a single command across dev, test, and prod.",
+        "Built a streaming personal-website agent using Titan-embedding retrieval over a persona corpus, grounded in a profile assembled at Lambda cold-start from a LinkedIn PDF, career summary, and style guide (parsed via pypdf) and injected into a Bedrock Claude Sonnet system prompt.",
+        "Shipped a public evals dashboard scoring retrieval quality (recall@k, nDCG@k) on 35 labeled queries per push and LLM-judged faithfulness on live traffic via an S3-event-driven judge Lambda that adds zero latency to chat responses.",
+        "Cut full-stack deployment to a single command across dev, test, and prod by chaining Docker build, Lambda upload, Terraform apply, Next.js export, S3 sync, and CloudFront invalidation through GitHub Actions and AWS OIDC.",
       ],
     },
     {
@@ -158,8 +134,8 @@ export const resume = {
       liveUrl: "https://pypi.org/project/mcp-second-opinion",
       tech: ["Python"],
       bullets: [
-        "Built and published an MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs mid-conversation.",
-        "Unified four provider APIs behind a single LiteLLM interface, returning per-call latency, token counts, and cost; gracefully disables providers with no API key instead of failing.",
+        "Built and published an MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs (OpenAI, Gemini, Anthropic, Grok) mid-conversation, exposing two tools: one to query a single model and one to fan out to all enabled providers in parallel and compare answers.",
+        "Unified four provider APIs behind a single LiteLLM interface, returning per-call latency, token counts, and cost; gracefully disables providers with no API key instead of failing, and ships as a pip-installable CLI (71 downloads in its first month) registered through standard MCP client config.",
       ],
     },
   ],
