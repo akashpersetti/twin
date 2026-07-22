@@ -39,7 +39,7 @@ export default function Loader({ onComplete }: LoaderProps) {
         {['A', 'H', 'P'].map(letter => (
           <motion.span
             key={letter}
-            className="text-7xl font-bold tracking-tight"
+            className="text-7xl font-normal tracking-tight"
             style={{ color: 'var(--accent)' }}
             variants={{
               hidden: { opacity: 0, y: 20 },

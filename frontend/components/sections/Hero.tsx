@@ -57,7 +57,7 @@ export default function Hero() {
 
         {/* Headline */}
         <motion.h1
-          className="text-4xl sm:text-6xl md:text-7xl font-bold leading-[1.05] mb-6"
+          className="text-4xl sm:text-6xl md:text-7xl font-normal leading-[1.05] mb-6"
           style={{ color: 'var(--text-primary)' }}
           initial={{ opacity: 0, y: reduced ? 0 : 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -169,7 +169,7 @@ export default function Hero() {
                     height={24}
                     className="h-6 w-6 shrink-0"
                   />
-                  <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                  <span className="text-lg font-normal tracking-tight" style={{ color: 'var(--text-primary)' }}>
                     {item.name}
                   </span>
                 </div>

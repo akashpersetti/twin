@@ -1,12 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { resume } from "@/data/resume";
 
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
+const cooper = localFont({
+  src: "./fonts/cooper-bt-light.otf",
+  variable: "--font-display",
+  weight: "300",
   display: "swap",
+  fallback: ["Georgia", "serif"],
+});
+
+const maison = localFont({
+  src: "./fonts/maison-neue-light.ttf",
+  variable: "--font-sans",
+  weight: "300",
+  display: "swap",
+  fallback: ["system-ui", "Helvetica Neue", "sans-serif"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -35,7 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${cooper.variable} ${maison.variable} ${jetbrainsMono.variable} antialiased`}
         style={{
           background: "var(--bg-base)",
           color: "var(--text-primary)",

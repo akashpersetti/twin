@@ -27,7 +27,7 @@ export default function About() {
           <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="eyebrow mb-3">About</p>
-              <h2 className="mono text-2xl sm:text-4xl font-medium tracking-tighter" style={{ color: 'var(--text-primary)' }}>
+              <h2 className="mono text-2xl sm:text-4xl font-normal tracking-tighter" style={{ color: 'var(--text-primary)' }}>
                 git log --author=&quot;Akash&quot;
               </h2>
             </div>
