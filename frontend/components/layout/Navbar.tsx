@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { id: 'contact', label: 'Contact', tagline: "Let's ship something real" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ onTwinOpen }: { onTwinOpen?: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hovered, setHovered] = useState<number | null>(null);
@@ -88,20 +88,59 @@ export default function Navbar() {
             <span>Akash<span style={{ color: 'var(--accent)' }}>.</span></span>
           </button>
 
-          {/* Center: location + live clock */}
-          <div className="hidden md:flex flex-col items-center text-center">
-            <span className="mono text-[11px] tracking-wide" style={{ color: '#a1a1aa' }}>
-              {resume.basics.location}
-            </span>
-            <span className="mono text-[10px] tabular-nums" style={{ color: '#52525b' }}>
-              {time ?? ' '}
-            </span>
+          {/* Center: location + clock + twin trigger */}
+          <div className="hidden md:flex items-center gap-4">
+            <div className="flex flex-col items-center text-center">
+              <span className="mono text-[11px] tracking-wide" style={{ color: '#a1a1aa' }}>
+                {resume.basics.location}
+              </span>
+              <span className="mono text-[10px] tabular-nums" style={{ color: '#52525b' }}>
+                {time ?? ' '}
+              </span>
+            </div>
+            <span className="h-6 w-px bg-white/10" aria-hidden />
+            <button
+              onClick={onTwinOpen}
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium transition-colors hover:bg-white/10"
+              style={{ color: '#d4d4d8' }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/avatar.png" alt="" className="h-5 w-5 rounded-full object-cover" />
+              Chat with my twin
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              </span>
+            </button>
           </div>
 
-          {/* Hamburger */}
+          {/* Mobile twin trigger + Hamburger */}
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              onClick={onTwinOpen}
+              className="mr-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium"
+              style={{ color: '#d4d4d8' }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/avatar.png" alt="" className="h-4 w-4 rounded-full object-cover" />
+              Twin
+            </button>
+            <motion.button
+              onClick={() => setMenuOpen(true)}
+              className="relative flex h-8 w-9 flex-col items-center justify-center gap-2"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Open menu"
+            >
+              <span className="block h-0.5 w-full" style={{ background: '#fafafa' }} />
+              <span className="block h-0.5 w-full" style={{ background: '#fafafa' }} />
+            </motion.button>
+          </div>
+
+          {/* Desktop hamburger */}
           <motion.button
             onClick={() => setMenuOpen(true)}
-            className="relative flex h-8 w-9 flex-col items-center justify-center gap-2"
+            className="relative hidden md:flex h-8 w-9 flex-col items-center justify-center gap-2"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Open menu"
@@ -141,7 +180,7 @@ export default function Navbar() {
               </span>
               <div className="hidden md:flex flex-col items-center text-center">
                 <span className="mono text-[11px]" style={{ color: '#a1a1aa' }}>{resume.basics.location}</span>
-                <span className="mono text-[10px] tabular-nums" style={{ color: '#52525b' }}>{time ?? ' '}</span>
+                <span className="mono text-[10px] tabular-nums" style={{ color: '#52525b' }}>{time ?? ' '}</span>
               </div>
               <motion.button
                 onClick={() => setMenuOpen(false)}

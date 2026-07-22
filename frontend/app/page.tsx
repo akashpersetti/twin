@@ -17,10 +17,11 @@ import Education from '@/components/sections/Education';
 import Certifications from '@/components/sections/Certifications';
 import More from '@/components/sections/More';
 import Contact from '@/components/sections/Contact';
-import TwinFloatingButton from '@/components/widgets/TwinFloatingButton';
+import TwinDrawer from '@/components/widgets/TwinDrawer';
 
 export default function Home() {
   const [loaderDone, setLoaderDone] = useState(false);
+  const [twinOpen, setTwinOpen] = useState(false);
 
   return (
     <>
@@ -33,7 +34,7 @@ export default function Home() {
       {loaderDone && (
         <>
           <ScrollProgress />
-          <Navbar />
+          <Navbar onTwinOpen={() => setTwinOpen(true)} />
           <main>
             <section id="hero">
               <Hero />
@@ -69,7 +70,7 @@ export default function Home() {
               <Contact />
             </section>
           </main>
-          <TwinFloatingButton />
+          <TwinDrawer open={twinOpen} onClose={() => setTwinOpen(false)} />
         </>
       )}
     </>
