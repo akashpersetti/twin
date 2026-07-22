@@ -138,6 +138,45 @@ export default function Hero() {
             Source Code
           </a>
         </motion.div>
+
+        {/* Techstack marquee */}
+        <motion.div
+          className="relative z-10 w-full max-w-4xl mx-auto mt-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.55 }}
+        >
+          <p className="eyebrow text-center mb-5">Stack I work with</p>
+          <div
+            className="relative flex overflow-hidden"
+            style={{
+              maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+            }}
+          >
+            <div className="animate-marquee flex gap-12 whitespace-nowrap px-4">
+              {[...STACK, ...STACK].map((item, i) => (
+                <div
+                  key={`${item.name}-${i}`}
+                  className="flex items-center gap-2.5 opacity-50 grayscale transition-all hover:opacity-100 hover:grayscale-0 hover:scale-105 cursor-default"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.logoSrc}
+                    alt=""
+                    aria-hidden
+                    width={24}
+                    height={24}
+                    className="h-6 w-6 shrink-0"
+                  />
+                  <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                    {item.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
