@@ -21,7 +21,6 @@ import Contact from '@/components/sections/Contact';
 
 export default function Home() {
   const [loaderDone, setLoaderDone] = useState(false);
-  const [twinOpen, setTwinOpen] = useState(false);
 
   return (
     <>
@@ -37,7 +36,7 @@ export default function Home() {
           <Navbar />
           <main>
             <section id="hero">
-              <Hero onTwinOpen={() => setTwinOpen(true)} />
+              <Hero />
             </section>
             <section id="hero-extras">
               <StatsAndStack />
@@ -73,7 +72,6 @@ export default function Home() {
               <Contact />
             </section>
           </main>
-          <TwinDrawer open={twinOpen} onClose={() => setTwinOpen(false)} />
         </>
       )}
     </>
