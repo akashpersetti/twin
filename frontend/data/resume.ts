@@ -21,7 +21,7 @@ export const resume = {
   impact: [
     { value: 60, unit: "%", label: "Manual effort reduced (Wingman)" },
     { value: 30, unit: "%", label: "Miscounting errors cut (ML Intern)" },
-    { value: 71, unit: "", label: "PyPI downloads in first month (mcp-second-opinion)" },
+    { value: 71, unit: "", label: "PyPI downloads in first month (mcp-second-opinion)", icon: "download" },
     { value: 2, unit: "x", label: "RAG precision from a chunking strategy I found (EvalBench)" },
   ],
 

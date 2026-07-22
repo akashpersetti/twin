@@ -1,5 +1,10 @@
+import { Download } from 'lucide-react';
 import { resume } from '@/data/resume';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
+
+const ICONS: Record<string, React.ReactNode> = {
+  download: <Download size={22} strokeWidth={2.5} />,
+};
 
 export default function ImpactStrip() {
   return (
@@ -9,7 +14,13 @@ export default function ImpactStrip() {
         style={{ borderColor: 'var(--border)' }}
       >
         {resume.impact.map(item => (
-          <AnimatedCounter key={item.label} value={item.value} unit={item.unit} label={item.label} />
+          <AnimatedCounter
+            key={item.label}
+            value={item.value}
+            unit={item.unit}
+            label={item.label}
+            icon={'icon' in item ? ICONS[item.icon] : undefined}
+          />
         ))}
       </div>
     </div>

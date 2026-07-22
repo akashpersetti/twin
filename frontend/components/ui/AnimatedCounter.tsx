@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useInView, useMotionValue, useSpring } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
@@ -8,9 +8,10 @@ interface AnimatedCounterProps {
   value: number;
   unit: string;
   label: string;
+  icon?: ReactNode;
 }
 
-export default function AnimatedCounter({ value, unit, label }: AnimatedCounterProps) {
+export default function AnimatedCounter({ value, unit, label, icon }: AnimatedCounterProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const motionVal = useMotionValue(0);
   const spring = useSpring(motionVal, { damping: 40, stiffness: 100 });
@@ -44,6 +45,11 @@ export default function AnimatedCounter({ value, unit, label }: AnimatedCounterP
           0
         </span>
         <span className="text-3xl font-bold mb-1" style={{ color: 'var(--accent)' }}>{unit}</span>
+        {icon && (
+          <span className="mb-1.5 ml-0.5" style={{ color: 'var(--accent)' }}>
+            {icon}
+          </span>
+        )}
       </div>
       <span className="text-sm text-center max-w-[160px]" style={{ color: 'var(--text-secondary)' }}>
         {label}
