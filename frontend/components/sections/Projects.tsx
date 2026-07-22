@@ -1,27 +1,30 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
-import { Calendar, RotateCcw, Github, ExternalLink } from 'lucide-react';
+import { Github, ExternalLink } from 'lucide-react';
 
-function ProjectLinks({ project }: { project: typeof resume.projects[number] }) {
+function ProjectLinks({ project, active }: { project: typeof resume.projects[number]; active: boolean }) {
   const githubUrl = 'githubUrl' in project ? project.githubUrl : undefined;
   const liveUrl = 'liveUrl' in project ? project.liveUrl : undefined;
 
   if (!githubUrl && !liveUrl) return null;
   return (
-    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
       {githubUrl && (
         <a
           href={githubUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${project.title} on GitHub`}
-          className="inline-flex items-center justify-center w-7 h-7 rounded-full transition-opacity hover:opacity-70"
-          style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-white/10"
+          style={{
+            border: '1px solid var(--border)',
+            color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+          }}
         >
           <Github size={13} />
         </a>
@@ -32,8 +35,11 @@ function ProjectLinks({ project }: { project: typeof resume.projects[number] }) 
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${project.title} live link`}
-          className="inline-flex items-center justify-center w-7 h-7 rounded-full transition-opacity hover:opacity-70"
-          style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-white/10"
+          style={{
+            border: '1px solid var(--border)',
+            color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+          }}
         >
           <ExternalLink size={13} />
         </a>
@@ -42,182 +48,132 @@ function ProjectLinks({ project }: { project: typeof resume.projects[number] }) 
   );
 }
 
-function FlipCard({ project, index }: { project: typeof resume.projects[number]; index: number }) {
-  const [flipped, setFlipped] = useState(false);
-
+function TechPill({ label }: { label: string }) {
   return (
-    <SectionReveal delay={index * 0.1}>
-      {/* Perspective wrapper */}
-      <div
-        className="cursor-pointer"
-        style={{ perspective: '1000px', height: '280px' }}
-        onClick={() => setFlipped(f => !f)}
-      >
-        <motion.div
-          className="relative w-full h-full"
-          style={{ transformStyle: 'preserve-3d' }}
-          animate={{ rotateY: flipped ? 180 : 0 }}
-          transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
-        >
-          {/* Front */}
-          <div
-            className="glass rounded-2xl p-6 absolute inset-0 flex flex-col justify-between"
-            style={{ backfaceVisibility: 'hidden' }}
-          >
-            <div>
-              <h3 className="text-xl font-black mb-1" style={{ color: 'var(--text-primary)' }}>
-                {project.title}
-              </h3>
-              <p className="text-sm font-medium mb-4" style={{ color: 'var(--accent)' }}>
-                {project.subtitle}
-              </p>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span
-                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
-                style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
-              >
-                <Calendar size={10} /> {project.period}
-              </span>
-              <ProjectLinks project={project} />
-            </div>
-          </div>
-
-          {/* Back */}
-          <div
-            className="glass rounded-2xl p-5 absolute inset-0 flex flex-col gap-3 overflow-hidden"
-            style={{
-              backfaceVisibility: 'hidden',
-              transform: 'rotateY(180deg)',
-              background: 'var(--bg-alt)',
-            }}
-          >
-            <div className="flex items-center justify-between flex-shrink-0">
-              <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                {project.title}
-              </span>
-              <RotateCcw size={13} style={{ color: 'var(--text-secondary)' }} />
-            </div>
-
-            <ul className="flex-1 space-y-2 overflow-y-auto">
-              {project.bullets.map((bullet, bi) => (
-                <li key={bi} className="flex gap-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  <span className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full" style={{ background: 'var(--accent)' }} />
-                  {bullet}
-                </li>
-              ))}
-            </ul>
-
-            <div className="flex flex-wrap gap-1.5 pt-2 border-t flex-shrink-0" style={{ borderColor: 'var(--border)' }}>
-              {project.tech.map(t => (
-                <span
-                  key={t}
-                  className="mono text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </SectionReveal>
+    <span
+      className="mono text-[11px] px-2.5 py-1 rounded-md font-medium"
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid var(--border)',
+        color: '#d4d4d8',
+      }}
+    >
+      {label}
+    </span>
   );
 }
 
 export default function Projects() {
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [expandedMobile, setExpandedMobile] = useState<number | null>(null);
+  const [active, setActive] = useState(0);
 
   return (
-    <section className="py-24 px-6" style={{ background: 'var(--bg-alt)' }}>
-      <div className="max-w-6xl mx-auto">
+    <section className="py-24 px-6 section-border">
+      <div className="max-w-4xl mx-auto">
         <SectionHeader
           eyebrow="Selected work"
-          title="Projects"
+          title="Things I've shipped"
           description="Agentic systems, LLM products, and ML pipelines, most shipped serverless on AWS via Terraform and GitHub Actions."
         />
-        <p className="text-sm mb-8 -mt-6 mono" style={{ color: 'var(--text-secondary)' }}>Tap any card to read the details.</p>
 
-        {/* Desktop: 3-col flip grid */}
-        <div className="hidden md:grid md:grid-cols-3 gap-6">
-          {resume.projects.map((project, i) => (
-            <FlipCard key={project.title} project={project} index={i} />
-          ))}
-        </div>
-
-        {/* Mobile: tap-to-expand accordion cards */}
-        <div className="md:hidden flex flex-col gap-4">
-          {resume.projects.map((project, i) => (
-            <div
-              key={project.title}
-              className="glass rounded-2xl overflow-hidden cursor-pointer"
-              onClick={() => setExpandedMobile(expandedMobile === i ? null : i)}
-            >
-              <div className="p-5 flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-black text-base" style={{ color: 'var(--text-primary)' }}>
-                    {project.title}
-                  </h3>
-                  <p className="text-sm font-medium" style={{ color: 'var(--accent)' }}>
-                    {project.subtitle}
-                  </p>
-                  <span
-                    className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full mt-1"
-                    style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
-                  >
-                    <Calendar size={10} /> {project.period}
-                  </span>
-                  <div className="mt-2">
-                    <ProjectLinks project={project} />
-                  </div>
-                </div>
-                <motion.span
-                  animate={{ rotate: expandedMobile === i ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-lg flex-shrink-0"
-                  style={{ color: 'var(--text-secondary)' }}
+        <SectionReveal>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            {resume.projects.map((project, i) => {
+              const on = i === active;
+              return (
+                <div
+                  key={project.title}
+                  onClick={() => setActive(on ? -1 : i)}
+                  className={`group relative cursor-pointer transition-all ${on ? 'py-7' : 'py-5'}`}
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
                 >
-                  ↓
-                </motion.span>
-              </div>
+                  {/* Active accent bar */}
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-px transition-opacity"
+                    style={{ background: 'var(--accent)', opacity: on ? 1 : 0 }}
+                  />
 
-              <AnimatePresence initial={false}>
-                {expandedMobile === i && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    style={{ overflow: 'hidden' }}
-                  >
-                    <div className="px-5 pb-5 border-t" style={{ borderColor: 'var(--border)' }}>
-                      <ul className="mt-3 space-y-2 mb-3">
-                        {project.bullets.map((bullet, bi) => (
-                          <li key={bi} className="flex gap-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                            <span className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full" style={{ background: 'var(--accent)' }} />
-                            {bullet}
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="flex flex-wrap gap-1.5">
-                        {project.tech.map(t => (
-                          <span
-                            key={t}
-                            className="mono text-xs px-2 py-0.5 rounded-full"
-                            style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
+                  {/* Row header */}
+                  <div className="flex items-center gap-4 sm:gap-6 pl-4">
+                    <span
+                      className="mono w-8 text-[11px] tabular-nums shrink-0 transition-colors"
+                      style={{ color: on ? 'var(--accent)' : '#3f3f46' }}
+                    >
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <h3
+                        className={`font-medium tracking-tight transition-all ${
+                          on ? 'text-2xl sm:text-3xl' : 'text-base sm:text-lg'
+                        }`}
+                        style={{ color: on ? 'var(--text-primary)' : 'var(--text-secondary)' }}
+                      >
+                        {project.title}
+                      </h3>
+                      {on && (
+                        <p className="mt-1 text-sm font-medium" style={{ color: 'var(--accent)' }}>
+                          {project.subtitle}
+                        </p>
+                      )}
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+                    <ProjectLinks project={project} active={on} />
+                  </div>
+
+                  {/* Expanded body */}
+                  <AnimatePresence initial={false}>
+                    {on && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <div className="mt-5 grid grid-cols-1 gap-5 pl-4 sm:grid-cols-3 sm:gap-8 sm:pl-[56px]">
+                          <ul className="sm:col-span-2 space-y-2">
+                            {project.bullets.map((bullet, bi) => (
+                              <li
+                                key={bi}
+                                className="flex gap-2 text-[13px] leading-relaxed"
+                                style={{ color: 'var(--text-secondary)' }}
+                              >
+                                <span
+                                  className="mt-1.5 flex-shrink-0 w-1 h-1 rounded-full"
+                                  style={{ background: 'var(--accent)' }}
+                                />
+                                {bullet}
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="flex flex-wrap gap-2 content-start sm:justify-end">
+                            {project.tech.map(t => (
+                              <TechPill key={t} label={t} />
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+        </SectionReveal>
+
+        <div className="mt-10 flex justify-center">
+          <a
+            href="https://github.com/akashpersetti"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium transition-colors hover:bg-white/10"
+            style={{
+              border: '1px solid rgba(255,255,255,0.15)',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#d4d4d8',
+            }}
+          >
+            <Github size={16} />
+            View more on GitHub
+          </a>
         </div>
       </div>
     </section>
