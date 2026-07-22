@@ -10,7 +10,7 @@ export default function SectionHeader({ eyebrow, title, description }: SectionHe
   return (
     <SectionReveal>
       <p className="eyebrow mb-3">{eyebrow}</p>
-      <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+      <h2 className="text-3xl sm:text-5xl font-medium tracking-tighter mb-4" style={{ color: 'var(--text-primary)' }}>
         {title}
       </h2>
       {description && (

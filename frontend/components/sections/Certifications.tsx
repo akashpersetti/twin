@@ -8,7 +8,7 @@ const ACCENT = '#2dd4bf';
 
 export default function Certifications() {
   return (
-    <section className="py-24 px-6">
+    <section className="py-24 px-6 section-border">
       <div className="max-w-4xl mx-auto">
         <SectionHeader eyebrow="Beyond the resume" title="Certs & Activities" />
 

@@ -15,7 +15,7 @@ export default function Contact() {
   ];
 
   return (
-    <section className="py-24 px-6">
+    <section className="py-24 px-6 section-border">
       <div className="max-w-2xl mx-auto">
         <SectionHeader
           eyebrow="Get in touch"

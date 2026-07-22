@@ -3,7 +3,7 @@ import AnimatedCounter from '@/components/ui/AnimatedCounter';
 
 export default function ImpactStrip() {
   return (
-    <div style={{ background: 'var(--bg-alt)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
       <div
         className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x"
         style={{ borderColor: 'var(--border)' }}

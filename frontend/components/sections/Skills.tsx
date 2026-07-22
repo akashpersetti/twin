@@ -20,7 +20,7 @@ export default function Skills() {
   const entries = Object.entries(resume.skills) as [keyof typeof resume.skills, readonly string[]][];
 
   return (
-    <section className="py-24 px-6">
+    <section className="py-24 px-6 section-border">
       <div className="max-w-4xl mx-auto">
         <SectionHeader
           eyebrow="Toolbox"
@@ -39,9 +39,9 @@ export default function Skills() {
                       key={skill}
                       className="mono text-xs px-3 py-1 rounded-full font-medium"
                       style={{
-                        background: 'var(--accent-wash)',
-                        color: 'var(--accent-hover)',
-                        border: '1px solid var(--surface-tint)',
+                        background: 'rgba(255,255,255,0.03)',
+                        color: '#d4d4d8',
+                        border: '1px solid var(--border)',
                       }}
                       initial={{ scale: 0, opacity: 0 }}
                       whileInView={{ scale: 1, opacity: 1 }}

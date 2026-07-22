@@ -12,7 +12,7 @@ export default function Experience() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-24 px-6">
+    <section className="py-24 px-6 section-border">
       <div className="max-w-4xl mx-auto">
         <SectionHeader
           eyebrow="Where I've worked"

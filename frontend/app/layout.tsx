@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { resume } from "@/data/resume";
@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "./icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({
