@@ -24,6 +24,35 @@ const FOCUS_ROWS = [
   { label: 'Platform',    detail: 'FastAPI · Next.js · AWS · Terraform' },
 ];
 
+const half = Math.ceil(STACK.length / 2);
+const STACK_ROW_1 = STACK.slice(0, half);
+const STACK_ROW_2 = STACK.slice(half);
+
+function MarqueeRow({ items }: { items: { name: string; logoSrc: string }[] }) {
+  return (
+    <div
+      className="relative flex overflow-hidden"
+      style={{
+        maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+      }}
+    >
+      <div className="animate-marquee flex gap-14 whitespace-nowrap px-4">
+        {[...items, ...items].map((item, i) => (
+          <div
+            key={`${item.name}-${i}`}
+            className="flex items-center gap-3.5 opacity-50 grayscale transition-all hover:opacity-100 hover:grayscale-0 hover:scale-105 cursor-default"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.logoSrc} alt="" aria-hidden width={32} height={32} className="h-8 w-8 shrink-0" />
+            <span className="text-2xl font-medium tracking-tight text-white">{item.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function StatsAndStack() {
   return (
     <div className="relative z-10 mx-auto max-w-7xl w-full px-6 py-16 lg:px-12">
@@ -73,27 +102,11 @@ export default function StatsAndStack() {
         </div>
 
         {/* Marquee card */}
-        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 py-8 backdrop-blur-xl">
-          <h3 className="mb-6 px-8 text-sm" style={{ color: '#a1a1aa' }}>Stack &amp; tools I use</h3>
-          <div
-            className="relative flex overflow-hidden"
-            style={{
-              maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-            }}
-          >
-            <div className="animate-marquee flex gap-12 whitespace-nowrap px-4">
-              {[...STACK, ...STACK].map((item, i) => (
-                <div
-                  key={`${item.name}-${i}`}
-                  className="flex items-center gap-2.5 opacity-50 grayscale transition-all hover:opacity-100 hover:grayscale-0 hover:scale-105 cursor-default"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.logoSrc} alt="" aria-hidden width={24} height={24} className="h-6 w-6 shrink-0" />
-                  <span className="text-lg font-medium tracking-tight text-white">{item.name}</span>
-                </div>
-              ))}
-            </div>
+        <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 py-8 backdrop-blur-xl">
+          <h3 className="px-8 text-lg font-medium" style={{ color: '#a1a1aa' }}>Stack &amp; tools I use</h3>
+          <div className="flex flex-1 flex-col justify-evenly">
+            <MarqueeRow items={STACK_ROW_1} />
+            <MarqueeRow items={STACK_ROW_2} />
           </div>
         </div>
       </div>
