@@ -8,7 +8,7 @@ interface GradientTextProps {
 export default function GradientText({ children, className = '' }: GradientTextProps) {
   return (
     <span
-      className={`bg-gradient-to-r from-teal-300 via-teal-200 to-teal-400 bg-clip-text text-transparent bg-[length:200%_100%] animate-shimmer ${className}`}
+      className={`bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 bg-clip-text text-transparent bg-[length:200%_100%] animate-shimmer ${className}`}
     >
       {children}
     </span>

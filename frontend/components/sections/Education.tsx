@@ -46,7 +46,7 @@ export default function Education() {
                         className="p-2 rounded-lg mt-0.5"
                         style={{ background: 'var(--accent-wash)' }}
                       >
-                        <GraduationCap size={20} color="#2dd4bf" />
+                        <GraduationCap size={20} color="var(--accent)" />
                       </div>
                       <div>
                         <h3 className="font-bold text-lg leading-tight" style={{ color: 'var(--text-primary)' }}>
