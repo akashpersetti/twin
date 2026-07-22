@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Bot, Sparkles, Brain, Code2, Layers, Database, Cloud, Workflow, ChevronRight } from 'lucide-react';
+import { Bot, Sparkles, Brain, Code2, Layers, Database, Cloud, Workflow, ChevronRight, Terminal } from 'lucide-react';
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -9,6 +9,7 @@ import SectionHeader from '@/components/ui/SectionHeader';
 const SKILL_META: { key: keyof typeof resume.skills; title: string; icon: typeof Bot; blurb: string }[] = [
   { key: 'agentic',     title: 'Agentic AI',            icon: Bot,      blurb: 'Multi-agent pipelines that do real work: LangGraph orchestration, MCP tooling, structured handoffs, and retries that only rerun what failed.' },
   { key: 'genai',       title: 'Generative AI & LLMs',  icon: Sparkles, blurb: 'RAG with real retrieval metrics, LLM evaluation as a discipline (EvalBench), and provider-agnostic integrations across OpenAI, Bedrock, and Hugging Face.' },
+  { key: 'aiCoding',    title: 'AI-Assisted Coding',    icon: Terminal, blurb: 'Pairing with AI coding agents daily to ship faster without skipping review: from terminal-native agents to IDE copilots.' },
   { key: 'ml',          title: 'Machine Learning',      icon: Brain,    blurb: 'Classical ML where it beats an LLM: clustering, classification, CNNs, and real-time computer vision with MediaPipe.' },
   { key: 'languages',   title: 'Languages',             icon: Code2,    blurb: 'Python for AI systems, TypeScript for products, SQL for truth. C++ and Java when the problem demands them.' },
   { key: 'development', title: 'Product Engineering',   icon: Layers,   blurb: 'FastAPI backends, Next.js and React frontends, React Native when it needs to be in your pocket. Shipped, not demoed.' },

@@ -156,6 +156,7 @@ export const resume = {
       "AWS Bedrock (Claude Sonnet)",
     ],
     agentic: ["OpenAI Agents SDK", "CrewAI", "LangGraph", "AutoGen", "Model Context Protocol (MCP)", "Strands Agents", "n8n", "LangChain"],
+    aiCoding: ["Claude Code", "Cursor", "Codex", "Hermes Agent", "OpenClaw"],
     cloud: [
       "AWS (Lambda, S3, CloudFront, Bedrock, DynamoDB, ECR, API Gateway, EC2, VPC, Aurora, App Runner, Amplify, SageMaker)",
       "Google Cloud Platform (GCP)",
