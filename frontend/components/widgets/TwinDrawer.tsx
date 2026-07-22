@@ -45,8 +45,8 @@ export default function TwinDrawer({ open, onClose }: TwinDrawerProps) {
         role="dialog"
         aria-label="Chat with Akash's twin"
         className="fixed z-[60] flex flex-col overflow-hidden shadow-2xl
-                   inset-x-3 bottom-3 h-[80dvh] rounded-3xl border
-                   md:inset-x-auto md:right-6 md:top-6 md:bottom-6 md:h-auto md:w-[min(420px,92vw)]"
+                   inset-x-3 bottom-3 h-[58dvh] rounded-3xl border
+                   md:inset-x-auto md:right-6 md:top-[20dvh] md:bottom-[20dvh] md:h-auto md:w-[min(420px,92vw)]"
         style={{ background: '#0c0c0f', borderColor: 'var(--border)', pointerEvents: open ? 'auto' : 'none' }}
         initial={false}
         animate={

@@ -106,7 +106,7 @@ export default function Navbar({ onTwinOpen }: { onTwinOpen?: () => void }) {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/avatar.png" alt="" className="h-5 w-5 rounded-full object-cover" />
-              Chat with my twin
+              Ask my twin anything
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -123,7 +123,7 @@ export default function Navbar({ onTwinOpen }: { onTwinOpen?: () => void }) {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/avatar.png" alt="" className="h-4 w-4 rounded-full object-cover" />
-              Twin
+              Ask twin
             </button>
             <motion.button
               onClick={() => setMenuOpen(true)}

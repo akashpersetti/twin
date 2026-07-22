@@ -139,10 +139,10 @@ export default function Hero() {
               {...fade(0.05)}
             >
               <span className="bg-gradient-to-br from-white via-zinc-200 to-amber-300/80 bg-clip-text text-transparent">
-                Akash Persetti,
+                Akash Persetti.
               </span>
               <br />
-              <span className="text-white">builds AI that proves itself.</span>
+              <span className="text-white">AI that shows its work.</span>
             </motion.h1>
 
             <motion.p className="max-w-xl text-lg leading-relaxed" style={{ color: '#d4d4d8' }} {...fade(0.15)}>
