@@ -467,23 +467,18 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 </div>
             )}
 
-            {/* Terminal input */}
-            <div
-                style={{ borderTop: '1px solid var(--border-glass)', padding: '10px 16px', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'text' }}
-                onClick={() => hiddenInputRef.current?.focus()}
-            >
-                <span style={{ color: 'var(--accent)', fontWeight: 700, flexShrink: 0, userSelect: 'none' }}>❯</span>
-
-                {/* Visual display of typed text + block cursor */}
-                <div style={{ flex: 1, position: 'relative', minHeight: '1.4em', display: 'flex', alignItems: 'center' }}>
-                    <span style={{ color: busy ? 'var(--text-secondary)' : 'var(--text-primary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {/* Glass pill input row */}
+            <div className="m-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2" style={{ borderTop: 'none' }}>
+                {/* Visual display of typed text (hidden input captures actual keystrokes) */}
+                <div style={{ flex: 1, position: 'relative', minHeight: '1.4em', display: 'flex', alignItems: 'center', cursor: 'text' }}>
+                    <span style={{ color: busy ? 'var(--text-secondary)' : 'var(--text-primary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.9375rem' }}>
                         {input}
                     </span>
                     {inputFocused && !busy && (
                         <span style={{ color: 'var(--accent)', display: 'inline-block', lineHeight: 1 }}>▋</span>
                     )}
                     {!input && !inputFocused && (
-                        <span style={{ color: 'var(--text-secondary)', opacity: 0.35, position: 'absolute', left: 0, pointerEvents: 'none', userSelect: 'none' }}>
+                        <span style={{ color: 'var(--text-secondary)', opacity: 0.35, position: 'absolute', left: 0, pointerEvents: 'none', userSelect: 'none', fontSize: '0.9375rem' }}>
                             {onboardingStep === 'name'
                                 ? 'type your name...'
                                 : onboardingStep === 'contact'
@@ -502,11 +497,13 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                         onBlur={() => setInputFocused(false)}
                         disabled={onboardingStep === 'done' && busy}
                         autoFocus
+                        className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-600"
                         style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'text', width: '100%' }}
                         aria-label="Chat input"
                     />
                 </div>
 
+                {/* Send button: round amber, 32px */}
                 <button
                     onClick={() => {
                         if (onboardingStep === 'name') handleNameSubmit();
@@ -514,7 +511,22 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                         else sendMessage();
                     }}
                     disabled={busy || (onboardingStep === 'done' && !input.trim())}
-                    style={{ background: 'none', border: 'none', cursor: onboardingStep !== 'done' || (input.trim() && !busy) ? 'pointer' : 'not-allowed', color: onboardingStep !== 'done' || (input.trim() && !busy) ? 'var(--accent)' : 'var(--border)', fontFamily: MONO, fontSize: '14px', padding: '0 4px', flexShrink: 0, transition: 'color 0.15s' }}
+                    style={{
+                        background: (onboardingStep !== 'done' || (input.trim() && !busy)) ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: (onboardingStep !== 'done' || (input.trim() && !busy)) ? 'pointer' : 'not-allowed',
+                        color: (onboardingStep !== 'done' || (input.trim() && !busy)) ? '#09090b' : 'rgba(255,255,255,0.2)',
+                        flexShrink: 0,
+                        transition: 'background 0.15s, color 0.15s',
+                        fontSize: '16px',
+                        opacity: busy && onboardingStep === 'done' ? 0.4 : 1,
+                    }}
                     aria-label="Send"
                 >
                     ⏎
