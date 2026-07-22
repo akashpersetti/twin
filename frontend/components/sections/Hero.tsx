@@ -139,7 +139,7 @@ export default function Hero() {
               {...fade(0.05)}
             >
               <span className="bg-gradient-to-br from-white via-zinc-200 to-amber-300/80 bg-clip-text text-transparent">
-                Akash Persetti
+                Akash Persetti,
               </span>
               <br />
               <span className="text-white">builds AI that proves itself.</span>
