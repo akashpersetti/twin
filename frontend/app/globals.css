@@ -5,9 +5,9 @@
 
 /* Brand color tokens */
 @theme {
-  --color-brand-primary: #2dd4bf;
-  --color-brand-accent:  #5eead4;
-  --color-brand-soft:    #99f6e4;
+  --color-brand-primary: #fbbf24;
+  --color-brand-accent:  #fcd34d;
+  --color-brand-soft:    #fde68a;
   --font-display: var(--font-display), Georgia, serif;
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
@@ -21,11 +21,11 @@
   --bg-card:        rgba(255,255,255,0.02);
   --surface-tint:   rgba(255,255,255,0.08);
 
-  /* Accent (teal, dark-tuned) */
-  --accent:         #2dd4bf;
-  --accent-hover:   #5eead4;
-  --accent-soft:    rgba(45,212,191,0.35);
-  --accent-wash:    rgba(45,212,191,0.08);
+  /* Accent (amber, dark-tuned) */
+  --accent:         #fbbf24;
+  --accent-hover:   #fcd34d;
+  --accent-soft:    rgba(251,191,36,0.35);
+  --accent-wash:    rgba(251,191,36,0.08);
 
   /* Text */
   --text-primary:   #fafafa;
@@ -36,7 +36,7 @@
 
   /* Legacy aliases kept so existing var() references resolve */
   --border-glass:   var(--border);
-  --glow-primary:   rgba(45,212,191,0.15);
+  --glow-primary:   rgba(251,191,36,0.15);
 
   /* Terminal syntax (About section) */
   --term-green:     #34d399;
@@ -70,7 +70,7 @@ h3, h4 {
 }
 
 ::selection {
-  background: rgba(45,212,191,0.30);
+  background: rgba(251,191,36,0.30);
   color: #fafafa;
 }
 
