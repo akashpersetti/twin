@@ -305,13 +305,43 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
 
     const busy = isLoading || isStreaming;
 
+    // Helper: determine if this message should show avatar (last in consecutive assistant run)
+    const getShowAvatar = (idx: number) => {
+        const msg = messages[idx];
+        if (msg.role !== 'assistant') return false;
+        const nextMsg = messages[idx + 1];
+        return !nextMsg || nextMsg.role !== 'assistant';
+    };
+
+    // Helper: get tight spacing for consecutive messages of same role
+    const getTightSpacing = (idx: number) => {
+        if (idx === 0) return {};
+        const prevMsg = messages[idx - 1];
+        const currMsg = messages[idx];
+        if (prevMsg && prevMsg.role === currMsg.role) {
+            return { marginTop: '-8px' };
+        }
+        return {};
+    };
+
+    // Helper: check if last user message should show Delivered footer
+    const getLastUserIdx = () => {
+        for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].role === 'user') return i;
+        }
+        return -1;
+    };
+
+    const lastUserIdx = getLastUserIdx();
+    const showDelivered = lastUserIdx >= 0 && lastUserIdx < messages.length - 1;
+
     return (
         <div
             className="flex flex-col h-full"
             style={{ background: 'var(--bg-base)', fontFamily: MONO, fontSize: '13px' }}
         >
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5" style={{ overflowX: 'hidden' }}>
+            <div className="flex-1 overflow-y-auto px-4 py-4" style={{ overflowX: 'hidden' }}>
 
                 {/* Empty state */}
                 {messages.length === 0 && onboardingStep === 'done' && !isLoading && !isStreaming && (
@@ -334,61 +364,71 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                     </div>
                 )}
 
-                {messages.map((message, idx) => {
-                    const isLastAssistant = message.role === 'assistant' && idx === messages.length - 1 && isStreaming;
-                    return (
-                        <div key={message.id} style={{ display: 'flex', flexDirection: 'column', alignItems: message.role === 'user' ? 'flex-end' : 'flex-start', minWidth: 0, width: '100%' }}>
-                            {/* Label + timestamp */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5em', marginBottom: '0.25em' }}>
-                                <span style={{
-                                    fontWeight: 700,
-                                    fontSize: '0.72em',
-                                    letterSpacing: '0.1em',
-                                    color: message.role === 'user' ? 'var(--text-secondary)' : 'var(--accent)',
-                                }}>
-                                    {message.role === 'user' ? 'YOU' : '◆ AKASH'}
-                                </span>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.68em', opacity: 0.5 }}>
-                                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                            </div>
+                <div className="flex flex-col gap-4">
+                    {messages.map((message, idx) => {
+                        const isLastAssistant = message.role === 'assistant' && idx === messages.length - 1 && isStreaming;
+                        const showAvatar = getShowAvatar(idx);
+                        const tightStyle = getTightSpacing(idx);
+                        const showDeliveredAfter = idx === lastUserIdx && showDelivered;
 
-                            {/* Bubble */}
-                            <div style={{
-                                maxWidth: '88%',
-                                paddingLeft: '0.75em',
-                                borderLeft: `2px solid ${message.role === 'user' ? 'var(--border)' : 'var(--accent)'}`,
-                                color: message.role === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                lineHeight: 1.65,
-                                textAlign: 'left',
-                                wordBreak: 'break-word',
-                                overflowWrap: 'break-word',
-                                minWidth: 0,
-                            }}>
-                                {message.role === 'assistant' ? (
-                                    <>
-                                        <ReactMarkdown components={mdComponents}>{message.content}</ReactMarkdown>
-                                        {isLastAssistant && (
-                                            <span style={{ color: 'var(--accent)', display: 'inline-block', marginLeft: '1px' }}>▋</span>
+                        return (
+                            <div key={message.id} style={tightStyle}>
+                                {/* Assistant message bubble */}
+                                {message.role === 'assistant' && (
+                                    <div className="flex items-end gap-2 max-w-[85%]">
+                                        {showAvatar ? (
+                                            <>
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src="/avatar.png" alt="" className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/10" />
+                                            </>
+                                        ) : (
+                                            <div className="w-7 shrink-0" />
                                         )}
-                                    </>
-                                ) : (
-                                    <span>{message.content}</span>
+                                        <div
+                                            className="rounded-2xl rounded-bl-md px-3.5 py-2.5 text-[13px] leading-relaxed"
+                                            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#d4d4d8' }}
+                                        >
+                                            {message.role === 'assistant' ? (
+                                                <>
+                                                    <ReactMarkdown components={mdComponents}>{message.content}</ReactMarkdown>
+                                                    {isLastAssistant && (
+                                                        <span style={{ color: 'var(--accent)', display: 'inline-block', marginLeft: '1px' }}>▋</span>
+                                                    )}
+                                                </>
+                                            ) : null}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* User message bubble */}
+                                {message.role === 'user' && (
+                                    <div className="flex justify-end">
+                                        <div
+                                            className="max-w-[85%] rounded-2xl rounded-br-md px-3.5 py-2.5 text-[13px] leading-relaxed"
+                                            style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.18)', color: '#fafafa' }}
+                                        >
+                                            <span>{message.content}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Delivered footer after last user message */}
+                                {showDeliveredAfter && (
+                                    <p className="text-right text-[10px] mt-1" style={{ color: '#52525b' }}>Delivered</p>
                                 )}
                             </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
 
-                {/* Loading state (before first chunk) */}
-                {isLoading && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.72em', letterSpacing: '0.1em', color: 'var(--accent)', marginBottom: '0.25em' }}>◆ AKASH</span>
-                        <div style={{ paddingLeft: '0.75em', borderLeft: '2px solid var(--accent)' }}>
-                            <span style={{ color: 'var(--accent)' }}>▋</span>
+                    {/* Typing marker (while waiting for first token) */}
+                    {isLoading && !messages.some((m, i) => i === messages.length - 1 && m.role === 'assistant' && m.content.length > 0) && (
+                        <div className="flex items-end gap-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src="/avatar.png" alt="" className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/10" />
+                            <span className="shimmer-text text-[12px] py-1">Akash is typing…</span>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 <div ref={messagesEndRef} />
             </div>
