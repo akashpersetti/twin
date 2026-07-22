@@ -108,7 +108,7 @@ The chat widget (`frontend/components/widgets/TwinFloatingButton.tsx`) is a fixe
 - Expands to a 380×560px glass panel on desktop, or full-screen on mobile / when maximized
 - Keeps the `<Twin>` component always mounted so conversation state survives open/close/fullscreen toggles without resetting
 
-The terminal-style chat (`frontend/components/twin.tsx`) uses Geist Mono font and a CLI aesthetic:
+The terminal-style chat (`frontend/components/twin.tsx`) uses JetBrains Mono and a CLI aesthetic:
 
 - Messages have `YOU` / `◆ AKASH` labels with a colored left border instead of chat bubbles
 - A hidden `<input>` captures keystrokes; a visual div renders the typed text with a static `▋` cursor
@@ -160,6 +160,14 @@ data: {"done": true}
 
 ---
 
+## Design
+
+The portfolio is a single dark theme: pitch-black base (`#09090b`), glass cards (`rgba(255,255,255,0.02)` surfaces with hairline borders), and a warm amber accent (`#fbbf24`) used sparingly for active states and markers. Typography is Cooper BT Light for display text (h1/h2, big statements), Maison Neue Light for body, and JetBrains Mono for terminal/code elements — the first two load from local files in `frontend/app/fonts/`, so no external font requests.
+
+Signature pieces: a mirrored split hero (glass stats + logo-marquee cards left, display text right), a `git log`-styled About section, a scroll-driven timeline wrapping the Experience cards, an accordion project list, an interactive skills rail with a sticky detail pane, a full-page overlay navigation with a live clock, and a contact form posting through FormSubmit. All copy and data come from `frontend/data/resume.ts`.
+
+---
+
 ## Repository Structure
 
 ```
@@ -179,19 +187,22 @@ twin/
 ├── frontend/
 │   ├── app/
 │   │   ├── page.tsx          # Portfolio page (all sections)
-│   │   ├── layout.tsx        # Root layout, FOWT prevention, metadata
+│   │   ├── layout.tsx        # Root layout, local fonts, metadata
+│   │   ├── fonts/            # Cooper BT Light + Maison Neue Light files
 │   │   └── globals.css       # Theme tokens, glass utilities, animations
 │   ├── components/
 │   │   ├── twin.tsx          # Terminal-style streaming chat component
 │   │   ├── widgets/
 │   │   │   └── TwinFloatingButton.tsx  # FAB + chat panel
-│   │   ├── sections/         # Hero, Experience, Projects, Skills, etc.
-│   │   └── ui/               # GlassCard, TiltCard, GradientText, etc.
+│   │   ├── layout/           # Navbar (full-page overlay), ScrollProgress
+│   │   ├── sections/         # Hero, Objective, About, Experience, Projects, Skills, etc.
+│   │   └── ui/               # SectionHeader, Timeline, GlassCard, etc.
 │   ├── data/
 │   │   └── resume.ts         # Single source of truth for all resume content
-│   ├── hooks/                # useScrollSpy, useTheme, useReducedMotion
+│   ├── hooks/                # useScrollSpy, useReducedMotion
 │   └── public/
-│       └── avatar.png        # Profile photo (used in FAB and chat)
+│       ├── avatar.png        # Profile photo (used in FAB and chat)
+│       └── brands/           # Stack logos for the hero marquee
 │
 ├── terraform/                # All AWS infrastructure as code
 │   ├── main.tf
