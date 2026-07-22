@@ -7,6 +7,7 @@ import Loader from '@/components/sections/Loader';
 import ScrollProgress from '@/components/layout/ScrollProgress';
 import Navbar from '@/components/layout/Navbar';
 import Hero from '@/components/sections/Hero';
+import StatsAndStack from '@/components/sections/StatsAndStack';
 import ImpactStrip from '@/components/sections/ImpactStrip';
 import Objective from '@/components/sections/Objective';
 import About from '@/components/sections/About';
@@ -38,6 +39,9 @@ export default function Home() {
           <main>
             <section id="hero">
               <Hero onTwinOpen={() => setTwinOpen(true)} />
+            </section>
+            <section id="hero-extras">
+              <StatsAndStack />
             </section>
             <section id="impact">
               <ImpactStrip />
