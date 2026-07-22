@@ -18,7 +18,6 @@ import Education from '@/components/sections/Education';
 import Certifications from '@/components/sections/Certifications';
 import More from '@/components/sections/More';
 import Contact from '@/components/sections/Contact';
-import TwinDrawer from '@/components/widgets/TwinDrawer';
 
 export default function Home() {
   const [loaderDone, setLoaderDone] = useState(false);
