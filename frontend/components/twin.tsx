@@ -324,7 +324,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                 style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--accent-soft)' }}
                             />
                         ) : (
-                            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: '#fff' }}>A</div>
+                            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, color: '#09090b' }}>A</div>
                         )}
                         <div style={{ textAlign: 'center' }}>
                             <p style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: 4 }}>Hello!</p>

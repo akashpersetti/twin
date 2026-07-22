@@ -52,8 +52,8 @@ export default function Navbar() {
             style={{ color: 'var(--text-primary)' }}
           >
             <span
-              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold text-white"
-              style={{ background: 'var(--accent)' }}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold"
+              style={{ background: 'var(--accent)', color: '#09090b' }}
             >
               A
             </span>
@@ -83,8 +83,8 @@ export default function Navbar() {
             <a
               href="/resume.pdf"
               download
-              className="ml-3 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
-              style={{ background: 'var(--accent)' }}
+              className="ml-3 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              style={{ background: 'var(--accent)', color: '#09090b' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
             >

@@ -34,7 +34,7 @@ export default function TwinFloatingButton() {
         {open && fullscreen && (
           <motion.div
             className="fixed inset-0 z-40"
-            style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -60,7 +60,7 @@ export default function TwinFloatingButton() {
           position: 'fixed',
           zIndex: 50,
           borderRadius: 20,
-          boxShadow: '0 20px 50px rgba(15,23,42,0.18)',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
           pointerEvents: open ? 'auto' : 'none',
           // Switch between fullscreen and panel geometry
           ...(fullscreen
@@ -128,7 +128,7 @@ export default function TwinFloatingButton() {
               exit={{ opacity: 0, x: 8, scale: 0.95 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
               className="glass rounded-xl px-3 py-2 flex items-center gap-2 select-none cursor-pointer whitespace-nowrap"
-              style={{ boxShadow: '0 8px 24px rgba(15,23,42,0.12)' }}
+              style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.45)' }}
               onClick={() => setOpen(true)}
             >
               <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 600 }}>
@@ -162,7 +162,7 @@ export default function TwinFloatingButton() {
                 exit={{ opacity: 0, scale: 0.7 }}
                 transition={{ duration: 0.15 }}
               >
-                <X size={22} className="text-white" />
+                <X size={22} style={{ color: '#09090b' }} />
               </motion.div>
             ) : (
               <motion.img

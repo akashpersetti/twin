@@ -27,7 +27,7 @@ export default function MobileDrawer({ open, onClose, items, activeId }: MobileD
         <>
           <motion.div
             className="fixed inset-0 z-40"
-            style={{ background: 'rgba(15,23,42,0.25)', backdropFilter: 'blur(2px)' }}
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

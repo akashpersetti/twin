@@ -37,7 +37,7 @@ export default function Contact() {
                   >
                     <div
                       className="p-2 rounded-lg flex-shrink-0"
-                      style={{ background: 'var(--accent-wash)', color: '#0d9488' }}
+                      style={{ background: 'var(--accent-wash)', color: '#2dd4bf' }}
                     >
                       <Icon size={18} />
                     </div>
@@ -63,7 +63,7 @@ export default function Contact() {
               className="p-3 rounded-xl flex-shrink-0"
               style={{ background: 'var(--bg-base)' }}
             >
-              <Bot size={24} color="#0d9488" />
+              <Bot size={24} color="#2dd4bf" />
             </div>
             <div>
               <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>

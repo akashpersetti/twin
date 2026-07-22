@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Download, ArrowRight, Github } from 'lucide-react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { resume } from '@/data/resume';
@@ -8,24 +8,37 @@ import { EncryptedText } from '@/components/ui/encrypted-text';
 
 const downloadFilename = `${resume.basics.name.replace(/\s+/g, '_')}_Resume.pdf`;
 
+/** Infinite marquee — logos in /public/brands/ (single-color #fff for dark UI) */
+const STACK: { name: string; logoSrc: string }[] = [
+  { name: 'LangGraph',   logoSrc: '/brands/langgraph.svg' },
+  { name: 'FastAPI',     logoSrc: '/brands/fastapi.svg' },
+  { name: 'AWS Bedrock', logoSrc: '/brands/awsbedrock.svg' },
+  { name: 'Terraform',   logoSrc: '/brands/terraform.svg' },
+  { name: 'Next.js',     logoSrc: '/brands/nextjs.svg' },
+  { name: 'Python',      logoSrc: '/brands/python.svg' },
+  { name: 'TypeScript',  logoSrc: '/brands/typescript.svg' },
+  { name: 'LangChain',   logoSrc: '/brands/langchain.svg' },
+  { name: 'DynamoDB',    logoSrc: '/brands/dynamodb.svg' },
+  { name: 'React',       logoSrc: '/brands/react.svg' },
+  { name: 'PostgreSQL',  logoSrc: '/brands/postgresql.svg' },
+  { name: 'Docker',      logoSrc: '/brands/docker.svg' },
+];
+
 export default function Hero() {
-  const { scrollY } = useScroll();
   const reduced = useReducedMotion();
-  const gridY = useTransform(scrollY, [0, 500], [0, reduced ? 0 : -80]);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6">
-      {/* Subtle light grid background */}
-      <motion.div className="absolute inset-0 bg-grid-mesh" style={{ y: gridY }} />
-
-      {/* Faint teal wash behind the headline */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 46% 38% at 50% 42%, rgba(94,234,212,0.18) 0%, transparent 70%)',
-        }}
-      />
+      {/* Layered dark background — glow + aurora + grain */}
+      <div className="absolute inset-0 hero-bg" aria-hidden>
+        <div className="absolute inset-0 hero-glow" />
+        <div className="absolute inset-0 hero-aurora" />
+        <div className="absolute inset-0 hero-grain" />
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(to top, #09090b, transparent 30%, transparent 75%, rgba(9,9,11,0.6))' }}
+        />
+      </div>
 
       <div className="relative z-10 w-full max-w-3xl mx-auto text-center pt-20">
         {/* Eyebrow / status */}
@@ -99,10 +112,8 @@ export default function Hero() {
         >
           <button
             onClick={() => document.getElementById('experience')?.scrollIntoView({ behavior: 'smooth' })}
-            className="group inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-colors"
-            style={{ background: 'var(--accent)' }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'var(--accent-hover)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'var(--accent)')}
+            className="group inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{ background: '#fafafa', color: '#09090b' }}
           >
             View Experience
             <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
@@ -110,10 +121,8 @@ export default function Hero() {
           <a
             href="/resume.pdf"
             download={downloadFilename}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors"
-            style={{ border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-base)' }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-soft)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+            className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm transition-colors hover:bg-white/10"
+            style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'var(--text-primary)', background: 'rgba(255,255,255,0.05)' }}
           >
             <Download size={16} />
             Download Resume
@@ -122,10 +131,8 @@ export default function Hero() {
             href="https://github.com/akashpersetti/twin"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors"
-            style={{ border: '1px solid var(--border)', color: 'var(--text-primary)', background: 'var(--bg-base)' }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--accent-soft)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+            className="inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm transition-colors hover:bg-white/10"
+            style={{ border: '1px solid rgba(255,255,255,0.12)', color: 'var(--text-primary)', background: 'rgba(255,255,255,0.05)' }}
           >
             <Github size={16} />
             Source Code

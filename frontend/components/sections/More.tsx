@@ -3,7 +3,7 @@ import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
 import GlassCard from '@/components/ui/GlassCard';
 
-const ACCENT = '#0d9488';
+const ACCENT = '#2dd4bf';
 
 export default function More() {
   return (
