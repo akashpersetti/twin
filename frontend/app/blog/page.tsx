@@ -234,12 +234,12 @@ export default function BlogManager() {
                 onChange={e => setEmail(e.target.value)}
                 style={{ padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.875rem', outline: 'none' }}
               />
-              <button type="submit" disabled={sendingLink} style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.625rem', fontWeight: 600, cursor: sendingLink ? 'default' : 'pointer', opacity: sendingLink ? 0.7 : 1 }}>
+              <button type="submit" disabled={sendingLink} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '8px', padding: '0.625rem', fontWeight: 600, cursor: sendingLink ? 'default' : 'pointer', opacity: sendingLink ? 0.7 : 1 }}>
                 {sendingLink ? 'Sending…' : 'Send magic link'}
               </button>
             </form>
           )}
-          {authError && <p style={{ color: '#ef4444', fontSize: '0.8125rem', margin: '0.75rem 0 0' }}>{authError}</p>}
+          {authError && <p style={{ color: '#f87171', fontSize: '0.8125rem', margin: '0.75rem 0 0' }}>{authError}</p>}
         </div>
       </div>
     );
@@ -256,12 +256,12 @@ export default function BlogManager() {
               <button onClick={handleSignOut} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', padding: '0.25rem', fontSize: '0.8125rem', cursor: 'pointer', textDecoration: 'underline' }}>
                 Sign out
               </button>
-              <button onClick={startCreate} style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={startCreate} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
                 + New Post
               </button>
             </div>
           </div>
-          {msg && <p style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem' }}>{msg}</p>}
+          {msg && <p style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-primary)' }}>{msg}</p>}
           {loading && <p style={{ color: 'var(--text-secondary)' }}>Loading…</p>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {posts.map(post => (
@@ -270,14 +270,14 @@ export default function BlogManager() {
                   <p style={{ fontWeight: 600, margin: 0 }}>{post.title}</p>
                   <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0', fontFamily: 'var(--font-mono)' }}>{post.slug}</p>
                 </div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.625rem', borderRadius: '999px', background: post.status === 'published' ? '#dcfce7' : 'var(--surface-tint)', color: post.status === 'published' ? '#15803d' : 'var(--accent)' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.625rem', borderRadius: '999px', background: post.status === 'published' ? 'rgba(52,211,153,0.15)' : 'var(--surface-tint)', color: post.status === 'published' ? '#34d399' : 'var(--accent)' }}>
                   {post.status}
                 </span>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{post.date}</span>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <button onClick={() => startEdit(post)} style={btnStyle()}>Edit</button>
                   <button onClick={() => handleTogglePublish(post)} style={btnStyle()}>{post.status === 'published' ? 'Unpublish' : 'Publish'}</button>
-                  <button onClick={() => setDeleteTarget(post)} style={btnStyle('#fee2e2', '#dc2626')}>Delete</button>
+                  <button onClick={() => setDeleteTarget(post)} style={btnStyle('rgba(239,68,68,0.15)', '#ef4444')}>Delete</button>
                 </div>
               </div>
             ))}
@@ -289,7 +289,7 @@ export default function BlogManager() {
               <p style={{ fontWeight: 600, marginBottom: '1rem' }}>Delete &ldquo;{deleteTarget.title}&rdquo;? This cannot be undone.</p>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <button onClick={() => setDeleteTarget(null)} style={btnStyle()}>Cancel</button>
-                <button onClick={handleDelete} style={btnStyle('#fee2e2', '#dc2626')}>Confirm Delete</button>
+                <button onClick={handleDelete} style={btnStyle('rgba(239,68,68,0.15)', '#ef4444')}>Confirm Delete</button>
               </div>
             </div>
           </div>
@@ -322,7 +322,7 @@ export default function BlogManager() {
             />
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button onClick={() => handleSave(false)} disabled={loading} style={{ ...btnStyle(), padding: '0.625rem 1rem' }}>Save Draft</button>
-              <button onClick={() => handleSave(true)} disabled={loading} style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.625rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => handleSave(true)} disabled={loading} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '8px', padding: '0.625rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
                 Save & Publish
               </button>
             </div>
@@ -340,10 +340,10 @@ export default function BlogManager() {
   );
 }
 
-function btnStyle(bg = '#f1f5f9', color = 'var(--text-primary)'): React.CSSProperties {
+function btnStyle(bg = 'rgba(255,255,255,0.08)', color = 'var(--text-primary)'): React.CSSProperties {
   return { background: bg, color, border: '1px solid var(--border)', borderRadius: '8px', padding: '0.375rem 0.75rem', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer' };
 }
 
 function inputStyle(): React.CSSProperties {
-  return { padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.875rem', background: '#fff', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' };
+  return { padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.875rem', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' };
 }

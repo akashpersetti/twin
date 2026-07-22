@@ -85,7 +85,7 @@ h1, h2, h3, h4 {
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #71717a;
+  color: var(--text-secondary);
 }
 
 /* Monospace accent for code/technical bits */
