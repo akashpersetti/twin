@@ -8,6 +8,7 @@ import ScrollProgress from '@/components/layout/ScrollProgress';
 import Navbar from '@/components/layout/Navbar';
 import Hero from '@/components/sections/Hero';
 import ImpactStrip from '@/components/sections/ImpactStrip';
+import About from '@/components/sections/About';
 import Experience from '@/components/sections/Experience';
 import Projects from '@/components/sections/Projects';
 import Skills from '@/components/sections/Skills';
@@ -38,6 +39,9 @@ export default function Home() {
             </section>
             <section id="impact">
               <ImpactStrip />
+            </section>
+            <section id="about">
+              <About />
             </section>
             <section id="experience">
               <Experience />
