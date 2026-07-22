@@ -17,31 +17,12 @@ const NAV_ITEMS = [
   { id: 'contact', label: 'Contact', tagline: "Let's ship something real" },
 ];
 
-export default function Navbar({ onTwinOpen }: { onTwinOpen?: () => void }) {
+export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hovered, setHovered] = useState<number | null>(null);
   const [time, setTime] = useState<string | null>(null);
-  const [showTwinTip, setShowTwinTip] = useState(false);
   const activeId = useScrollSpy(NAV_ITEMS.map(n => n.id));
-
-  /* One-shot coach-mark nudging first-time visitors toward the twin trigger */
-  useEffect(() => {
-    if (sessionStorage.getItem('twin_tip_seen')) return;
-    const show = setTimeout(() => setShowTwinTip(true), 2200);
-    const hide = setTimeout(() => dismissTwinTip(), 8200);
-    return () => { clearTimeout(show); clearTimeout(hide); };
-  }, []);
-
-  function dismissTwinTip() {
-    setShowTwinTip(false);
-    sessionStorage.setItem('twin_tip_seen', '1');
-  }
-
-  function handleTwinOpen() {
-    dismissTwinTip();
-    onTwinOpen?.();
-  }
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
@@ -107,7 +88,7 @@ export default function Navbar({ onTwinOpen }: { onTwinOpen?: () => void }) {
             <span>Akash<span style={{ color: 'var(--accent)' }}>.</span></span>
           </button>
 
-          {/* Center: location + clock + twin trigger */}
+          {/* Center: location + clock */}
           <div className="hidden md:flex items-center gap-4">
             <div className="flex flex-col items-center text-center">
               <span className="mono text-[11px] tracking-wide" style={{ color: '#a1a1aa' }}>
@@ -117,53 +98,10 @@ export default function Navbar({ onTwinOpen }: { onTwinOpen?: () => void }) {
                 {time ?? ' '}
               </span>
             </div>
-            <span className="h-6 w-px bg-white/10" aria-hidden />
-            <div className="relative">
-              <AnimatePresence>
-                {showTwinTip && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className="absolute left-1/2 top-full mt-3 -translate-x-1/2 whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-medium shadow-lg"
-                    style={{ background: 'rgba(9,9,11,0.96)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                  >
-                    <span
-                      className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-l border-t"
-                      style={{ background: 'rgba(9,9,11,0.96)', borderColor: 'var(--border)' }}
-                    />
-                    👋 Psst, try asking my twin something
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              <button
-                onClick={handleTwinOpen}
-                className="twin-glow flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10"
-                style={{ color: '#f4f4f5' }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/avatar.png" alt="" className="h-6 w-6 rounded-full object-cover" />
-                Ask my twin anything
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                </span>
-              </button>
-            </div>
           </div>
 
-          {/* Mobile twin trigger + Hamburger */}
+          {/* Hamburger */}
           <div className="flex items-center gap-2 md:hidden">
-            <button
-              onClick={handleTwinOpen}
-              className="twin-glow mr-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium"
-              style={{ color: '#f4f4f5' }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/avatar.png" alt="" className="h-5 w-5 rounded-full object-cover" />
-              Ask twin
-            </button>
             <motion.button
               onClick={() => setMenuOpen(true)}
               className="relative flex h-8 w-9 flex-col items-center justify-center gap-2"

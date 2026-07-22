@@ -34,10 +34,10 @@ export default function Home() {
       {loaderDone && (
         <>
           <ScrollProgress />
-          <Navbar onTwinOpen={() => setTwinOpen(true)} />
+          <Navbar />
           <main>
             <section id="hero">
-              <Hero />
+              <Hero onTwinOpen={() => setTwinOpen(true)} />
             </section>
             <section id="impact">
               <ImpactStrip />
