@@ -1,114 +1,88 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Briefcase, MapPin, Calendar } from 'lucide-react';
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
-import GlassCard from '@/components/ui/GlassCard';
+import { Briefcase, ChevronRight, MapPin } from 'lucide-react';
 
 export default function Experience() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
-
   return (
     <section className="py-24 px-6 section-border">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <SectionHeader
-          eyebrow="Where I've worked"
-          title="Experience"
-          description="From applied ML internships to building production AI products, shipping end-to-end, in production."
+          eyebrow="Experience"
+          title="Where I've been deployed"
+          note="Real products, real users, real constraints."
         />
 
-        <div className="relative">
-          {/* Timeline line */}
-          <div
-            className="absolute left-4 top-0 bottom-0 w-px hidden md:block"
-            style={{ background: 'var(--border)' }}
-          />
+        <div className="flex flex-col gap-6">
+          {resume.experience.map((exp, i) => {
+            const current = exp.period.includes('Present');
+            return (
+              <SectionReveal key={`${exp.role}-${exp.period}`} delay={i * 0.1}>
+                <div className="relative rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+                  {/* Ambient glows */}
+                  <div className="pointer-events-none absolute -top-32 -right-32 h-64 w-64 rounded-full blur-3xl" style={{ background: 'rgba(251,191,36,0.04)' }} aria-hidden />
+                  <div className="pointer-events-none absolute -bottom-20 -left-20 h-48 w-48 rounded-full blur-3xl" style={{ background: 'rgba(56,189,248,0.04)' }} aria-hidden />
 
-          <div className="flex flex-col gap-6">
-            {resume.experience.map((exp, i) => (
-              <SectionReveal key={`${exp.role}-${exp.company}`} delay={i * 0.1}>
-                <div className="md:pl-12 relative">
-                  {/* Timeline dot */}
-                  <div
-                    className="absolute left-2.5 top-6 w-3 h-3 rounded-full border-2 hidden md:block"
-                    style={{
-                      background: openIndex === i ? 'var(--accent)' : 'var(--bg-base)',
-                      borderColor: openIndex === i ? 'var(--accent)' : 'var(--border)',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
-
-                  <GlassCard className="cursor-pointer" >
-                    <button
-                      className="w-full text-left"
-                      onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                              {exp.role}
-                            </h3>
-                            <span
-                              className="text-xs px-2 py-0.5 rounded-full font-medium"
-                              style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
-                            >
-                              {exp.type}
-                            </span>
-                          </div>
-                          <p className="font-semibold mb-2" style={{ color: 'var(--accent)' }}>
-                            {exp.company}
-                          </p>
-                          <div className="flex flex-wrap gap-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            <span className="flex items-center gap-1">
-                              <MapPin size={13} /> {exp.location}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar size={13} /> {exp.period}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Briefcase size={13} /> {exp.project}
-                            </span>
-                          </div>
+                  <div className="relative z-10 p-8 sm:p-10">
+                    {/* Header row */}
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-8">
+                      <div className="flex items-start gap-4">
+                        <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.05] ring-1 ring-white/10">
+                          <Briefcase className="h-5 w-5 text-white" />
                         </div>
-                        <motion.div
-                          animate={{ rotate: openIndex === i ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                          style={{ color: 'var(--text-secondary)', flexShrink: 0 }}
-                        >
-                          <ChevronDown size={20} />
-                        </motion.div>
+                        <div>
+                          <h3 className="text-xl font-semibold tracking-tight text-white leading-snug">{exp.role}</h3>
+                          <p className="mt-1 text-sm font-medium" style={{ color: 'var(--accent)' }}>{exp.company}</p>
+                        </div>
                       </div>
-                    </button>
 
-                    <AnimatePresence initial={false}>
-                      {openIndex === i && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3, ease: 'easeInOut' }}
-                          style={{ overflow: 'hidden' }}
+                      <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end sm:gap-1.5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                            current
+                              ? 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                              : 'border border-white/[0.08] bg-white/[0.03]'
+                          }`}
+                          style={current ? {} : { color: '#a1a1aa' }}
                         >
-                          <ul className="mt-4 space-y-3 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-                            {exp.bullets.map((bullet, bi) => (
-                              <li key={bi} className="flex gap-3 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                                <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--accent)' }} />
-                                {bullet}
-                              </li>
-                            ))}
-                          </ul>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </GlassCard>
+                          {current && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                          {exp.period}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px]" style={{ color: '#a1a1aa' }}>
+                          <MapPin className="w-3 h-3" />
+                          {exp.location}
+                        </span>
+                        <span className="inline-flex items-center rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px]" style={{ color: '#a1a1aa' }}>
+                          {exp.type}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Project label */}
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: '#52525b' }}>
+                      Project
+                    </p>
+                    <p className="mb-6 text-[15px] text-white">{exp.project}</p>
+
+                    {/* Bullets */}
+                    <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: '#52525b' }}>
+                      What I built
+                    </p>
+                    <ul className="space-y-2.5">
+                      {exp.bullets.map(b => (
+                        <li key={b} className="flex items-start gap-2.5 text-[13px] leading-relaxed" style={{ color: '#a1a1aa' }}>
+                          <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color: 'rgba(251,191,36,0.6)' }} />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </SectionReveal>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>
