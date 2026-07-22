@@ -143,6 +143,13 @@ h3, h4 {
 }
 .animate-marquee { animation: marquee 40s linear infinite; }
 
+/* ─── Skills detail pane fade ───────────────────── */
+@keyframes detailFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.skill-detail { animation: detailFade 0.3s ease-out; }
+
 /* ─── About / commit-log ─────────────────────────── */
 /* Commit rows animate via framer-motion whileInView (see About.tsx) —
    pure-CSS mount animations would play before the section is scrolled into view. */
