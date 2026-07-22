@@ -5,40 +5,46 @@
 
 /* Brand color tokens */
 @theme {
-  --color-brand-primary: #0d9488;
-  --color-brand-accent:  #0f766e;
-  --color-brand-soft:    #5eead4;
+  --color-brand-primary: #2dd4bf;
+  --color-brand-accent:  #5eead4;
+  --color-brand-soft:    #99f6e4;
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
-/* ─── Design Tokens (light teal, single theme) ───── */
+/* ─── Design Tokens (pitch black, single theme) ──── */
 :root {
   /* Surfaces */
-  --bg-base:        #ffffff;
-  --bg-alt:         #f7fafa;   /* alternating section background */
-  --bg-card:        #ffffff;
-  --surface-tint:   #ccfbf1;   /* light teal surface/border */
+  --bg-base:        #09090b;
+  --bg-alt:         #0c0c0f;   /* slightly lifted section background */
+  --bg-card:        rgba(255,255,255,0.02);
+  --surface-tint:   rgba(255,255,255,0.08);
 
-  /* Accent (teal) */
-  --accent:         #0d9488;
-  --accent-hover:   #0f766e;
-  --accent-soft:    #5eead4;
-  --accent-wash:    rgba(13,148,136,0.08);
+  /* Accent (teal, dark-tuned) */
+  --accent:         #2dd4bf;
+  --accent-hover:   #5eead4;
+  --accent-soft:    rgba(45,212,191,0.35);
+  --accent-wash:    rgba(45,212,191,0.08);
 
   /* Text */
-  --text-primary:   #0f172a;
-  --text-secondary: #475569;
+  --text-primary:   #fafafa;
+  --text-secondary: #a1a1aa;
 
   /* Lines */
-  --border:         #e2e8f0;
+  --border:         rgba(255,255,255,0.08);
 
   /* Legacy aliases kept so existing var() references resolve */
   --border-glass:   var(--border);
-  --glow-primary:   rgba(13,148,136,0.12);
+  --glow-primary:   rgba(45,212,191,0.15);
+
+  /* Terminal syntax (About section) */
+  --term-green:     #34d399;
+  --term-sky:       #38bdf8;
+  --term-amber:     #fbbf24;
 }
 
 /* ─── Base typography ───────────────────────────── */
+html { scroll-behavior: smooth; }
 html, body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   color: var(--text-primary);
@@ -51,37 +57,35 @@ h1, h2, h3, h4 {
 }
 
 ::selection {
-  background: var(--accent-soft);
-  color: #0f172a;
+  background: rgba(45,212,191,0.30);
+  color: #fafafa;
 }
 
-/* ─── Card surfaces (flat, crisp, subtle border) ── */
+/* ─── Card surfaces (dark glass) ─────────────────── */
 .glass {
   background:       var(--bg-card);
   border:           1px solid var(--border);
-  border-radius:    14px;
-  box-shadow:       0 1px 2px rgba(15,23,42,0.04);
+  border-radius:    16px;
+  box-shadow:       0 1px 2px rgba(0,0,0,0.4);
 }
 
 .glass-hover {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 }
 .glass-hover:hover {
-  border-color: var(--accent-soft);
-  box-shadow:
-    0 1px 2px rgba(15,23,42,0.04),
-    0 8px 24px rgba(13,148,136,0.10);
+  border-color: rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.04);
   transform: translateY(-2px);
 }
 
 /* Small uppercase eyebrow label above section titles */
 .eyebrow {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: #71717a;
 }
 
 /* Monospace accent for code/technical bits */
@@ -89,17 +93,58 @@ h1, h2, h3, h4 {
   font-family: var(--font-mono), ui-monospace, monospace;
 }
 
-/* ─── Subtle background detail ───────────────────── */
-.bg-grid-mesh {
-  background-image:
-    linear-gradient(var(--border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-  background-size: 56px 56px;
-  -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 40%, #000 0%, transparent 78%);
-          mask-image: radial-gradient(ellipse 70% 55% at 50% 40%, #000 0%, transparent 78%);
+/* Thin section separators (replaces alternating bg) */
+.section-border { border-top: 1px solid rgba(255,255,255,0.06); }
+
+/* ─── Hero background layers ─────────────────────── */
+.hero-bg { background: radial-gradient(ellipse at 70% 20%, #131316 0%, #09090b 65%); }
+
+@keyframes auroraDrift {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50%      { transform: translate3d(-3%, 2%, 0) scale(1.08); }
+}
+.hero-aurora {
+  background:
+    radial-gradient(40% 50% at 25% 30%, rgba(45,212,191,0.07), transparent 70%),
+    radial-gradient(45% 45% at 80% 65%, rgba(56,189,248,0.06), transparent 70%),
+    radial-gradient(35% 40% at 50% 50%, rgba(168,85,247,0.05), transparent 70%);
+  animation: auroraDrift 18s ease-in-out infinite;
+  filter: blur(40px);
+}
+.hero-glow {
+  background:
+    radial-gradient(circle at 75% 25%, rgba(45,212,191,0.10), transparent 45%),
+    radial-gradient(circle at 20% 80%, rgba(56,189,248,0.07), transparent 50%);
+  filter: blur(2px);
+}
+.hero-grain {
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ─── Animations ────────────────────────────────── */
+/* ─── Techstack marquee ──────────────────────────── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 40s linear infinite; }
+
+/* ─── About / commit-log ─────────────────────────── */
+/* Commit rows animate via framer-motion whileInView (see About.tsx) —
+   pure-CSS mount animations would play before the section is scrolled into view. */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+.cursor-blink::after {
+  content: '▋';
+  margin-left: 2px;
+  animation: cursorBlink 1s step-start infinite;
+  color: var(--term-green);
+}
+
+/* ─── Animations (existing, kept) ────────────────── */
 @keyframes shimmer {
   0%   { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }
