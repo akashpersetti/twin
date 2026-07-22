@@ -55,7 +55,7 @@ export default function Contact() {
         />
 
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-5">
-          {/* Form — left 3 cols */}
+          {/* Form: left 3 cols */}
           <SectionReveal className="lg:col-span-3">
             <form onSubmit={handleSubmit} className="space-y-3">
               {status === 'sent' && (
@@ -63,7 +63,7 @@ export default function Contact() {
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-400" />
                   <div>
                     <p className="text-sm font-medium text-green-100">Message sent!</p>
-                    <p className="mt-0.5 text-xs text-green-200/70">Thanks for reaching out — I&apos;ll get back to you within 24 hours.</p>
+                    <p className="mt-0.5 text-xs text-green-200/70">Thanks for reaching out. I&apos;ll get back to you within 1 hour.</p>
                   </div>
                 </div>
               )}
@@ -114,7 +114,7 @@ export default function Contact() {
                       color: status === 'sent' ? 'rgba(74,222,128,0.9)' : status === 'error' ? 'rgba(248,113,113,0.9)' : '#71717a',
                     }}
                   >
-                    {status === 'sent' ? 'Message delivered' : status === 'error' ? 'Send failed — try again' : status === 'sending' ? 'Sending…' : 'Reply within 24 h'}
+                    {status === 'sent' ? 'Message delivered' : status === 'error' ? 'Send failed, try again' : status === 'sending' ? 'Sending…' : 'Reply within 1 hour'}
                   </span>
                   <button
                     type="submit"
@@ -129,7 +129,7 @@ export default function Contact() {
             </form>
           </SectionReveal>
 
-          {/* Socials — right 2 cols */}
+          {/* Socials: right 2 cols */}
           <SectionReveal delay={0.1} className="lg:col-span-2">
             <div className="flex flex-col justify-between gap-10 h-full">
               <div className="space-y-4">

@@ -4,10 +4,10 @@ import { motion } from 'framer-motion';
 import SectionReveal from '@/components/ui/SectionReveal';
 
 const COMMITS = [
-  { hash: 'a3f9e12', type: 'feat',     msg: 'join MyEdMaster as AI Engineer — adaptive AI tutoring in production' },
-  { hash: 'f81c440', type: 'feat',     msg: 'ship EvalBench — multi-provider LLM benchmarks: structured output, latency/cost, RAG' },
-  { hash: '7d2b9ac', type: 'feat',     msg: 'build TerraformAgent — 6-node LangGraph pipeline generating validated IaC' },
-  { hash: 'c5e0d71', type: 'feat',     msg: 'deploy digital twin — RAG-backed portfolio with live faithfulness evals' },
+  { hash: 'a3f9e12', type: 'feat',     msg: 'join MyEdMaster as AI Engineer: adaptive AI tutoring in production' },
+  { hash: 'f81c440', type: 'feat',     msg: 'ship EvalBench, multi-provider LLM benchmarks: structured output, latency/cost, RAG' },
+  { hash: '7d2b9ac', type: 'feat',     msg: 'build TerraformAgent: 6-node LangGraph pipeline generating validated IaC' },
+  { hash: 'c5e0d71', type: 'feat',     msg: 'deploy digital twin: RAG-backed portfolio with live faithfulness evals' },
   { hash: '92ab3fe', type: 'refactor', msg: 'pivot focus → LLM evaluation & agentic systems' },
   { hash: '0c1d8b4', type: 'init',     msg: 'init: M.S. Computer Science @ Indiana University Bloomington' },
 ];
@@ -50,7 +50,7 @@ export default function About() {
               <span className="h-3 w-3 rounded-full" style={{ background: '#3f3f46' }} />
               <span className="h-3 w-3 rounded-full" style={{ background: '#3f3f46' }} />
               <span className="h-3 w-3 rounded-full" style={{ background: '#3f3f46' }} />
-              <span className="ml-4 text-[11px]" style={{ color: '#52525b' }}>~/akash — zsh</span>
+              <span className="ml-4 text-[11px]" style={{ color: '#52525b' }}>~/akash - zsh</span>
             </div>
 
             {/* Prompt line */}
@@ -62,7 +62,7 @@ export default function About() {
               <span style={{ color: 'var(--text-primary)' }}>git log --oneline --author=&quot;Akash&quot;</span>
             </div>
 
-            {/* Commit rows — staggered reveal when scrolled into view */}
+            {/* Commit rows: staggered reveal when scrolled into view */}
             <div className="px-5 pb-2">
               {COMMITS.map(({ hash, type, msg }, i) => (
                 <motion.div

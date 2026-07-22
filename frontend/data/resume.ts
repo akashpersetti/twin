@@ -30,7 +30,7 @@ export const resume = {
       company: "MyEdMaster LLC",
       location: "Leesburg, Virginia, United States",
       type: "Remote",
-      period: "Jun 2026 – Present",
+      period: "Jun 2026 - Present",
       project: "Adaptive AI Tutoring Product",
       bullets: [
         "Building an adaptive AI tutoring product that assesses a learner’s existing knowledge of a target topic or certification and generates a customized, real-time training program covering only the gaps, using Python, LLMs (OpenAI SDK), and MySQL.",
@@ -42,7 +42,7 @@ export const resume = {
       company: "MyEdMaster LLC",
       location: "Leesburg, Virginia, United States",
       type: "Remote",
-      period: "Jun 2025 – Aug 2025",
+      period: "Jun 2025 - Aug 2025",
       project: "Virtual Coach for Exercise Assessment",
       bullets: [
         "Built a real-time computer-vision exercise-assessment system that cut repetition miscounting by roughly 30% and reached over 92% count accuracy across 3 exercise types (Kettlebell Front Raise, Seated Leg Extensions, Jack Knives) by adding calibration routines and motion-consistency checks in Python and MediaPipe, lowering estimated coach intervention time by about 40%.",
@@ -169,7 +169,7 @@ export const resume = {
       institution: "Indiana University Bloomington",
       school: "Luddy School of Informatics, Computing and Engineering",
       location: "Bloomington, Indiana, United States",
-      period: "Aug 2024 – May 2026 (Graduated)",
+      period: "Aug 2024 - May 2026 (Graduated)",
       gpa: "3.8 / 4.0",
       coursework: [
         "Applied Algorithms",
@@ -187,7 +187,7 @@ export const resume = {
       institution: "The National Institute of Engineering, Mysuru, India",
       school: "Autonomous under Visvesvaraya Technological University",
       location: "Mysuru, India",
-      period: "2020 – 2024",
+      period: "2020 - 2024",
       gpa: "3.7 / 4.0",
       coursework: [
         "Computer Networks",
@@ -211,7 +211,7 @@ export const resume = {
     {
       title: "Introduction to Machine Learning",
       issuer: "NPTEL / IIT Madras",
-      period: "Oct 2022 – Jan 2023",
+      period: "Oct 2022 - Jan 2023",
       details: "Completed a 12-week online course covering neural networks, regression, and KNN",
       topics: ["Neural Networks", "Regression", "KNN"],
     },

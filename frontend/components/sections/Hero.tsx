@@ -7,7 +7,7 @@ import { resume } from '@/data/resume';
 
 const downloadFilename = `${resume.basics.name.replace(/\s+/g, '_')}_Resume.pdf`;
 
-/** Infinite marquee — logos in /public/brands/ */
+/** Infinite marquee: logos in /public/brands/ */
 const STACK: { name: string; logoSrc: string }[] = [
   { name: 'LangGraph',   logoSrc: '/brands/langgraph.svg' },
   { name: 'FastAPI',     logoSrc: '/brands/fastapi.svg' },
@@ -60,7 +60,7 @@ export default function Hero() {
       <div className="relative z-10 mx-auto max-w-7xl w-full px-6 py-32 lg:px-12">
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-10 items-center">
 
-          {/* LEFT — cards (mirror of reference) */}
+          {/* LEFT: cards (mirror of reference) */}
           <motion.div className="order-2 lg:order-1 lg:col-span-5 space-y-6" {...fade(0.35)}>
             {/* Stats card */}
             <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl">
@@ -132,7 +132,7 @@ export default function Hero() {
             </div>
           </motion.div>
 
-          {/* RIGHT — text */}
+          {/* RIGHT: text */}
           <div className="order-1 lg:order-2 lg:col-span-7 space-y-8">
             <motion.h1
               className="text-5xl sm:text-6xl lg:text-7xl xl:text-[80px] font-normal leading-[1.02]"
@@ -147,7 +147,7 @@ export default function Hero() {
             </motion.h1>
 
             <motion.p className="max-w-xl text-lg leading-relaxed" style={{ color: '#d4d4d8' }} {...fade(0.15)}>
-              AI Engineer at MyEdMaster — building adaptive AI tutoring that assesses what a learner
+              AI Engineer at MyEdMaster, building adaptive AI tutoring that assesses what a learner
               already knows and teaches only the gaps. M.S. Computer Science, Indiana University Bloomington.
             </motion.p>
 
@@ -156,8 +156,8 @@ export default function Hero() {
               style={{ color: '#71717a' }}
               {...fade(0.22)}
             >
-              Day-to-day: LangGraph pipelines, structured outputs, RAG with real retrieval metrics —
-              evals before vibes, every model claim gets benchmarked.
+              Day-to-day: LangGraph pipelines, structured outputs, RAG with real retrieval metrics.
+              Evals before vibes, every model claim gets benchmarked.
             </motion.p>
 
             <motion.div className="flex flex-col sm:flex-row gap-4" {...fade(0.3)}>

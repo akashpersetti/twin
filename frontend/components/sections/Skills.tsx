@@ -7,14 +7,14 @@ import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
 
 const SKILL_META: { key: keyof typeof resume.skills; title: string; icon: typeof Bot; blurb: string }[] = [
-  { key: 'agentic',     title: 'Agentic AI',            icon: Bot,      blurb: 'Multi-agent pipelines that do real work — LangGraph orchestration, MCP tooling, structured handoffs, and retries that only rerun what failed.' },
+  { key: 'agentic',     title: 'Agentic AI',            icon: Bot,      blurb: 'Multi-agent pipelines that do real work: LangGraph orchestration, MCP tooling, structured handoffs, and retries that only rerun what failed.' },
   { key: 'genai',       title: 'Generative AI & LLMs',  icon: Sparkles, blurb: 'RAG with real retrieval metrics, LLM evaluation as a discipline (EvalBench), and provider-agnostic integrations across OpenAI, Bedrock, and Hugging Face.' },
-  { key: 'ml',          title: 'Machine Learning',      icon: Brain,    blurb: 'Classical ML where it beats an LLM — clustering, classification, CNNs, and real-time computer vision with MediaPipe.' },
+  { key: 'ml',          title: 'Machine Learning',      icon: Brain,    blurb: 'Classical ML where it beats an LLM: clustering, classification, CNNs, and real-time computer vision with MediaPipe.' },
   { key: 'languages',   title: 'Languages',             icon: Code2,    blurb: 'Python for AI systems, TypeScript for products, SQL for truth. C++ and Java when the problem demands them.' },
-  { key: 'development', title: 'Product Engineering',   icon: Layers,   blurb: 'FastAPI backends, Next.js and React frontends, React Native when it needs to be in your pocket — shipped, not demoed.' },
-  { key: 'databases',   title: 'Databases',             icon: Database, blurb: 'Relational when it matters, document when it fits, DynamoDB when it scales — plus vector stores for retrieval.' },
-  { key: 'cloud',       title: 'Cloud',                 icon: Cloud,    blurb: 'AWS-first serverless — Lambda, API Gateway, S3, Bedrock — provisioned as code, torn down as easily.' },
-  { key: 'devops',      title: 'CI/CD & DevOps',        icon: Workflow, blurb: 'GitHub Actions pipelines, Docker images, Terraform for AWS and Azure — deploys are boring by design.' },
+  { key: 'development', title: 'Product Engineering',   icon: Layers,   blurb: 'FastAPI backends, Next.js and React frontends, React Native when it needs to be in your pocket. Shipped, not demoed.' },
+  { key: 'databases',   title: 'Databases',             icon: Database, blurb: 'Relational when it matters, document when it fits, DynamoDB when it scales, plus vector stores for retrieval.' },
+  { key: 'cloud',       title: 'Cloud',                 icon: Cloud,    blurb: 'AWS-first serverless: Lambda, API Gateway, S3, Bedrock. Provisioned as code, torn down as easily.' },
+  { key: 'devops',      title: 'CI/CD & DevOps',        icon: Workflow, blurb: 'GitHub Actions pipelines, Docker images, Terraform for AWS and Azure. Deploys are boring by design.' },
 ];
 
 export default function Skills() {
@@ -29,7 +29,7 @@ export default function Skills() {
         <SectionHeader
           eyebrow="Skill-Set"
           title="What I reach for"
-          note="Agents first, evals always — then the stack to ship them."
+          note="Agents first, evals always, then the stack to ship them."
         />
 
         <SectionReveal>

@@ -72,7 +72,7 @@ export default function Projects() {
         <SectionHeader
           eyebrow="Selected work"
           title="Built, shipped, measured"
-          note="Agentic systems and LLM products — most serverless on AWS."
+          note="Agentic systems and LLM products, most serverless on AWS."
         />
 
         <SectionReveal>

@@ -30,7 +30,7 @@ export default function Objective() {
         <SectionHeader
           eyebrow="Career Objective"
           title="What I'm building toward"
-          description="Shipping AI systems that handle real constraints — orchestration, evaluation, and deployment at scale."
+          description="Shipping AI systems that handle real constraints: orchestration, evaluation, and deployment at scale."
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
