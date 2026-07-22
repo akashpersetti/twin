@@ -8,26 +8,8 @@ export default function PostCard({ post }: { post: PostMeta }) {
       href={`/${post.slug}`}
       style={{ display: "block", textDecoration: "none", color: "inherit" }}
     >
-      <article
-        style={{
-          border: "1px solid var(--border)",
-          borderRadius: "14px",
-          padding: "1.5rem",
-          background: "var(--bg-card)",
-          transition: "border-color 0.2s, box-shadow 0.2s, transform 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = "var(--accent-soft)";
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(13,148,136,0.10)";
-          (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
-          (e.currentTarget as HTMLElement).style.boxShadow = "none";
-          (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-        }}
-      >
-        <h2 style={{ fontSize: "1.125rem", fontWeight: 700, margin: "0 0 0.5rem", color: "var(--text-primary)" }}>
+      <article className="glass glass-hover" style={{ padding: "1.5rem" }}>
+        <h2 className="font-display" style={{ fontSize: "1.375rem", margin: "0 0 0.5rem", color: "var(--text-primary)" }}>
           {post.title}
         </h2>
         <p style={{ fontSize: "0.9375rem", color: "var(--text-secondary)", margin: "0 0 0.75rem", lineHeight: 1.6 }}>

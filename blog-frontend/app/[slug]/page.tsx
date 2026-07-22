@@ -25,7 +25,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       </a>
       <article>
         <header style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, lineHeight: 1.2, margin: "0 0 1rem" }}>{post.title}</h1>
+          <h1 className="font-display" style={{ fontSize: "2.25rem", lineHeight: 1.2, margin: "0 0 1rem" }}>{post.title}</h1>
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
             <time style={{ fontSize: "0.875rem", color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>
               {post.date}{post.updated !== post.date ? ` · updated ${post.updated}` : ""}
