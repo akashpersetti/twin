@@ -138,17 +138,17 @@ export default function Hero() {
               className="text-5xl sm:text-6xl lg:text-7xl xl:text-[80px] font-normal leading-[1.02]"
               {...fade(0.05)}
             >
-              Hello, I&apos;m{' '}
               <span className="bg-gradient-to-br from-white via-zinc-200 to-amber-300/80 bg-clip-text text-transparent">
                 Akash Persetti
               </span>
               <br />
-              <span className="text-white">AI Engineer</span>
+              <span className="text-white">builds AI that proves itself.</span>
             </motion.h1>
 
             <motion.p className="max-w-xl text-lg leading-relaxed" style={{ color: '#d4d4d8' }} {...fade(0.15)}>
-              AI Engineer at MyEdMaster, building adaptive AI tutoring that assesses what a learner
-              already knows and teaches only the gaps. M.S. Computer Science, Indiana University Bloomington.
+              Most days I&apos;m wiring LangGraph agents, benchmarking LLMs across providers with
+              EvalBench, or shipping FastAPI and Next.js apps serverless on AWS. This site runs on
+              a RAG-powered digital twin I built, with its faithfulness scored live.
             </motion.p>
 
             <motion.p
@@ -156,8 +156,8 @@ export default function Hero() {
               style={{ color: '#71717a' }}
               {...fade(0.22)}
             >
-              Day-to-day: LangGraph pipelines, structured outputs, RAG with real retrieval metrics.
-              Evals before vibes, every model claim gets benchmarked.
+              Evals before vibes: every model claim gets benchmarked.
+              M.S. Computer Science, Indiana University Bloomington.
             </motion.p>
 
             <motion.div className="flex flex-col sm:flex-row gap-4" {...fade(0.3)}>
