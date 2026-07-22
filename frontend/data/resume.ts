@@ -19,9 +19,10 @@ export const resume = {
   },
 
   impact: [
-    { value: 60, unit: "%", label: "Manual effort reduced (Sentinel)" },
+    { value: 60, unit: "%", label: "Manual effort reduced (Wingman)" },
     { value: 30, unit: "%", label: "Miscounting errors cut (ML Intern)" },
-    { value: 25, unit: "%", label: "Organic search visibility lift (Web Development Intern)" },
+    { value: 71, unit: "", label: "PyPI downloads in first month (mcp-second-opinion)" },
+    { value: 2, unit: "x", label: "RAG precision from a chunking strategy I found (EvalBench)" },
   ],
 
   experience: [
