@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
+import { Send } from 'lucide-react';
 
 const MONO = 'var(--font-mono), "JetBrains Mono", "Fira Code", monospace';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -72,7 +73,6 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     const [isLoading, setIsLoading] = useState(false);
     const [isStreaming, setIsStreaming] = useState(false);
     const [sessionId, setSessionId] = useState<string>('');
-    const [inputFocused, setInputFocused] = useState(false);
     const [onboardingStep, setOnboardingStep] = useState<'name' | 'contact' | 'done'>('name');
     const [visitorName, setVisitorName] = useState<string | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -338,7 +338,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     return (
         <div
             className="flex flex-col h-full"
-            style={{ background: 'var(--bg-base)', fontFamily: MONO, fontSize: '13px' }}
+            style={{ background: 'var(--bg-base)' }}
         >
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-4" style={{ overflowX: 'hidden' }}>
@@ -389,13 +389,9 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#d4d4d8' }}
                                         >
                                             {message.role === 'assistant' ? (
-                                                <>
-                                                    <ReactMarkdown components={mdComponents}>{message.content}</ReactMarkdown>
-                                                    {isLastAssistant && (
-                                                        <span style={{ color: 'var(--accent)', display: 'inline-block', marginLeft: '1px' }}>▋</span>
-                                                    )}
-                                                </>
+                                                <ReactMarkdown components={mdComponents}>{message.content}</ReactMarkdown>
                                             ) : null}
+                                            {isLastAssistant && <span className="sr-only">Typing</span>}
                                         </div>
                                     </div>
                                 )}
@@ -444,8 +440,8 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                     justifyContent: 'space-between',
                     flexShrink: 0,
                 }}>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.80em', fontFamily: MONO }}>
-                        Don't want to share?
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                        Don&apos;t want to share?
                     </span>
                     <button
                         onClick={handleOnboardingSkip}
@@ -454,12 +450,10 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                             border: '1px solid var(--border)',
                             color: 'var(--text-primary)',
                             padding: '5px 18px',
-                            borderRadius: '6px',
-                            fontFamily: MONO,
-                            fontSize: '0.82em',
-                            fontWeight: 700,
+                            borderRadius: '999px',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
                             cursor: 'pointer',
-                            letterSpacing: '0.04em',
                         }}
                     >
                         Skip ↗
@@ -468,40 +462,26 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
             )}
 
             {/* Glass pill input row */}
-            <div className="m-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2" style={{ borderTop: 'none' }}>
-                {/* Visual display of typed text (hidden input captures actual keystrokes) */}
-                <div style={{ flex: 1, position: 'relative', minHeight: '1.4em', display: 'flex', alignItems: 'center', cursor: 'text' }}>
-                    <span style={{ color: busy ? 'var(--text-secondary)' : 'var(--text-primary)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.9375rem' }}>
-                        {input}
-                    </span>
-                    {inputFocused && !busy && (
-                        <span style={{ color: 'var(--accent)', display: 'inline-block', lineHeight: 1 }}>▋</span>
-                    )}
-                    {!input && !inputFocused && (
-                        <span style={{ color: 'var(--text-secondary)', opacity: 0.35, position: 'absolute', left: 0, pointerEvents: 'none', userSelect: 'none', fontSize: '0.9375rem' }}>
-                            {onboardingStep === 'name'
-                                ? 'type your name...'
-                                : onboardingStep === 'contact'
-                                ? 'type your email or phone...'
-                                : 'ask something...'}
-                        </span>
-                    )}
-                    {/* Hidden real input to capture keystrokes */}
-                    <input
-                        ref={hiddenInputRef}
-                        type="text"
-                        value={input}
-                        onChange={e => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        onFocus={() => setInputFocused(true)}
-                        onBlur={() => setInputFocused(false)}
-                        disabled={onboardingStep === 'done' && busy}
-                        autoFocus
-                        className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-600"
-                        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'text', width: '100%' }}
-                        aria-label="Chat input"
-                    />
-                </div>
+            <div className="m-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+                <input
+                    ref={hiddenInputRef}
+                    type="text"
+                    value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={onboardingStep === 'done' && busy}
+                    autoFocus
+                    placeholder={
+                        onboardingStep === 'name'
+                            ? 'Type your name...'
+                            : onboardingStep === 'contact'
+                            ? 'Type your email or phone...'
+                            : 'Ask something...'
+                    }
+                    className="flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-zinc-600"
+                    style={{ color: busy ? 'var(--text-secondary)' : 'var(--text-primary)' }}
+                    aria-label="Chat input"
+                />
 
                 {/* Send button: round amber, 32px */}
                 <button
@@ -524,12 +504,11 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                         color: (onboardingStep !== 'done' || (input.trim() && !busy)) ? '#09090b' : 'rgba(255,255,255,0.2)',
                         flexShrink: 0,
                         transition: 'background 0.15s, color 0.15s',
-                        fontSize: '16px',
                         opacity: busy && onboardingStep === 'done' ? 0.4 : 1,
                     }}
                     aria-label="Send"
                 >
-                    ⏎
+                    <Send size={14} />
                 </button>
             </div>
         </div>

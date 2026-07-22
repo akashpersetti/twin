@@ -40,13 +40,13 @@ export default function TwinDrawer({ open, onClose }: TwinDrawerProps) {
         )}
       </AnimatePresence>
 
-      {/* Desktop: right drawer. Mobile: bottom sheet. Twin stays mounted so chat state survives. */}
+      {/* Desktop: floating right panel with top/bottom margin. Mobile: floating bottom sheet. Twin stays mounted so chat state survives. */}
       <motion.aside
         role="dialog"
         aria-label="Chat with Akash's twin"
-        className="fixed z-[60] flex flex-col
-                   inset-x-0 bottom-0 h-[85dvh] rounded-t-3xl border-t
-                   md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:h-full md:w-[min(420px,92vw)] md:rounded-none md:border-t-0 md:border-l"
+        className="fixed z-[60] flex flex-col overflow-hidden shadow-2xl
+                   inset-x-3 bottom-3 h-[80dvh] rounded-3xl border
+                   md:inset-x-auto md:right-6 md:top-6 md:bottom-6 md:h-auto md:w-[min(420px,92vw)]"
         style={{ background: '#0c0c0f', borderColor: 'var(--border)', pointerEvents: open ? 'auto' : 'none' }}
         initial={false}
         animate={
