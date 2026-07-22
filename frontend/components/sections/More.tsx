@@ -9,7 +9,7 @@ export default function More() {
   return (
     <section className="py-24 px-6 section-border">
       <div className="max-w-4xl mx-auto">
-        <SectionHeader eyebrow="Elsewhere" title="More" />
+        <SectionHeader eyebrow="Beyond code" title="Beyond the repo" note="Leadership, community, and the rest." />
 
         <div className="grid md:grid-cols-2 gap-6">
           <SectionReveal>

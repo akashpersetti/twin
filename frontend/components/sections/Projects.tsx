@@ -71,8 +71,8 @@ export default function Projects() {
       <div className="max-w-4xl mx-auto">
         <SectionHeader
           eyebrow="Selected work"
-          title="Things I've shipped"
-          description="Agentic systems, LLM products, and ML pipelines, most shipped serverless on AWS via Terraform and GitHub Actions."
+          title="Built, shipped, measured"
+          note="Agentic systems and LLM products — most serverless on AWS."
         />
 
         <SectionReveal>

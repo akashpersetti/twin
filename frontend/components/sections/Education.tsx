@@ -10,7 +10,7 @@ export default function Education() {
   return (
     <section className="py-24 px-6 section-border">
       <div className="max-w-4xl mx-auto">
-        <SectionHeader eyebrow="Academic background" title="Education" />
+        <SectionHeader eyebrow="Education" title="Formal pretraining" note="The degrees behind the demos." />
 
         <div className="relative">
           {/* Timeline line */}

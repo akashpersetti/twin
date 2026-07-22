@@ -10,7 +10,7 @@ export default function Certifications() {
   return (
     <section className="py-24 px-6 section-border">
       <div className="max-w-4xl mx-auto">
-        <SectionHeader eyebrow="Beyond the resume" title="Certs & Activities" />
+        <SectionHeader eyebrow="Credentials" title="Proof of work" note="Verified, not vibes." />
 
         <div className="grid gap-6">
           {/* Certifications */}
