@@ -26,7 +26,7 @@ export default function TwinPanel() {
       <AnimatePresence>
         {isMaximized && (
           <motion.div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-50"
             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -44,7 +44,7 @@ export default function TwinPanel() {
         transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
         className={
           isMaximized
-            ? 'fixed inset-4 md:inset-x-[10%] md:inset-y-[5%] z-50 flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
+            ? 'fixed inset-4 md:inset-x-[10%] md:inset-y-[5%] z-[60] flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
             : 'relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
         }
       >
