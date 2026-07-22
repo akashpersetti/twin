@@ -75,7 +75,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     const [sessionId, setSessionId] = useState<string>('');
     const [onboardingStep, setOnboardingStep] = useState<'name' | 'contact' | 'done'>('name');
     const [visitorName, setVisitorName] = useState<string | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const hiddenInputRef = useRef<HTMLInputElement>(null);
 
     const [avatarError, setAvatarError] = useState(false);
@@ -89,8 +89,13 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     }));
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const el = messagesContainerRef.current;
+        if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
     }, [messages]);
+
+    useEffect(() => {
+        hiddenInputRef.current?.focus({ preventScroll: true });
+    }, []);
 
     const triggerGreeting = async (name: string) => {
         const greetId = (Date.now() + 2).toString();
@@ -137,7 +142,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         } finally {
             setIsLoading(false);
             setIsStreaming(false);
-            setTimeout(() => hiddenInputRef.current?.focus(), 50);
+            setTimeout(() => hiddenInputRef.current?.focus({ preventScroll: true }), 50);
         }
     };
 
@@ -222,7 +227,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         } finally {
             setIsLoading(false);
             setIsStreaming(false);
-            setTimeout(() => hiddenInputRef.current?.focus(), 50);
+            setTimeout(() => hiddenInputRef.current?.focus({ preventScroll: true }), 50);
         }
     };
 
@@ -341,7 +346,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
             style={{ background: 'var(--bg-base)' }}
         >
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4" style={{ overflowX: 'hidden' }}>
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4" style={{ overflowX: 'hidden' }}>
 
                 {/* Empty state */}
                 {messages.length === 0 && onboardingStep === 'done' && !isLoading && !isStreaming && (
@@ -426,7 +431,6 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                     )}
                 </div>
 
-                <div ref={messagesEndRef} />
             </div>
 
             {/* Skip banner - only shown during onboarding */}
@@ -470,7 +474,6 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={onboardingStep === 'done' && busy}
-                    autoFocus
                     placeholder={
                         onboardingStep === 'name'
                             ? 'Type your name...'

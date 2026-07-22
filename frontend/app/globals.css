@@ -136,19 +136,6 @@ h3, h4 {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* ─── Twin trigger glow ──────────────────────────── */
-@keyframes twinGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); }
-  50%      { box-shadow: 0 0 18px 3px rgba(251,191,36,0.35); }
-}
-.twin-glow {
-  animation: twinGlow 2.6s ease-in-out infinite;
-}
-.twin-glow:hover {
-  animation-play-state: paused;
-  box-shadow: 0 0 22px 4px rgba(251,191,36,0.5);
-}
-
 /* ─── Techstack marquee ──────────────────────────── */
 @keyframes marquee {
   from { transform: translateX(0); }

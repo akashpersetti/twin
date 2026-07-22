@@ -7,6 +7,7 @@ import Loader from '@/components/sections/Loader';
 import ScrollProgress from '@/components/layout/ScrollProgress';
 import Navbar from '@/components/layout/Navbar';
 import Hero from '@/components/sections/Hero';
+import StatsAndStack from '@/components/sections/StatsAndStack';
 import ImpactStrip from '@/components/sections/ImpactStrip';
 import Objective from '@/components/sections/Objective';
 import About from '@/components/sections/About';
@@ -17,11 +18,9 @@ import Education from '@/components/sections/Education';
 import Certifications from '@/components/sections/Certifications';
 import More from '@/components/sections/More';
 import Contact from '@/components/sections/Contact';
-import TwinDrawer from '@/components/widgets/TwinDrawer';
 
 export default function Home() {
   const [loaderDone, setLoaderDone] = useState(false);
-  const [twinOpen, setTwinOpen] = useState(false);
 
   return (
     <>
@@ -37,7 +36,10 @@ export default function Home() {
           <Navbar />
           <main>
             <section id="hero">
-              <Hero onTwinOpen={() => setTwinOpen(true)} />
+              <Hero />
+            </section>
+            <section id="hero-extras">
+              <StatsAndStack />
             </section>
             <section id="impact">
               <ImpactStrip />
@@ -70,7 +72,6 @@ export default function Home() {
               <Contact />
             </section>
           </main>
-          <TwinDrawer open={twinOpen} onClose={() => setTwinOpen(false)} />
         </>
       )}
     </>
