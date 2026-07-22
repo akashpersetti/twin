@@ -3,23 +3,17 @@
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
+import { Timeline } from '@/components/ui/timeline';
 import { Briefcase, ChevronRight, MapPin } from 'lucide-react';
 
 export default function Experience() {
-  return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-5xl mx-auto">
-        <SectionHeader
-          eyebrow="Experience"
-          title="Where I've been deployed"
-          note="Real products, real users, real constraints."
-        />
-
-        <div className="flex flex-col gap-6">
-          {resume.experience.map((exp, i) => {
-            const current = exp.period.includes('Present');
-            return (
-              <SectionReveal key={`${exp.role}-${exp.period}`} delay={i * 0.1}>
+  const entries = resume.experience.map((exp, i) => {
+    const current = exp.period.includes('Present');
+    const year = exp.period.match(/\d{4}/)?.[0] ?? exp.period;
+    return {
+      title: current ? `${year} +` : year,
+      content: (
+        <SectionReveal key={`${exp.role}-${exp.period}`} delay={i * 0.1}>
                 <div className="relative rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
                   {/* Ambient glows */}
                   <div className="pointer-events-none absolute -top-32 -right-32 h-64 w-64 rounded-full blur-3xl" style={{ background: 'rgba(251,191,36,0.04)' }} aria-hidden />
@@ -81,9 +75,19 @@ export default function Experience() {
                   </div>
                 </div>
               </SectionReveal>
-            );
-          })}
-        </div>
+      ),
+    };
+  });
+
+  return (
+    <section className="py-24 px-6 section-border">
+      <div className="max-w-5xl mx-auto">
+        <SectionHeader
+          eyebrow="Experience"
+          title="Where I've been deployed"
+          note="Real products, real users, real constraints."
+        />
+        <Timeline data={entries} />
       </div>
     </section>
   );
