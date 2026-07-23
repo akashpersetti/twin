@@ -1,0 +1,76 @@
+name: Synthetic Eval Snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment whose evals_bucket to upload the snapshot to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  run-eval:
+    name: Run synthetic eval snapshot (${{ github.event.inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: github-actions-synthetic-eval
+          aws-region: ${{ secrets.DEFAULT_AWS_REGION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_wrapper: false  # Important: disable wrapper to get raw outputs
+
+      - name: Get evals bucket
+        id: tf_outputs
+        working-directory: ./terraform
+        run: |
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          AWS_REGION=${{ secrets.DEFAULT_AWS_REGION }}
+          terraform init -input=false \
+            -backend-config="bucket=twin-terraform-state-${AWS_ACCOUNT_ID}" \
+            -backend-config="key=${{ github.event.inputs.environment }}/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="use_lockfile=true" \
+            -backend-config="encrypt=true"
+          terraform workspace select "${{ github.event.inputs.environment }}"
+          echo "evals_bucket=$(terraform output -raw evals_bucket)" >> "$GITHUB_OUTPUT"
+
+      - name: Run synthetic eval snapshot
+        working-directory: ./backend
+        run: |
+          uv sync
+          uv run python ../evals/run_eval.py
+          uv run python ../evals/upload_snapshot.py
+        env:
+          EVALS_BUCKET: ${{ steps.tf_outputs.outputs.evals_bucket }}
+          GITHUB_SHA: ${{ github.sha }}
+          DEFAULT_AWS_REGION: ${{ secrets.DEFAULT_AWS_REGION }}
