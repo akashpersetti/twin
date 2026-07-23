@@ -17,6 +17,7 @@ import Skills from '@/components/sections/Skills';
 import Education from '@/components/sections/Education';
 import Certifications from '@/components/sections/Certifications';
 import More from '@/components/sections/More';
+import Quote from '@/components/sections/Quote';
 import Contact from '@/components/sections/Contact';
 
 export default function Home() {
@@ -67,6 +68,9 @@ export default function Home() {
             </section>
             <section id="more">
               <More />
+            </section>
+            <section id="quote">
+              <Quote />
             </section>
             <section id="contact">
               <Contact />
