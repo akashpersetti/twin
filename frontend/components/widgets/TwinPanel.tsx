@@ -44,8 +44,8 @@ export default function TwinPanel() {
         transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
         className={
           isMaximized
-            ? 'fixed inset-4 md:inset-x-[10%] md:inset-y-[5%] z-[60] flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
-            : 'relative flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
+            ? 'fixed inset-4 md:inset-x-[10%] md:inset-y-[5%] z-[60] flex min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
+            : 'relative flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
         }
       >
         {/* Header */}

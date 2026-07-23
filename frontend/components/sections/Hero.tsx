@@ -40,7 +40,7 @@ export default function Hero() {
         <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-10 items-center lg:items-stretch">
 
           {/* LEFT: Twin chat panel */}
-          <motion.div className="order-2 lg:order-1 lg:col-span-5 h-full" {...fade(0.35)}>
+          <motion.div className="order-2 lg:order-1 lg:col-span-5 h-[70vh] min-h-0" {...fade(0.35)}>
             <TwinPanel />
           </motion.div>
 
