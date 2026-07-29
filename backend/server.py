@@ -8,6 +8,8 @@ from typing import Optional, List, Dict, Generator
 import json
 import uuid
 from datetime import datetime
+import time
+from collections import deque
 import boto3
 from botocore.exceptions import ClientError
 from context import prompt
@@ -109,6 +111,38 @@ def save_conversation(session_id: str, messages: List[Dict]):
         file_path = os.path.join(MEMORY_DIR, get_memory_path(session_id))
         with open(file_path, "w") as f:
             json.dump(messages, f, indent=2)
+
+
+# Abuse guards
+MAX_MESSAGE_LENGTH = 20_000
+TRUNCATION_NOTICE = (
+    "\n\n[...message truncated as it's too long; "
+    "ask the visitor to send something more concise]"
+)
+RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_MAX_REQUESTS = 20
+_request_log: Dict[str, deque] = {}
+
+
+def clamp_message(message: str) -> str:
+    """Truncate an overly long visitor message before it reaches Bedrock or storage."""
+    if len(message) > MAX_MESSAGE_LENGTH:
+        return message[:MAX_MESSAGE_LENGTH] + TRUNCATION_NOTICE
+    return message
+
+
+def check_rate_limit(session_id: str) -> None:
+    """Raise HTTP 429 if this session has exceeded the request cap for the current window."""
+    now = time.monotonic()
+    window = _request_log.setdefault(session_id, deque())
+    while window and now - window[0] > RATE_LIMIT_WINDOW_SECONDS:
+        window.popleft()
+    if len(window) >= RATE_LIMIT_MAX_REQUESTS:
+        raise HTTPException(
+            status_code=429,
+            detail="You're sending messages too quickly — please slow down and try again in a moment.",
+        )
+    window.append(now)
 
 
 def build_bedrock_messages(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> List[Dict]:
