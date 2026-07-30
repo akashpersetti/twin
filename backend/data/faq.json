@@ -1,0 +1,20 @@
+[
+  {
+    "faq": 1,
+    "query": "current role and what you're working on",
+    "question": "What are you currently working on?",
+    "answer": "I'm an Applied AI Engineer building agentic systems, LLM evaluation infrastructure, and production AI applications on AWS."
+  },
+  {
+    "faq": 2,
+    "query": "education background",
+    "question": "What's your educational background?",
+    "answer": "I have an M.S. in Computer Science from Indiana University Bloomington, completed in May 2026."
+  },
+  {
+    "faq": 3,
+    "query": "how to get in touch",
+    "question": "How can I get in touch with you?",
+    "answer": "The best way to reach me is via email or LinkedIn - both are linked in the site footer."
+  }
+]

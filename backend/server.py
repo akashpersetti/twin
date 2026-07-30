@@ -9,12 +9,14 @@ import json
 import uuid
 from datetime import datetime
 import time
+import re
 from collections import deque
 import boto3
 from botocore.exceptions import ClientError
 from context import prompt
 import retrieval
 from bedrock_client import bedrock_client, BEDROCK_MODEL_ID
+from resources import faq_entries
 
 # Load environment variables
 load_dotenv()
@@ -143,6 +145,20 @@ def check_rate_limit(session_id: str) -> None:
             detail="You're sending messages too quickly — please slow down and try again in a moment.",
         )
     window.append(now)
+
+
+QN_PATTERN = re.compile(r"^\s*q(\d+)\s*$", re.IGNORECASE)
+
+
+def get_faq(number: int) -> Optional[Dict]:
+    return next((f for f in faq_entries if f["faq"] == number), None)
+
+
+def match_faq_shortcut(message: str) -> Optional[Dict]:
+    match = QN_PATTERN.match(message)
+    if not match:
+        return None
+    return get_faq(int(match.group(1)))
 
 
 def build_bedrock_messages(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> List[Dict]:
