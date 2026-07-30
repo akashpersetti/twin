@@ -34,9 +34,19 @@ app.add_middleware(
 )
 
 # Memory storage configuration
+USE_DYNAMODB = os.getenv("USE_DYNAMODB", "false").lower() == "true"
+DYNAMODB_TABLE = os.getenv("DYNAMODB_TABLE", "")
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
 S3_BUCKET = os.getenv("S3_BUCKET", "")
 MEMORY_DIR = os.getenv("MEMORY_DIR", "../memory")
+
+# Initialize DynamoDB resource if needed
+if USE_DYNAMODB:
+    dynamodb_resource = boto3.resource(
+        "dynamodb",
+        region_name=os.getenv("AWS_DEFAULT_REGION", os.getenv("DEFAULT_AWS_REGION", "us-east-1")),
+    )
+    conversations_table = dynamodb_resource.Table(DYNAMODB_TABLE)
 
 # Initialize S3 client if needed
 if USE_S3:
@@ -79,9 +89,39 @@ def get_memory_path(session_id: str) -> str:
     return f"{session_id}.json"
 
 
+def _compute_conversation_aggregates(messages: List[Dict]) -> Dict:
+    last_activity = messages[-1]["timestamp"] if messages else datetime.now().isoformat()
+    needs_attention = any(m.get("needs_attention", False) for m in messages)
+    unread_count = sum(1 for m in messages if not m.get("read", False))
+    return {
+        "last_activity": last_activity,
+        "needs_attention": needs_attention,
+        "unread_count": unread_count,
+    }
+
+
+def _load_conversations_index() -> Dict[str, Dict]:
+    index_path = os.path.join(MEMORY_DIR, "conversations_index.json")
+    if os.path.exists(index_path):
+        with open(index_path, "r") as f:
+            return json.load(f)
+    return {}
+
+
+def _save_conversations_index(index: Dict[str, Dict]) -> None:
+    os.makedirs(MEMORY_DIR, exist_ok=True)
+    index_path = os.path.join(MEMORY_DIR, "conversations_index.json")
+    with open(index_path, "w") as f:
+        json.dump(index, f, indent=2)
+
+
 def load_conversation(session_id: str) -> List[Dict]:
     """Load conversation history from storage"""
-    if USE_S3:
+    if USE_DYNAMODB:
+        response = conversations_table.get_item(Key={"conversation_id": session_id})
+        item = response.get("Item")
+        return item["messages"] if item else []
+    elif USE_S3:
         try:
             response = s3_client.get_object(Bucket=S3_BUCKET, Key=get_memory_path(session_id))
             return json.loads(response["Body"].read().decode("utf-8"))
@@ -100,7 +140,15 @@ def load_conversation(session_id: str) -> List[Dict]:
 
 def save_conversation(session_id: str, messages: List[Dict]):
     """Save conversation history to storage"""
-    if USE_S3:
+    if USE_DYNAMODB:
+        aggregates = _compute_conversation_aggregates(messages)
+        conversations_table.put_item(Item={
+            "conversation_id": session_id,
+            "messages": messages,
+            "gsi_pk": "CONVO",
+            **aggregates,
+        })
+    elif USE_S3:
         s3_client.put_object(
             Bucket=S3_BUCKET,
             Key=get_memory_path(session_id),
@@ -113,6 +161,10 @@ def save_conversation(session_id: str, messages: List[Dict]):
         file_path = os.path.join(MEMORY_DIR, get_memory_path(session_id))
         with open(file_path, "w") as f:
             json.dump(messages, f, indent=2)
+
+        index = _load_conversations_index()
+        index[session_id] = _compute_conversation_aggregates(messages)
+        _save_conversations_index(index)
 
 
 # Abuse guards
