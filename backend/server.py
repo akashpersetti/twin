@@ -1,10 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from boto3.dynamodb.conditions import Key
 from pydantic import BaseModel
+import secrets
 import os
 from dotenv import load_dotenv
-from typing import Optional, List, Dict, Generator
+from typing import Optional, List, Dict, Generator, Tuple
 import json
 import uuid
 from datetime import datetime
@@ -17,6 +19,7 @@ from context import prompt
 import retrieval
 from bedrock_client import bedrock_client, BEDROCK_MODEL_ID
 from resources import faq_entries
+import auth
 
 # Load environment variables
 load_dotenv()
@@ -78,6 +81,14 @@ class VisitorRequest(BaseModel):
     contact: Optional[str] = None
 
 
+class MagicLinkRequest(BaseModel):
+    email: str
+
+
+class HumanMessageRequest(BaseModel):
+    content: str
+
+
 class Message(BaseModel):
     role: str
     content: str
@@ -93,10 +104,12 @@ def _compute_conversation_aggregates(messages: List[Dict]) -> Dict:
     last_activity = messages[-1]["timestamp"] if messages else datetime.now().isoformat()
     needs_attention = any(m.get("needs_attention", False) for m in messages)
     unread_count = sum(1 for m in messages if not m.get("read", False))
+    preview = messages[-1]["content"][:140] if messages else ""
     return {
         "last_activity": last_activity,
         "needs_attention": needs_attention,
         "unread_count": unread_count,
+        "preview": preview,
     }
 
 
@@ -242,12 +255,13 @@ def build_bedrock_messages(conversation: List[Dict], user_message: str, user_nam
     messages = []
     messages.append({"role": "user", "content": [{"text": f"System: {system}"}]})
     for msg in conversation[-20:]:
-        messages.append({"role": msg["role"], "content": [{"text": msg["content"]}]})
+        bedrock_role = "assistant" if msg["role"] in ("assistant", "human") else "user"
+        messages.append({"role": bedrock_role, "content": [{"text": msg["content"]}]})
     messages.append({"role": "user", "content": [{"text": user_message}]})
     return messages
 
 
-FAQ_TOOL_CONFIG = {
+TOOL_CONFIG = {
     "tools": [
         {
             "toolSpec": {
@@ -266,12 +280,30 @@ FAQ_TOOL_CONFIG = {
                     }
                 },
             }
-        }
+        },
+        {
+            "toolSpec": {
+                "name": "escalate_to_human_tool",
+                "description": "Flag this conversation for the human owner's personal attention when you cannot answer the visitor's question, or the visitor explicitly asks to speak with a human. Still answer as helpfully as you can in the same turn, and let the visitor know you've notified the human.",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "reason": {
+                                "type": "string",
+                                "description": "Brief reason for escalation, shown to the human owner.",
+                            }
+                        },
+                        "required": [],
+                    }
+                },
+            }
+        },
     ]
 }
 
 
-def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> str:
+def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> Tuple[str, bool]:
     """Call AWS Bedrock with conversation history"""
     messages = build_bedrock_messages(conversation, user_message, user_name=user_name)
     try:
@@ -279,9 +311,10 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
             modelId=BEDROCK_MODEL_ID,
             messages=messages,
             inferenceConfig={"maxTokens": 2000, "temperature": 0.7},
-            toolConfig=FAQ_TOOL_CONFIG,
+            toolConfig=TOOL_CONFIG,
         )
         output_message = response["output"]["message"]
+        escalated = False
 
         if response.get("stopReason") == "tool_use":
             messages.append(output_message)
@@ -289,12 +322,18 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
             for block in output_message["content"]:
                 if "toolUse" in block:
                     tool_use = block["toolUse"]
-                    faq_entry = get_faq(tool_use["input"].get("faq_number"))
-                    result_text = (
-                        f"Q: {faq_entry['question']}\nA: {faq_entry['answer']}"
-                        if faq_entry
-                        else "No FAQ found with that number. Answer from general context instead."
-                    )
+                    if tool_use["name"] == "faq_tool":
+                        faq_entry = get_faq(tool_use["input"].get("faq_number"))
+                        result_text = (
+                            f"Q: {faq_entry['question']}\nA: {faq_entry['answer']}"
+                            if faq_entry
+                            else "No FAQ found with that number. Answer from general context instead."
+                        )
+                    elif tool_use["name"] == "escalate_to_human_tool":
+                        escalated = True
+                        result_text = "Escalation recorded. Briefly acknowledge to the visitor, naturally, that you've notified the human owner."
+                    else:
+                        result_text = "Unknown tool."
                     tool_result_content.append(
                         {
                             "toolResult": {
@@ -308,11 +347,11 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
                 modelId=BEDROCK_MODEL_ID,
                 messages=messages,
                 inferenceConfig={"maxTokens": 2000, "temperature": 0.7},
-                toolConfig=FAQ_TOOL_CONFIG,
+                toolConfig=TOOL_CONFIG,
             )
             output_message = response["output"]["message"]
 
-        return output_message["content"][0]["text"]
+        return output_message["content"][0]["text"], escalated
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ValidationException':
@@ -429,6 +468,102 @@ async def notify_visitor(request: VisitorRequest):
     return {"status": "ok"}
 
 
+ADMIN_MAGIC_LINK_BASE_URL = "https://akashpersetti.com/admin"
+
+
+@app.post("/admin/auth/request")
+def request_admin_magic_link(req: MagicLinkRequest):
+    if req.email != auth.OWNER_EMAIL:
+        return {"sent": True}
+
+    token = secrets.token_hex(32)
+    expires_at = int(time.time()) + auth.MAGIC_TOKEN_TTL_SECONDS
+    auth.magic_tokens_table.put_item(Item={"token": token, "expires_at": expires_at})
+
+    link = f"{ADMIN_MAGIC_LINK_BASE_URL}?magic={token}"
+    auth.ses.send_email(
+        Source=auth.SES_SENDER_EMAIL,
+        Destination={"ToAddresses": [auth.OWNER_EMAIL]},
+        Message={
+            "Subject": {"Data": "Your chat admin sign-in link", "Charset": "UTF-8"},
+            "Body": {
+                "Text": {
+                    "Data": f"Sign in to the chat admin:\n\n{link}\n\nThis link expires in 15 minutes.",
+                    "Charset": "UTF-8",
+                },
+                "Html": {
+                    "Data": f'<p><a href="{link}">Sign in to the chat admin</a></p><p>This link expires in 15 minutes.</p>',
+                    "Charset": "UTF-8",
+                },
+            },
+        },
+    )
+    return {"sent": True}
+
+
+@app.get("/admin/auth/verify")
+def verify_admin_magic_link(token: Optional[str] = None):
+    auth.consume_magic_token(token)
+    return {"admin_token": auth.get_admin_token()}
+
+
+@app.get("/admin/conversations")
+async def list_conversations(_: None = Depends(auth.verify_token)):
+    if USE_DYNAMODB:
+        response = conversations_table.query(
+            IndexName="by-recency",
+            KeyConditionExpression=Key("gsi_pk").eq("CONVO"),
+            ScanIndexForward=False,
+        )
+        conversations = [
+            {
+                "conversation_id": item["conversation_id"],
+                "last_activity": item["last_activity"],
+                "needs_attention": item["needs_attention"],
+                "unread_count": item["unread_count"],
+                "preview": item.get("preview", ""),
+            }
+            for item in response.get("Items", [])
+        ]
+    else:
+        index = _load_conversations_index()
+        conversations = [{"conversation_id": cid, **aggregates} for cid, aggregates in index.items()]
+        conversations.sort(key=lambda c: c["last_activity"], reverse=True)
+    return {"conversations": conversations}
+
+
+@app.get("/admin/conversations/{conversation_id}")
+async def get_admin_conversation(conversation_id: str, _: None = Depends(auth.verify_token)):
+    messages = load_conversation(conversation_id)
+    if not messages:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    for msg in messages:
+        msg["read"] = True
+        msg["needs_attention"] = False
+    save_conversation(conversation_id, messages)
+
+    return {"conversation_id": conversation_id, "messages": messages}
+
+
+@app.post("/admin/conversations/{conversation_id}/messages")
+async def post_human_message(
+    conversation_id: str, request: HumanMessageRequest, _: None = Depends(auth.verify_token)
+):
+    messages = load_conversation(conversation_id)
+    messages.append(
+        {
+            "role": "human",
+            "content": request.content,
+            "timestamp": datetime.now().isoformat(),
+            "needs_attention": False,
+            "read": True,
+        }
+    )
+    save_conversation(conversation_id, messages)
+    return {"conversation_id": conversation_id, "messages": messages}
+
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     try:
@@ -453,7 +588,7 @@ async def chat(request: ChatRequest):
         conversation = load_conversation(session_id)
 
         # Call Bedrock for response
-        assistant_response = call_bedrock(conversation, message, user_name=request.user_name)
+        assistant_response, escalated = call_bedrock(conversation, message, user_name=request.user_name)
 
         # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
         if message != "__greet__":
@@ -469,7 +604,7 @@ async def chat(request: ChatRequest):
                 "role": "assistant",
                 "content": assistant_response,
                 "timestamp": datetime.now().isoformat(),
-                "needs_attention": False,
+                "needs_attention": escalated,
                 "read": False,
             }
         )

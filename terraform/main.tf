@@ -157,6 +157,34 @@ resource "aws_iam_role_policy_attachment" "lambda_s3" {
   role       = aws_iam_role.lambda_role.name
 }
 
+resource "aws_iam_role_policy" "lambda_ssm" {
+  name = "${local.name_prefix}-ssm-policy"
+  role = aws_iam_role.lambda_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ssm:GetParameter"]
+      Resource = "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/twin/dev/blog-admin-token"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_ses" {
+  name = "${local.name_prefix}-ses-policy"
+  role = aws_iam_role.lambda_role.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ses:SendEmail"]
+      Resource = "*"
+    }]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
   role       = aws_iam_role.lambda_role.name
@@ -202,14 +230,15 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      CORS_ORIGINS     = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
-      USE_DYNAMODB     = "true"
-      DYNAMODB_TABLE   = aws_dynamodb_table.conversations.name
-      S3_BUCKET        = aws_s3_bucket.memory.id
-      USE_S3           = "true"
-      BEDROCK_MODEL_ID = var.bedrock_model_id
-      SNS_TOPIC_ARN    = aws_sns_topic.visitor_notifications.arn
-      EVALS_BUCKET     = aws_s3_bucket.evals.id
+      CORS_ORIGINS      = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      USE_DYNAMODB      = "true"
+      DYNAMODB_TABLE    = aws_dynamodb_table.conversations.name
+      S3_BUCKET         = aws_s3_bucket.memory.id
+      USE_S3            = "true"
+      BEDROCK_MODEL_ID  = var.bedrock_model_id
+      SNS_TOPIC_ARN     = aws_sns_topic.visitor_notifications.arn
+      EVALS_BUCKET      = aws_s3_bucket.evals.id
+      MAGIC_TOKEN_TABLE = aws_dynamodb_table.magic_tokens.name
     }
   }
 
@@ -296,6 +325,36 @@ resource "aws_apigatewayv2_route" "get_evals_synthetic_detail" {
 resource "aws_apigatewayv2_route" "get_evals_live" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /evals/live"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "post_admin_auth_request" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /admin/auth/request"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_admin_auth_verify" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /admin/auth/verify"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_admin_conversations" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /admin/conversations"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_admin_conversation_detail" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /admin/conversations/{conversation_id}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "post_admin_conversation_message" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /admin/conversations/{conversation_id}/messages"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
