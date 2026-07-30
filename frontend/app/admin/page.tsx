@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdminLogin from '@/components/admin/AdminLogin';
 import ConversationInbox, { ConversationSummary } from '@/components/admin/ConversationInbox';
+import ConversationThread, { AdminMessage } from '@/components/admin/ConversationThread';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -12,6 +13,8 @@ export default function AdminPage() {
     const [adminToken, setAdminToken] = useState<string | null>(null);
     const [view, setView] = useState<View>('login');
     const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [threadMessages, setThreadMessages] = useState<AdminMessage[]>([]);
 
     const adminFetch = async (path: string, options: RequestInit = {}) => {
         const response = await fetch(`${API_URL}${path}`, {
@@ -43,6 +46,35 @@ export default function AdminPage() {
         }
     }, [adminToken, view]); // eslint-disable-line react-hooks/exhaustive-deps
 
+    const openConversation = async (conversationId: string) => {
+        const response = await adminFetch(`/admin/conversations/${conversationId}`);
+        if (response.ok) {
+            const data = await response.json();
+            setThreadMessages(data.messages ?? []);
+            setSelectedId(conversationId);
+            setView('thread');
+        }
+    };
+
+    const closeThread = () => {
+        setSelectedId(null);
+        setThreadMessages([]);
+        setView('inbox');
+    };
+
+    const sendReply = async (content: string) => {
+        if (!selectedId) return;
+        const response = await adminFetch(`/admin/conversations/${selectedId}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content }),
+        });
+        if (response.ok) {
+            const data = await response.json();
+            setThreadMessages(data.messages ?? []);
+        }
+    };
+
     useEffect(() => {
         const stored = localStorage.getItem('admin_token');
         if (stored) {
@@ -62,7 +94,10 @@ export default function AdminPage() {
             <div className="max-w-2xl mx-auto">
                 {view === 'login' && <AdminLogin apiUrl={API_URL} onLoggedIn={handleLoggedIn} />}
                 {view === 'inbox' && (
-                    <ConversationInbox conversations={conversations} onSelect={() => {}} />
+                    <ConversationInbox conversations={conversations} onSelect={openConversation} />
+                )}
+                {view === 'thread' && selectedId && (
+                    <ConversationThread messages={threadMessages} onBack={closeThread} onSend={sendReply} />
                 )}
             </div>
         </main>
