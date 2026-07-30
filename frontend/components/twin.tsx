@@ -152,6 +152,15 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     };
 
     useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const qParam = params.get('q');
+        if (qParam && /^\d+$/.test(qParam)) {
+            window.history.replaceState(null, '', window.location.pathname);
+            setOnboardingStep('done');
+            sendMessage(`Q${qParam}`);
+            return;
+        }
+
         const FIFTEEN_MINS = 15 * 60 * 1000;
         const visitor = readVisitor();
         const expired = visitor && (Date.now() - new Date(visitor.seenAt).getTime() > FIFTEEN_MINS);
@@ -172,13 +181,14 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const sendMessage = async () => {
-        if (!input.trim() || isLoading || isStreaming) return;
+    const sendMessage = async (overrideText?: string) => {
+        const text = overrideText ?? input;
+        if (!text.trim() || isLoading || isStreaming) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
             role: 'user',
-            content: input,
+            content: text,
             timestamp: new Date(),
         };
 
