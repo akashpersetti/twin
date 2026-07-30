@@ -230,14 +230,15 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      CORS_ORIGINS     = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
-      USE_DYNAMODB     = "true"
-      DYNAMODB_TABLE   = aws_dynamodb_table.conversations.name
-      S3_BUCKET        = aws_s3_bucket.memory.id
-      USE_S3           = "true"
-      BEDROCK_MODEL_ID = var.bedrock_model_id
-      SNS_TOPIC_ARN    = aws_sns_topic.visitor_notifications.arn
-      EVALS_BUCKET     = aws_s3_bucket.evals.id
+      CORS_ORIGINS      = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      USE_DYNAMODB      = "true"
+      DYNAMODB_TABLE    = aws_dynamodb_table.conversations.name
+      S3_BUCKET         = aws_s3_bucket.memory.id
+      USE_S3            = "true"
+      BEDROCK_MODEL_ID  = var.bedrock_model_id
+      SNS_TOPIC_ARN     = aws_sns_topic.visitor_notifications.arn
+      EVALS_BUCKET      = aws_s3_bucket.evals.id
+      MAGIC_TOKEN_TABLE = aws_dynamodb_table.magic_tokens.name
     }
   }
 
