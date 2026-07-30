@@ -8,6 +8,8 @@ from typing import Optional, List, Dict, Generator
 import json
 import uuid
 from datetime import datetime
+import time
+from collections import deque
 import boto3
 from botocore.exceptions import ClientError
 from context import prompt
@@ -109,6 +111,38 @@ def save_conversation(session_id: str, messages: List[Dict]):
         file_path = os.path.join(MEMORY_DIR, get_memory_path(session_id))
         with open(file_path, "w") as f:
             json.dump(messages, f, indent=2)
+
+
+# Abuse guards
+MAX_MESSAGE_LENGTH = 20_000
+TRUNCATION_NOTICE = (
+    "\n\n[...message truncated as it's too long; "
+    "ask the visitor to send something more concise]"
+)
+RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_MAX_REQUESTS = 20
+_request_log: Dict[str, deque] = {}
+
+
+def clamp_message(message: str) -> str:
+    """Truncate an overly long visitor message before it reaches Bedrock or storage."""
+    if len(message) > MAX_MESSAGE_LENGTH:
+        return message[:MAX_MESSAGE_LENGTH] + TRUNCATION_NOTICE
+    return message
+
+
+def check_rate_limit(session_id: str) -> None:
+    """Raise HTTP 429 if this session has exceeded the request cap for the current window."""
+    now = time.monotonic()
+    window = _request_log.setdefault(session_id, deque())
+    while window and now - window[0] > RATE_LIMIT_WINDOW_SECONDS:
+        window.popleft()
+    if len(window) >= RATE_LIMIT_MAX_REQUESTS:
+        raise HTTPException(
+            status_code=429,
+            detail="You're sending messages too quickly — please slow down and try again in a moment.",
+        )
+    window.append(now)
 
 
 def build_bedrock_messages(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> List[Dict]:
@@ -271,23 +305,24 @@ async def notify_visitor(request: VisitorRequest):
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     try:
-        # Generate session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
+        check_rate_limit(session_id)
+        message = clamp_message(request.message)
 
         # Load conversation history
         conversation = load_conversation(session_id)
 
         # Call Bedrock for response
-        assistant_response = call_bedrock(conversation, request.message, user_name=request.user_name)
+        assistant_response = call_bedrock(conversation, message, user_name=request.user_name)
 
         # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
-        if request.message != "__greet__":
-            retrieved_chunks = retrieval.retrieve(request.message, k=5)
-            capture_live_eval(request.message, retrieved_chunks, assistant_response)
+        if message != "__greet__":
+            retrieved_chunks = retrieval.retrieve(message, k=5)
+            capture_live_eval(message, retrieved_chunks, assistant_response)
 
         # Update conversation history
         conversation.append(
-            {"role": "user", "content": request.message, "timestamp": datetime.now().isoformat()}
+            {"role": "user", "content": message, "timestamp": datetime.now().isoformat()}
         )
         conversation.append(
             {
@@ -313,9 +348,11 @@ async def chat(request: ChatRequest):
 async def chat_stream(request: ChatRequest):
     try:
         session_id = request.session_id or str(uuid.uuid4())
+        check_rate_limit(session_id)
+        message = clamp_message(request.message)
         conversation = load_conversation(session_id)
         return StreamingResponse(
-            stream_bedrock(conversation, request.message, session_id, user_name=request.user_name),
+            stream_bedrock(conversation, message, session_id, user_name=request.user_name),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
