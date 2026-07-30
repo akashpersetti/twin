@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import AdminLogin from '@/components/admin/AdminLogin';
 import ConversationInbox, { ConversationSummary } from '@/components/admin/ConversationInbox';
 import ConversationThread, { AdminMessage } from '@/components/admin/ConversationThread';
@@ -15,6 +15,7 @@ export default function AdminPage() {
     const [conversations, setConversations] = useState<ConversationSummary[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [threadMessages, setThreadMessages] = useState<AdminMessage[]>([]);
+    const lastAdminPolledCountRef = useRef(0);
 
     const adminFetch = async (path: string, options: RequestInit = {}) => {
         const response = await fetch(`${API_URL}${path}`, {
@@ -50,7 +51,9 @@ export default function AdminPage() {
         const response = await adminFetch(`/admin/conversations/${conversationId}`);
         if (response.ok) {
             const data = await response.json();
-            setThreadMessages(data.messages ?? []);
+            const messages = data.messages ?? [];
+            setThreadMessages(messages);
+            lastAdminPolledCountRef.current = messages.length;
             setSelectedId(conversationId);
             setView('thread');
         }
@@ -59,6 +62,7 @@ export default function AdminPage() {
     const closeThread = () => {
         setSelectedId(null);
         setThreadMessages([]);
+        lastAdminPolledCountRef.current = 0;
         setView('inbox');
     };
 
@@ -71,9 +75,39 @@ export default function AdminPage() {
         });
         if (response.ok) {
             const data = await response.json();
-            setThreadMessages(data.messages ?? []);
+            const messages = data.messages ?? [];
+            setThreadMessages(messages);
+            lastAdminPolledCountRef.current = messages.length;
         }
     };
+
+    useEffect(() => {
+        if (view !== 'thread' || !selectedId) return;
+
+        let cancelled = false;
+
+        const poll = async () => {
+            const response = await adminFetch(`/admin/conversations/${selectedId}`);
+            if (cancelled) return;
+            if (response.ok) {
+                const data = await response.json();
+                if (cancelled) return;
+                const allMessages: AdminMessage[] = data.messages ?? [];
+                const newOnes = allMessages.slice(lastAdminPolledCountRef.current);
+                if (newOnes.length > 0) {
+                    setThreadMessages(prev => [...prev, ...newOnes]);
+                }
+                lastAdminPolledCountRef.current = allMessages.length;
+            }
+        };
+
+        const intervalId = setInterval(poll, 5_000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(intervalId);
+        };
+    }, [view, selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         const stored = localStorage.getItem('admin_token');
