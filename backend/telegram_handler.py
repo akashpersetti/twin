@@ -15,14 +15,14 @@ ssm_client = boto3.client(
 _BOT_TOKEN = None
 
 
-def _config(name):
+def _config(name: str) -> str:
     value = os.getenv(name, "")
     if not value:
         raise RuntimeError("Telegram notifier is not configured")
     return value
 
 
-def _get_bot_token():
+def _get_bot_token() -> str:
     global _BOT_TOKEN
     if _BOT_TOKEN is None:
         response = ssm_client.get_parameter(
@@ -33,7 +33,7 @@ def _get_bot_token():
     return _BOT_TOKEN
 
 
-def _notification(record):
+def _notification(record: dict) -> tuple[str, str]:
     try:
         sns = record["Sns"]
         message = sns["Message"]
@@ -49,7 +49,7 @@ def _notification(record):
     return subject, message
 
 
-def _send_message(subject, message):
+def _send_message(subject: str, message: str) -> None:
     chat_id = _config("TELEGRAM_CHAT_ID")
     admin_url = _config("TELEGRAM_ADMIN_URL")
     token = _get_bot_token()
@@ -72,6 +72,8 @@ def _send_message(subject, message):
 
     try:
         with request.urlopen(telegram_request, timeout=10) as response:
+            if not 200 <= response.status < 300:
+                raise RuntimeError("Telegram notification delivery failed")
             result = json.loads(response.read())
     except Exception:
         raise RuntimeError("Telegram notification delivery failed") from None
@@ -80,7 +82,7 @@ def _send_message(subject, message):
         raise RuntimeError("Telegram rejected the notification")
 
 
-def handler(event, context):
+def handler(event: dict, context: object) -> dict[str, int]:
     records = event.get("Records") if isinstance(event, dict) else None
     if not isinstance(records, list) or not records:
         raise ValueError("Malformed SNS notification")

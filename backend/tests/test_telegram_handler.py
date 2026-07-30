@@ -125,6 +125,27 @@ def test_handler_raises_on_non_2xx_response():
             telegram_handler.handler(sns_event(("Subject", "Message")), None)
 
 
+def test_handler_raises_on_returned_non_2xx_response_even_when_telegram_accepts():
+    with patch.object(telegram_handler.ssm_client, "get_parameter") as get_parameter, \
+         patch.object(telegram_handler.request, "urlopen") as urlopen:
+        get_parameter.return_value = {"Parameter": {"Value": "bot-token"}}
+        urlopen.return_value.__enter__.return_value = telegram_response()
+        urlopen.return_value.__enter__.return_value.status = 500
+
+        with pytest.raises(RuntimeError, match="Telegram notification delivery failed"):
+            telegram_handler.handler(sns_event(("Subject", "Message")), None)
+
+
+def test_handler_raises_on_malformed_telegram_json():
+    with patch.object(telegram_handler.ssm_client, "get_parameter") as get_parameter, \
+         patch.object(telegram_handler.request, "urlopen") as urlopen:
+        get_parameter.return_value = {"Parameter": {"Value": "bot-token"}}
+        urlopen.return_value.__enter__.return_value = telegram_response(b"not json")
+
+        with pytest.raises(RuntimeError, match="Telegram notification delivery failed"):
+            telegram_handler.handler(sns_event(("Subject", "Message")), None)
+
+
 def test_handler_hides_token_when_delivery_fails():
     with patch.object(telegram_handler.ssm_client, "get_parameter") as get_parameter, \
          patch.object(telegram_handler.request, "urlopen", side_effect=OSError("offline")):
