@@ -9,12 +9,14 @@ import json
 import uuid
 from datetime import datetime
 import time
+import re
 from collections import deque
 import boto3
 from botocore.exceptions import ClientError
 from context import prompt
 import retrieval
 from bedrock_client import bedrock_client, BEDROCK_MODEL_ID
+from resources import faq_entries
 
 # Load environment variables
 load_dotenv()
@@ -145,6 +147,23 @@ def check_rate_limit(session_id: str) -> None:
     window.append(now)
 
 
+QN_PATTERN = re.compile(r"^\s*q(\d+)\s*$", re.IGNORECASE)
+
+
+def get_faq(number: int) -> Optional[Dict]:
+    return next((f for f in faq_entries if f["faq"] == number), None)
+
+
+def match_faq_shortcut(message: str) -> Optional[Dict]:
+    match = QN_PATTERN.match(message)
+    if not match:
+        return None
+    try:
+        return get_faq(int(match.group(1)))
+    except ValueError:
+        return None
+
+
 def build_bedrock_messages(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> List[Dict]:
     """Build the messages list for Bedrock in the correct format."""
     if user_message == "__greet__":
@@ -153,7 +172,7 @@ def build_bedrock_messages(conversation: List[Dict], user_message: str, user_nam
         relevant_chunks = [chunk for chunk, score in retrieval.retrieve(user_message, k=5)]
 
     profile_context = "\n\n".join(f"## {c.section_title}\n{c.text}" for c in relevant_chunks)
-    system = prompt(profile_context=profile_context)
+    system = prompt(profile_context=profile_context, faq_entries=faq_entries)
     if user_name:
         system += (
             "\n\n---\n\nVISITOR CONTEXT\n\n"
@@ -176,6 +195,30 @@ def build_bedrock_messages(conversation: List[Dict], user_message: str, user_nam
     return messages
 
 
+FAQ_TOOL_CONFIG = {
+    "tools": [
+        {
+            "toolSpec": {
+                "name": "faq_tool",
+                "description": "Fetch the exact, pre-approved answer to one of the owner's numbered FAQs, when the visitor's question closely matches one of the topics listed in the system prompt.",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "faq_number": {
+                                "type": "integer",
+                                "description": "The numeric id of the FAQ that matches the visitor's question.",
+                            }
+                        },
+                        "required": ["faq_number"],
+                    }
+                },
+            }
+        }
+    ]
+}
+
+
 def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> str:
     """Call AWS Bedrock with conversation history"""
     messages = build_bedrock_messages(conversation, user_message, user_name=user_name)
@@ -183,9 +226,41 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
         response = bedrock_client.converse(
             modelId=BEDROCK_MODEL_ID,
             messages=messages,
-            inferenceConfig={"maxTokens": 2000, "temperature": 0.7}
+            inferenceConfig={"maxTokens": 2000, "temperature": 0.7},
+            toolConfig=FAQ_TOOL_CONFIG,
         )
-        return response["output"]["message"]["content"][0]["text"]
+        output_message = response["output"]["message"]
+
+        if response.get("stopReason") == "tool_use":
+            messages.append(output_message)
+            tool_result_content = []
+            for block in output_message["content"]:
+                if "toolUse" in block:
+                    tool_use = block["toolUse"]
+                    faq_entry = get_faq(tool_use["input"].get("faq_number"))
+                    result_text = (
+                        f"Q: {faq_entry['question']}\nA: {faq_entry['answer']}"
+                        if faq_entry
+                        else "No FAQ found with that number. Answer from general context instead."
+                    )
+                    tool_result_content.append(
+                        {
+                            "toolResult": {
+                                "toolUseId": tool_use["toolUseId"],
+                                "content": [{"text": result_text}],
+                            }
+                        }
+                    )
+            messages.append({"role": "user", "content": tool_result_content})
+            response = bedrock_client.converse(
+                modelId=BEDROCK_MODEL_ID,
+                messages=messages,
+                inferenceConfig={"maxTokens": 2000, "temperature": 0.7},
+                toolConfig=FAQ_TOOL_CONFIG,
+            )
+            output_message = response["output"]["message"]
+
+        return output_message["content"][0]["text"]
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ValidationException':
@@ -308,6 +383,19 @@ async def chat(request: ChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
         check_rate_limit(session_id)
         message = clamp_message(request.message)
+
+        faq_match = match_faq_shortcut(message)
+        if faq_match:
+            assistant_response = f"**Q{faq_match['faq']}:** {faq_match['question']}\n\n{faq_match['answer']}"
+            conversation = load_conversation(session_id)
+            conversation.append(
+                {"role": "user", "content": message, "timestamp": datetime.now().isoformat()}
+            )
+            conversation.append(
+                {"role": "assistant", "content": assistant_response, "timestamp": datetime.now().isoformat()}
+            )
+            save_conversation(session_id, conversation)
+            return ChatResponse(response=assistant_response, session_id=session_id)
 
         # Load conversation history
         conversation = load_conversation(session_id)
