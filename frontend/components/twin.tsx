@@ -109,7 +109,10 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 body: JSON.stringify({ message: '__greet__', user_name: name }),
             });
 
-            if (!response.ok) throw new Error('Request failed');
+            if (!response.ok) {
+                const errorBody = await response.json().catch(() => null);
+                throw new Error(response.status === 429 && errorBody?.detail ? errorBody.detail : 'Request failed');
+            }
 
             const data = await response.json();
             if (data.session_id) setSessionId(data.session_id);
@@ -130,8 +133,10 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                     if (pos >= text.length) { clearInterval(tick); resolve(); }
                 }, 16);
             });
-        } catch {
-            const fallback = `Hey, ${name}! Ask me anything about Akash.`;
+        } catch (error) {
+            const fallback = error instanceof Error && error.message !== 'Request failed'
+                ? error.message
+                : `Hey, ${name}! Ask me anything about Akash.`;
             if (placeholderAdded) {
                 setMessages(prev => prev.map(m =>
                     m.id === greetId && m.content === '' ? { ...m, content: fallback } : m
@@ -191,7 +196,10 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 body: JSON.stringify({ message: userMessage.content, session_id: sessionId || undefined }),
             });
 
-            if (!response.ok) throw new Error('Request failed');
+            if (!response.ok) {
+                const errorBody = await response.json().catch(() => null);
+                throw new Error(response.status === 429 && errorBody?.detail ? errorBody.detail : 'Request failed');
+            }
 
             const data = await response.json();
             if (data.session_id && !sessionId) setSessionId(data.session_id);
@@ -216,7 +224,9 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
 
         } catch (error) {
             console.error('Chat error:', error);
-            const errMsg = 'Sorry, I encountered an error. Please try again.';
+            const errMsg = error instanceof Error && error.message !== 'Request failed'
+                ? error.message
+                : 'Sorry, I encountered an error. Please try again.';
             if (placeholderAdded) {
                 setMessages(prev => prev.map(m =>
                     m.id === assistantId && m.content === '' ? { ...m, content: errMsg } : m
