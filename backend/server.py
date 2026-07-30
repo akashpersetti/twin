@@ -328,6 +328,19 @@ async def chat(request: ChatRequest):
         check_rate_limit(session_id)
         message = clamp_message(request.message)
 
+        faq_match = match_faq_shortcut(message)
+        if faq_match:
+            assistant_response = f"**Q{faq_match['faq']}:** {faq_match['question']}\n\n{faq_match['answer']}"
+            conversation = load_conversation(session_id)
+            conversation.append(
+                {"role": "user", "content": message, "timestamp": datetime.now().isoformat()}
+            )
+            conversation.append(
+                {"role": "assistant", "content": assistant_response, "timestamp": datetime.now().isoformat()}
+            )
+            save_conversation(session_id, conversation)
+            return ChatResponse(response=assistant_response, session_id=session_id)
+
         # Load conversation history
         conversation = load_conversation(session_id)
 
