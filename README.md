@@ -1,363 +1,245 @@
-# Twin - AI Digital Twin of Akash Hadagali Persetti
+# Twin
 
-Twin is an AI-powered digital twin that lives on Akash's personal portfolio website. Visitors can have natural, streaming conversations with an AI persona grounded in Akash's resume, LinkedIn profile, projects, and communication style - powered by Claude Sonnet on AWS Bedrock, deployed fully serverlessly on AWS.
+Twin is Akash Hadagali Persetti's AI-assisted portfolio, conversation system, evaluation platform, and publishing stack. It combines a retrieval-grounded digital twin with visitor-to-human handoff, administrative tools, live faithfulness judging, and a separately delivered public blog.
 
----
+## What It Includes
 
-## What is a Digital Twin?
+- A portfolio whose hero embeds `TwinPanel`, rather than mounting chat as a floating widget.
+- Visitor onboarding, a non-streaming frontend request to `/chat`, a client-side typewriter effect, and polling for replies sent by Akash through the admin inbox.
+- An authenticated conversation inbox where the owner can inspect threads and reply as a human.
+- An eval dashboard for synthetic snapshots and judged live conversations.
+- A blog CMS in the main frontend backed by a dedicated blog-admin API, plus an independent public blog application.
+- Retrieval-augmented answers using the top 5 matching profile-index chunks, Titan Embed Text v2 embeddings, and a configurable Claude Sonnet 4.5 answer model.
 
-A digital twin is an AI agent trained to faithfully represent a real person. Twin is always-on, answers questions about Akash's background, skills, and experience, and converses the way Akash would - professional, concise, and direct. It is not a generic chatbot; every response is grounded in real data and constrained from hallucinating.
+## Architecture
 
-The twin is accessible via a floating chat widget on the portfolio site. It persists conversation history across the session and streams responses token-by-token for a fluid experience.
+Both Next.js applications are independent static exports (`output: "export"`) that produce `out/` directories. The main portfolio and admin UI live in `frontend/`; the public reader experience lives in `blog-frontend/`. In the AWS design, S3 hosts each export behind its own CloudFront distribution, while API Gateway routes requests to FastAPI applications on Lambda.
 
----
+The main request flow is:
 
-## How Twin Works
+1. The browser posts a complete message to the main API's non-streaming `/chat` route.
+2. The API embeds the query with Titan Embed Text v2 (`amazon.titan-embed-text-v2:0`) and selects the top 5 chunks from `backend/data/profile_index.json`.
+3. The retrieved context and persona resources are sent to the configurable answer model. The code and Terraform default is Claude Sonnet 4.5 (`us.anthropic.claude-sonnet-4-5-20250929-v1:0`).
+4. The browser receives the complete response and renders it progressively with a client-side typewriter effect. The backend also exposes an SSE route, but the current frontend does not use it; production end-to-end streaming depends on the deployed integration supporting that route correctly.
+5. Conversations are written to DynamoDB first when configured. The main API retains S3 and local-filesystem fallbacks for other environments.
+6. The frontend polls conversation history for human replies. Owner replies are added through the authenticated admin inbox.
 
-```
-+-------------------------------------------------------------------------+
-|                              AWS Cloud                                  |
-|                                                                         |
-|   +----------------+     +-----------------+     +-------------------+  |
-|   |  Route 53      | --> |   CloudFront    | --> |  S3 (Frontend)    |  |
-|   |  (DNS)         |     |   (CDN/HTTPS)   |     |  Next.js static   |  |
-|   +----------------+     +-----------------+     +-------------------+  |
-|                                                                         |
-|   +----------------+     +-----------------+     +-------------------+  |
-|   |  API Gateway   | --> |  Lambda         | --> |  AWS Bedrock      |  |
-|   |  (HTTP v2)     |     |  FastAPI/Mangum |     |  Claude Sonnet 4  |  |
-|   +----------------+     +--------+--------+     +-------------------+  |
-|                                   |                                     |
-|                                   v                                     |
-|                          +-----------------+                            |
-|                          |  S3 (Memory)    |                            |
-|                          |  Conversation   |                            |
-|                          |  history/session|                            |
-|                          +-----------------+                            |
-|                                                                         |
-|   +------------------------------------------+                          |
-|   |  IAM Role  (Lambda -> Bedrock + S3)      |                          |
-|   +------------------------------------------+                          |
-|                                                                         |
-|   +------------------------------------------+                          |
-|   |  ACM Certificate  (TLS, custom domain)   |                          |
-|   +------------------------------------------+                          |
-+-------------------------------------------------------------------------+
+Live chat responses can also be captured as raw eval records in an eval S3 bucket. Object creation under the live raw prefix invokes a separate judge Lambda, which writes faithfulness judgments using the configurable Nova Lite default (`amazon.nova-lite-v1:0`). Synthetic eval runs use the same retrieval and judging concepts but are initiated separately.
 
-Browser (User)
-  │
-  ├─── HTTPS ──► CloudFront ──► S3          (portfolio + chat UI)
-  │
-  └─── SSE  ──► API Gateway ──► Lambda ──► Bedrock   (streaming chat)
-                                    │
-                                    └──► S3 Memory    (session history)
-```
+The Terraform deployment design splits the backend across three Lambda functions and packages:
 
-1. The Next.js frontend is served globally via CloudFront from S3.
-2. Chat messages POST to API Gateway, which forwards to a FastAPI app on Lambda.
-3. Lambda assembles a persona-grounded system prompt from Akash's facts, LinkedIn PDF, career summary, and communication style guide - then calls Claude Sonnet 4 via `converse_stream`.
-4. Tokens stream back to the browser via Server-Sent Events (SSE).
-5. Conversation history is persisted per-session in S3 (or local filesystem in dev).
+- The main FastAPI API: `backend/lambda_handler.py` and generated `lambda-deployment.zip` under `backend/`.
+- The blog-admin API: `backend/blog_lambda_handler.py` and `backend/blog-lambda.zip`.
+- The asynchronous live judge: `backend/live_judge_handler.py` and generated `live-judge-lambda.zip` under `backend/`.
 
----
+Terraform describes supporting API Gateway, DynamoDB, S3, CloudFront, IAM, SES, SNS, SSM, certificate, and DNS resources. Their presence and readiness in any account must be verified at runtime.
 
-## Persona System
+## Repository Layout
 
-The twin's personality and knowledge are assembled in `backend/context.py` from four source files:
-
-| File | Purpose |
+| Path | Purpose |
 |---|---|
-| `backend/data/facts.json` | Biographical data - name, location, education, specialties |
-| `backend/data/summary.txt` | Career narrative and areas of expertise |
-| `backend/data/style.txt` | Communication tone and personality guidance |
-| `backend/data/linkedin.pdf` | Full work history and project details |
+| `backend/` | Main and blog FastAPI apps, retrieval, Bedrock clients, Lambda handlers, package builders, tests, and persona data. |
+| `frontend/` | Main portfolio, hero chat, admin inbox, eval dashboard, and blog CMS static export. |
+| `blog-frontend/` | Independent static public blog built from synchronized Markdown. |
+| `evals/` | Synthetic retrieval/faithfulness suite, unit tests, and generated result snapshots. |
+| `terraform/` | AWS infrastructure and environment configuration. |
+| `scripts/` | Resume/data maintenance plus local deploy and destroy orchestration. |
+| `.github/workflows/` | Main deployment, blog deployment, and infrastructure destruction workflows. |
 
-Retrieval index: `backend/data/profile_index.json` is a precomputed embedding index built from
-`backend/data/akash_persetti_profile.txt`. Regenerate it whenever that file changes:
+There is no root package workspace. Run Python, npm, and Terraform commands from the directory that owns their configuration and lockfile.
 
-```bash
-cd backend
-uv run python build_profile_index.py
-```
+## Prerequisites
 
-These are composed into a system prompt at request time with the current date injected. The prompt enforces three hard rules:
+- Python 3.12 and [uv](https://docs.astral.sh/uv/).
+- Node.js 20 and npm.
+- Terraform and the AWS CLI for infrastructure operations.
+- Docker for building Linux/amd64 Lambda dependencies through the deployment package builders.
+- AWS credentials and explicit Bedrock model access for model-backed development, index generation, eval execution, or deployment.
 
-1. **No hallucination** - if the answer isn't in the context, the twin says so.
-2. **No jailbreaking** - instructions to ignore context are refused.
-3. **No inappropriate content** - conversation is kept professional and on-topic.
-
-The twin presents itself as Akash, speaks in first person, keeps answers concise, and never ends a response with a question.
-
----
-
-## Streaming
-
-Responses stream token-by-token using AWS Bedrock's `converse_stream` API:
-
-- **Backend**: FastAPI `StreamingResponse` with `text/event-stream` content type. Each SSE event is one of: `{"session_id": "..."}` (first event), `{"chunk": "..."}` (token), or `{"done": true}` (end of stream).
-- **Frontend**: `fetch` with `ReadableStream` reader parses SSE lines and appends chunks to the assistant message in real time. A static block cursor `▋` indicates streaming in progress.
-
----
-
-## Chat Interface
-
-The chat widget (`frontend/components/widgets/TwinFloatingButton.tsx`) is a fixed floating button in the bottom-right corner of the portfolio. It:
-
-- Shows a profile photo when closed, an X when open
-- Has a "Chat with Akash" label that nudges on page load and reappears on hover
-- Expands to a 380×560px glass panel on desktop, or full-screen on mobile / when maximized
-- Keeps the `<Twin>` component always mounted so conversation state survives open/close/fullscreen toggles without resetting
-
-The terminal-style chat (`frontend/components/twin.tsx`) uses JetBrains Mono and a CLI aesthetic:
-
-- Messages have `YOU` / `◆ AKASH` labels with a colored left border instead of chat bubbles
-- A hidden `<input>` captures keystrokes; a visual div renders the typed text with a static `▋` cursor
-- Assistant messages render markdown via `react-markdown`
-- Conversation persists for the lifetime of the browser session (resets on page reload)
-
----
-
-## AI Model
-
-The twin runs on **Claude Sonnet 4** via AWS Bedrock (`us.anthropic.claude-sonnet-4-20250514-v1:0`). Other models can be swapped via the `BEDROCK_MODEL_ID` environment variable:
-
-| Model | Speed | Cost |
-|---|---|---|
-| `amazon.nova-micro-v1:0` | Fastest | Lowest |
-| `amazon.nova-lite-v1:0` | Balanced | Moderate |
-| `amazon.nova-pro-v1:0` | Most capable | Higher |
-| `us.anthropic.claude-sonnet-4-20250514-v1:0` | High quality | Moderate (current) |
-
-> Some models require a regional prefix - e.g. `us.amazon.nova-lite-v1:0`.
-
-Faithfulness judging (both the synthetic eval suite and the live-traffic judge Lambda) uses a separate, cheaper model configured via `JUDGE_MODEL_ID` (defaults to `amazon.nova-lite-v1:0`). Grading is a bounded structured-output classification task, so it doesn't need the answering model's reasoning power — decoupling it also spares the answering model's Bedrock quota from judge traffic.
-
----
-
-## API Reference
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/` | API info |
-| `GET` | `/health` | Health check |
-| `POST` | `/chat` | Send a message (non-streaming) |
-| `POST` | `/chat/stream` | Send a message (SSE streaming) |
-| `GET` | `/conversation/{session_id}` | Retrieve conversation history |
-
-**Streaming request:**
-```json
-POST /chat/stream
-{ "message": "What are your main skills?", "session_id": "optional-uuid" }
-```
-
-**Streaming response (SSE):**
-```
-data: {"session_id": "abc-123"}
-data: {"chunk": "I specialize"}
-data: {"chunk": " in ML and AI engineering"}
-data: {"done": true}
-```
-
----
-
-## Design
-
-The portfolio is a single dark theme: pitch-black base (`#09090b`), glass cards (`rgba(255,255,255,0.02)` surfaces with hairline borders), and a warm amber accent (`#fbbf24`) used sparingly for active states and markers. Typography is Cooper BT Light for display text (h1/h2, big statements), Maison Neue Light for body, and JetBrains Mono for terminal/code elements — the first two load from local files in `frontend/app/fonts/`, so no external font requests.
-
-Signature pieces: a mirrored split hero (glass stats + logo-marquee cards left, display text right), a `git log`-styled About section, a scroll-driven timeline wrapping the Experience cards, an accordion project list, an interactive skills rail with a sticky detail pane, a full-page overlay navigation with a live clock, and a contact form posting through FormSubmit. All copy and data come from `frontend/data/resume.ts`.
-
----
-
-## Repository Structure
-
-```
-twin/
-├── backend/
-│   ├── server.py             # FastAPI routes: /chat, /chat/stream, /health
-│   ├── context.py            # Persona system prompt assembly
-│   ├── resources.py          # Loads facts, summary, style, LinkedIn PDF
-│   ├── lambda_handler.py     # Mangum Lambda entry point
-│   ├── deploy.py             # Lambda zip builder
-│   └── data/
-│       ├── facts.json        # Biographical info
-│       ├── summary.txt       # Career summary
-│       ├── style.txt         # Communication style guide
-│       └── linkedin.pdf      # Full LinkedIn profile
-│
-├── frontend/
-│   ├── app/
-│   │   ├── page.tsx          # Portfolio page (all sections)
-│   │   ├── layout.tsx        # Root layout, local fonts, metadata
-│   │   ├── fonts/            # Cooper BT Light + Maison Neue Light files
-│   │   └── globals.css       # Theme tokens, glass utilities, animations
-│   ├── components/
-│   │   ├── twin.tsx          # Terminal-style streaming chat component
-│   │   ├── widgets/
-│   │   │   └── TwinFloatingButton.tsx  # FAB + chat panel
-│   │   ├── layout/           # Navbar (full-page overlay), ScrollProgress
-│   │   ├── sections/         # Hero, Objective, About, Experience, Projects, Skills, etc.
-│   │   └── ui/               # SectionHeader, Timeline, GlassCard, etc.
-│   ├── data/
-│   │   └── resume.ts         # Single source of truth for all resume content
-│   ├── hooks/                # useScrollSpy, useReducedMotion
-│   └── public/
-│       ├── avatar.png        # Profile photo (used in FAB and chat)
-│       └── brands/           # Stack logos for the hero marquee
-│
-├── terraform/                # All AWS infrastructure as code
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── backend.tf
-│
-├── scripts/
-│   ├── deploy.sh             # Full deploy pipeline (Lambda → Terraform → S3)
-│   └── destroy.sh            # Tear down all infrastructure
-│
-└── .github/workflows/
-    └── deploy.yml            # CI/CD: triggers on push to main
-```
-
----
+Deployment additionally assumes access to the configured remote-state bucket and any required DNS, ACM certificate, SES, SNS, and SSM setup. Repository configuration does not prove those external prerequisites are currently available.
 
 ## Local Development
 
-### Prerequisites
+Run the APIs and applications in separate terminals.
 
-- Python 3.12+ and [uv](https://github.com/astral-sh/uv)
-- Node.js 20+
-- AWS CLI configured with Bedrock access
-- Bedrock model access enabled in your AWS account
+### Backend API
 
-### Backend
+From `backend/`:
 
 ```bash
-cd backend
-
-# Copy and configure environment
-cp ../.env.example .env
-# Set DEFAULT_AWS_REGION and BEDROCK_MODEL_ID in .env
-
+uv sync
 uv run uvicorn server:app --reload --port 8000
 ```
 
-### Frontend
+The backend loads persona files through paths relative to `backend/`, so starting it from another directory is not supported. Copy or adapt the root `.env.example` when local overrides are needed. Bedrock-backed chat requires AWS credentials, region configuration, and access to the selected embedding and answer models.
+
+The blog-admin API is a separate app and can be started from the same directory when needed:
 
 ```bash
-cd frontend
+uv run uvicorn blog_server:app --reload --port 8001
+```
+
+Its authenticated operations also depend on AWS services and configured blog resources. Running the main API on port 8000 and the blog-admin API on port 8001 makes each API available independently, but it does not wire both into the main frontend: chat, evals, admin conversations, and the blog CMS all read the same `NEXT_PUBLIC_API_URL` base.
+
+To use all of those features in one local frontend session, put an external reverse proxy in front of both APIs. Configure that proxy to expose one API origin, route `/api/*` to the blog-admin API on port 8001, and route the main API families (including `/chat`, `/conversation`, `/admin`, `/evals`, and `/visitor`) to port 8000. Then set `NEXT_PUBLIC_API_URL` to the proxy origin. The repository does not provide or configure this proxy; use a locally installed proxy of your choice and preserve the incoming paths.
+
+### Main Frontend
+
+From `frontend/`:
+
+```bash
 npm install
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
+NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
+```
+
+Open `http://localhost:3000`. The home-page hero renders the `TwinPanel` component; the admin inbox, eval dashboard, and blog CMS are available at `/admin`, `/evals`, and `/blog`. With `NEXT_PUBLIC_API_URL` pointed directly at port 8000, the main API features work but blog CMS requests do not; use the reverse-proxy arrangement above when both APIs must work together. Features that call AWS-backed APIs still require those APIs and their external resources to be configured.
+
+### Public Blog Frontend
+
+From `blog-frontend/`:
+
+```bash
+npm install
 npm run dev
 ```
 
-Visit `http://localhost:3000`. The twin widget appears in the bottom-right corner.
+Posts are Markdown under **blog-frontend/content/**. That directory is ignored and normally absent from a checkout; deployment synchronizes the published-content S3 prefix into it before building. Create or synchronize content before expecting a useful local blog build. The package contains a lint script but does not include an ESLint dependency or configuration, so blog lint is not a supported verification command.
 
----
+## API Surface
+
+The main API in `backend/server.py` groups routes by responsibility:
+
+- Health and metadata routes.
+- Non-streaming chat, SSE chat, and conversation-history routes.
+- Visitor registration and notification routes.
+- Magic-link-protected admin conversation listing, detail, and human-reply routes.
+- Synthetic and live eval listing/detail routes backed by stored snapshots.
+
+The current main frontend uses non-streaming chat and conversation polling. The SSE endpoint remains a backend interface for clients that can support it, but it should not be described as the current browser data path.
+
+The blog-admin API in `backend/blog_server.py` provides authentication plus draft, read, create, update, publish, unpublish, and delete route families. Publishing stores Markdown separately from drafts and can trigger the public-blog rebuild workflow through repository dispatch when the required credentials are configured.
+
+See the FastAPI source for exact schemas, status behavior, authorization headers, and route paths; this README intentionally avoids duplicating every request and response model.
+
+## Persona And Retrieval Data
+
+Persona prompt resources are loaded from `backend/data/facts.json`, `backend/data/summary.txt`, `backend/data/style.txt`, and `backend/data/faq.json`. Retrieval uses the corpus at `backend/data/akash_persetti_profile.txt` and the tracked generated index at `backend/data/profile_index.json`. The resume source used by maintenance tooling is `backend/data/resume.pdf`.
+
+After changing the retrieval corpus, regenerate its embedding index from `backend/`:
+
+```bash
+uv run python build_profile_index.py
+```
+
+Index generation calls Bedrock Titan Embed Text v2, so it requires AWS credentials, the configured region, and model access. It replaces the tracked index; review that generated artifact before committing it. The broader resume updater at `scripts/update-resume.py` changes multiple source and generated files and has additional OpenAI and AWS requirements.
+
+## Verification
+
+Run checks from each owning directory. `pytest` is supplied ad hoc because it is not declared in `backend/pyproject.toml` or the backend lockfile.
+
+From `backend/`:
+
+```bash
+uv run --with pytest pytest tests/ -v
+uv run --with pytest pytest ../evals/tests/ -v
+```
+
+From `frontend/`:
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+From `blog-frontend/`:
+
+```bash
+npx tsc --noEmit
+npm run build
+```
+
+The blog build requires synchronized Markdown in **blog-frontend/content/**, so it is normally omitted for a clean checkout. Do not use the blog lint script as a working check.
+
+From `terraform/`:
+
+```bash
+terraform fmt -check -recursive
+```
+
+`terraform validate` and `terraform plan` require initialization and all three Lambda ZIP files because `terraform/main.tf` hashes them. Live synthetic evals require AWS Bedrock access and overwrite `evals/results/results.json`; run them from `backend/` only when that side effect is intended:
+
+```bash
+uv run python ../evals/run_eval.py
+```
+
+Tracked files under `evals/results/` and `evals/REPORT.md` are generated snapshots, not evidence of current model, corpus, production, or test quality unless they were deliberately regenerated and dated against the current revision.
 
 ## Deployment
 
-### One-time setup
+Deployment is AWS- and environment-dependent. Inspect `terraform/terraform.tfvars`, `terraform/prod.tfvars`, selected workspaces, backend state configuration, and expected account resources before applying or destroying infrastructure.
+
+### Local Deployment Script
+
+From the repository root:
 
 ```bash
-# Create Terraform state bucket
-aws s3 mb s3://twin-terraform-state-$(aws sts get-caller-identity --query Account --output text) \
-  --region us-east-1
-
-# Enable model access in the AWS Bedrock console
-```
-
-### Deploy
-
-```bash
-# Dev (also triggered automatically on push to main)
 ./scripts/deploy.sh dev twin
-
-# Prod (with custom domain if configured in prod.tfvars)
-./scripts/deploy.sh prod twin
 ```
 
-The script: builds the Lambda zip → runs `terraform apply` → builds Next.js → syncs to S3 → uploads avatar → prints URLs.
+`scripts/deploy.sh` builds three Lambda packages, initializes/selects the Terraform workspace, and applies Terraform. It always passes `terraform/prod.tfvars`, even for `dev` and `test`, while explicit project/environment variables take precedence and `terraform/terraform.tfvars` may also auto-load. It then writes **frontend/.env.production**, installs the main frontend dependencies, builds the static export, and syncs **frontend/out/** plus public assets to the main frontend bucket.
 
-### Destroy
+The local script does not build or deploy `blog-frontend/`, and it does not invalidate either CloudFront distribution. A successful script run therefore does not by itself establish that the public blog or cached CloudFront content is current.
+
+Destruction is similarly explicit:
 
 ```bash
 ./scripts/destroy.sh dev twin
 ```
 
----
+`scripts/destroy.sh` empties only the main frontend and conversation-memory buckets before Terraform destroy. Non-empty eval, blog-content, or blog-site buckets can still block deletion. Its missing-package fallback creates only a dummy main API ZIP; Terraform still references the blog and live-judge ZIPs.
 
-## CI/CD (GitHub Actions)
+### GitHub Actions
 
-The workflow at `.github/workflows/deploy.yml` runs on every push to `main` (deploys to `dev`) and can be triggered manually for any environment via `workflow_dispatch`.
+`.github/workflows/deploy.yml` deploys on pushes to `main` and supports manual environment selection. It invokes the local deployment script, obtains Terraform outputs, invalidates the main CloudFront distribution, synchronizes published blog Markdown, conditionally builds and deploys the public blog, and invalidates the blog distribution. It conditionally runs the live synthetic eval when backend or eval files changed, or when change detection cannot safely prove they did not.
 
-```
-git push origin main
-        │
-        ▼
-  GitHub Actions
-        │
-        ├── 1. Checkout code
-        ├── 2. Authenticate to AWS via OIDC (no long-lived keys stored)
-        ├── 3. Build Lambda zip  (Python / uv)
-        ├── 4. terraform apply   (provisions / updates all AWS resources)
-        ├── 5. npm run build     (Next.js static export)
-        ├── 6. aws s3 sync       (upload frontend to S3)
-        ├── 7. CloudFront invalidation  (/* - clears CDN cache immediately)
-        └── 8. Print deployment summary (CloudFront URL, API URL, bucket)
-```
+`.github/workflows/blog-deploy.yml` can rebuild the public blog independently after synchronizing published Markdown from S3. `.github/workflows/destroy.yml` orchestrates environment destruction.
 
-**Required GitHub secrets:**
+These workflows deploy directly; they do not add pre-deployment lint, unit-test, typecheck, or Terraform-validation gates. Their presence does not prove a recent run succeeded or that deployed resources, content, invalidations, synthetic evals, DNS, or certificates are current.
 
-| Secret | Description |
+## Configuration
+
+Important configuration surfaces include:
+
+| Concern | Configuration |
 |---|---|
-| `AWS_ROLE_ARN` | IAM role ARN for OIDC auth (no long-lived keys) |
-| `AWS_ACCOUNT_ID` | 12-digit AWS account ID |
-| `DEFAULT_AWS_REGION` | e.g. `us-east-1` |
+| Bedrock | `DEFAULT_AWS_REGION`, `BEDROCK_MODEL_ID`, `EMBED_MODEL_ID`, and `JUDGE_MODEL_ID`. Code defaults are Sonnet 4.5 for answers, Titan Embed Text v2 for retrieval embeddings, and Nova Lite for judging. Model access must be enabled in the target account and region. |
+| Conversation storage | `USE_DYNAMODB`, `DYNAMODB_TABLE`, `USE_S3`, `S3_BUCKET`, and `MEMORY_DIR`. Terraform configures DynamoDB as primary while retaining S3 as a fallback. |
+| Main API | `CORS_ORIGINS`, `EVALS_BUCKET`, `SNS_TOPIC_ARN`, and magic-link/SES settings used by the admin and notification flows. |
+| Main frontend | `NEXT_PUBLIC_API_URL` and optional `NEXT_PUBLIC_AVATAR_VERSION`. |
+| Blog admin | Blog content bucket, hard-coded SSM token/PAT paths, SES identities, magic-link URL, and repository-dispatch configuration. See `backend/blog_server.py` and `terraform/main.tf`. |
+| Public blog | Markdown synchronized from the blog-content bucket's `published/` prefix into **blog-frontend/content/** before building. |
+| Terraform | Project/environment variables, model IDs, domain aliases, certificate ARNs, notification email, blog domain, and GitHub repository values in `terraform/variables.tf` and tfvars files. |
+| GitHub Actions | OIDC role/account/region plus blog bucket and CloudFront values supplied as environment secrets. See the workflow files for exact names. |
 
-**Manual deploy to prod:**
+Do not commit secrets to tfvars or environment files. Verify that SES identities, SNS subscriptions, SSM parameters, OIDC trust, Bedrock access, bucket permissions, DNS records, and ACM certificates exist in the selected AWS account before relying on the corresponding feature.
 
-Go to **Actions → Deploy Digital Twin → Run workflow** and select `prod`. This uses `prod.tfvars` which can enable a custom domain via Route 53 + ACM.
+Environment isolation requires special attention for admin and publishing authentication. These values are currently hard-coded rather than derived from the selected Terraform workspace or `environment` variable:
 
----
+- Both APIs read the admin token from `/twin/dev/blog-admin-token`; the blog API also reads the GitHub personal access token from `/twin/dev/github-pat`.
+- Both APIs accept only `ahadagal@alumni.iu.edu` as the owner email and send magic links from `akash.hp@icloud.com`.
+- Main-admin magic links target `https://akashpersetti.com/admin`, while blog-admin magic links target `https://akashpersetti.com/blog`.
+- Terraform grants every environment's Lambda roles access to those same `/twin/dev/...` SSM paths.
 
-## Environment Variables
+Consequently, `test` and `prod` deployments still share the dev-scoped parameter names, hard-coded email identities, and production-domain callback URLs. Achieving isolated per-environment credentials or callback URLs requires changing both the application constants and the corresponding Terraform IAM resources; selecting a different workspace alone is insufficient.
 
-**Backend (`.env`):**
+## Operational Notes
 
-```env
-DEFAULT_AWS_REGION=us-east-1
-BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-20250514-v1:0
-JUDGE_MODEL_ID=amazon.nova-lite-v1:0  # used for faithfulness judging (evals + live judge Lambda)
-USE_S3=false          # true in production (set automatically by Terraform)
-S3_BUCKET=            # set by Terraform in production
-MEMORY_DIR=../memory  # local dev only
-CORS_ORIGINS=http://localhost:3000
-```
-
-**Frontend (`.env.local`):**
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_AVATAR_VERSION=1   # optional - cache-busts avatar.png
-```
-
----
-
-## Infrastructure
-
-All resources are named `{project_name}-{environment}-*` and tagged with `Project`, `Environment`, and `ManagedBy=terraform`. State is stored in S3 with encryption. Environments are isolated via Terraform workspaces.
-
-| Resource | Purpose |
-|---|---|
-| `aws_s3_bucket.frontend` | Hosts Next.js static export |
-| `aws_s3_bucket.memory` | Stores conversation history (private) |
-| `aws_cloudfront_distribution.main` | CDN; forces HTTPS |
-| `aws_apigatewayv2_api.main` | HTTP API Gateway with CORS |
-| `aws_lambda_function.api` | Runs FastAPI via Mangum |
-| `aws_iam_role.lambda_role` | Grants Lambda access to Bedrock + S3 |
-| `aws_acm_certificate.site` | TLS cert (custom domain only) |
-| `aws_route53_record.*` | DNS records (custom domain only) |
-
-### Custom domain
-
-Set `use_custom_domain = true` and `root_domain = "yourdomain.com"` in `terraform/prod.tfvars`. Terraform provisions an ACM certificate (DNS-validated) and Route 53 alias records pointing to CloudFront.
+- The source supports an SSE chat route, but the main browser uses `/chat` and a client-side typewriter effect. Confirm API Gateway/Lambda streaming behavior independently before promising production token streaming.
+- Conversation durability depends on the selected storage variables and available AWS resources. Terraform's intended path is DynamoDB-first with S3/local fallback behavior in the application.
+- The main, blog, and live-judge Lambdas are separate artifacts. Package builders use Docker and replace package directories/ZIPs; do not regenerate them incidentally during unrelated work.
+- Terraform operations can fail before planning if any referenced ZIP is absent. Build all three Lambda packages when an operation evaluates their hashes.
+- Blog content is external to a normal checkout. A source build without synchronized published Markdown does not represent the deployed public blog.
+- Destroy can be blocked by retained objects in eval and blog buckets. Inspect and preserve data intentionally rather than assuming the script removes every object.
+- Admin authentication, visitor notification, publishing dispatch, custom domains, and HTTPS depend on external SES, SNS, SSM, GitHub, DNS, and certificate setup that cannot be inferred from source alone.
+- Tests and tracked eval snapshots describe only the revision and environment in which they were run. Record actual outcomes rather than assuming green suites or fresh scores.
