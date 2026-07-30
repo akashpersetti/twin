@@ -134,7 +134,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 }, 16);
             });
         } catch (error) {
-            const fallback = error instanceof Error && error.message !== 'Request failed'
+            const fallback = error instanceof Error && error.message === "You're sending messages too quickly — please slow down and try again in a moment."
                 ? error.message
                 : `Hey, ${name}! Ask me anything about Akash.`;
             if (placeholderAdded) {
@@ -224,7 +224,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
 
         } catch (error) {
             console.error('Chat error:', error);
-            const errMsg = error instanceof Error && error.message !== 'Request failed'
+            const errMsg = error instanceof Error && error.message === "You're sending messages too quickly — please slow down and try again in a moment."
                 ? error.message
                 : 'Sorry, I encountered an error. Please try again.';
             if (placeholderAdded) {
