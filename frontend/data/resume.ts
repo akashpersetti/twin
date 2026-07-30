@@ -1,7 +1,7 @@
 export const resume = {
   basics: {
     name: "Akash Hadagali Persetti",
-    title: "AI Engineer | M.S. Computer Science",
+    title: "Applied AI Engineer | M.S. Computer Science",
     location: "Bloomington, IN",
     address: "421 W Hoosier Court Ave, Bloomington, IN - 47404",
     email: "hadagalipersettiakash@gmail.com",
@@ -31,7 +31,7 @@ export const resume = {
       company: "MyEdMaster LLC",
       location: "Leesburg, Virginia, United States",
       type: "Remote",
-      period: "Jun 2026 - Present",
+      period: "Jun 2026 – Present",
       project: "Adaptive AI Tutoring Product",
       bullets: [
         "Building an adaptive AI tutoring product that assesses a learner’s existing knowledge of a target topic or certification and generates a customized, real-time training program covering only the gaps, using Python, LLMs (OpenAI SDK), and MySQL.",
@@ -43,7 +43,7 @@ export const resume = {
       company: "MyEdMaster LLC",
       location: "Leesburg, Virginia, United States",
       type: "Remote",
-      period: "Jun 2025 - Aug 2025",
+      period: "Jun 2025 – Aug 2025",
       project: "Virtual Coach for Exercise Assessment",
       bullets: [
         "Built a real-time computer-vision exercise-assessment system that cut repetition miscounting by roughly 30% and reached over 92% count accuracy across 3 exercise types (Kettlebell Front Raise, Seated Leg Extensions, Jack Knives) by adding calibration routines and motion-consistency checks in Python and MediaPipe, lowering estimated coach intervention time by about 40%.",
@@ -53,6 +53,26 @@ export const resume = {
   ],
 
   projects: [
+    {
+      title: "RepoModernizer",
+      subtitle: "Autonomous Codebase Migration Agent",
+      period: "Not specified",
+      githubUrl: "https://repo-modernizer.akashpersetti.com",
+      liveUrl: "https://repo-modernizer.akashpersetti.com",
+      tech: [
+        "LangGraph",
+        "FastAPI",
+        "Fargate",
+        "EFS",
+        "Lambda",
+      ],
+      bullets: [
+        "Built a 5-node LangGraph state machine (ingest, install deps, plan, migrate-file loop, finalize) that plans a file-by-file migration from a natural-language goal, rewrites each file with an LLM, and gates any diff above a risk threshold behind a human-in-the-loop interrupt() before it touches disk.",
+        "Detects a cloned target repo’s own dependency manifest (pip or npm) and installs it into an isolated per-task virtual environment, decoupled from the worker’s own runtime, so the target’s real test suite runs against its real dependencies – and fails fast before spending any LLM cost if install itself breaks.",
+        "Computed diffs from known-good before/after file content rather than trusting LLM-authored diffs, added bounded retries with Bedrock primary/fallback failover on transient or provider errors, and enforced guardrails (forbidden paths, max changed lines, no deletions) plus a hard per-task cost cap.",
+        "Deployed on API Gateway, Lambda (FastAPI via Mangum), SQS, and one-shot Fargate tasks with DynamoDB checkpointing and an EFS-mounted workspace so a fresh container resumes mid-migration after a crash; provisioned through Terraform and GitHub Actions OIDC, with 96 passing tests and no long-lived AWS credentials.",
+      ],
+    },
     {
       title: "TerraformAgent",
       subtitle: "Multi-Agent IaC Generator",
@@ -123,7 +143,7 @@ export const resume = {
         "S3",
       ],
       bullets: [
-        "Built a streaming personal-website agent using Titan-embedding retrieval over a persona corpus, grounded in a profile assembled at Lambda cold-start from a LinkedIn PDF, career summary, and style guide (parsed via pypdf) and injected into a Bedrock Claude Sonnet system prompt.",
+        "Built a tool-calling personal-website agent on Bedrock Claude Sonnet 4.5 using Titan-v2 retrieval over a persona corpus assembled at Lambda cold-start, with a pre-approved-FAQ tool and an escalate-to-human tool that SNS-notifies the owner for a live reply via a DynamoDB-backed admin inbox.",
         "Shipped a public evals dashboard scoring retrieval quality (recall@k, nDCG@k) on 35 labeled queries per push and LLM-judged faithfulness on live traffic via an S3-event-driven judge Lambda that adds zero latency to chat responses.",
         "Cut full-stack deployment to a single command across dev, test, and prod by chaining Docker build, Lambda upload, Terraform apply, Next.js export, S3 sync, and CloudFront invalidation through GitHub Actions and AWS OIDC.",
       ],
@@ -142,14 +162,14 @@ export const resume = {
   ],
 
   skills: {
-    languages: ["Python", "TypeScript", "JavaScript", "C++", "Java", "SQL"],
-    databases: ["MySQL", "MongoDB", "PostgreSQL", "DynamoDB", "NeonDB"],
-    development: ["JavaScript", "TypeScript", "Node.js", "React", "React Native (Expo)", "HTML", "CSS", "FastAPI", "Next.js", "Webflow"],
+    languages: ["Python", "TypeScript", "JavaScript", "SQL", "C++"],
+    databases: ["MySQL", "PostgreSQL", "DynamoDB"],
+    development: ["JavaScript", "TypeScript", "Node.js", "React", "Next.js", "FastAPI"],
     ml: ["Clustering Algorithms & Classification Models", "CNN", "MediaPipe", "scikit-learn"],
     genai: [
       "Retrieval-Augmented Generation (RAG) Systems",
       "LangChain Framework",
-      "Vector Databases (ChromaDB)",
+      "Vector Databases",
       "LLM Evaluation",
       "Hugging Face Framework",
       "OpenAI",
