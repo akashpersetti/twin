@@ -158,7 +158,10 @@ def match_faq_shortcut(message: str) -> Optional[Dict]:
     match = QN_PATTERN.match(message)
     if not match:
         return None
-    return get_faq(int(match.group(1)))
+    try:
+        return get_faq(int(match.group(1)))
+    except ValueError:
+        return None
 
 
 def build_bedrock_messages(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> List[Dict]:

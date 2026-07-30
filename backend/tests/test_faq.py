@@ -32,3 +32,7 @@ def test_match_faq_shortcut_rejects_non_shortcut_text():
 
 def test_match_faq_shortcut_returns_none_for_unknown_number():
     assert server.match_faq_shortcut("Q999") is None
+
+
+def test_match_faq_shortcut_returns_none_for_extremely_long_number():
+    assert server.match_faq_shortcut("Q" + "9" * 5000) is None
