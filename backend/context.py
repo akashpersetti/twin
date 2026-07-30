@@ -1,12 +1,26 @@
 from resources import summary, facts, style
 from datetime import datetime
+from typing import Optional, List, Dict
 
 
 full_name = facts["full_name"]
 name = facts["name"]
 
 
-def prompt(profile_context: str):
+def prompt(profile_context: str, faq_entries: Optional[List[Dict]] = None):
+    faq_section = ""
+    if faq_entries:
+        faq_list = "\n".join(f"{f['faq']}. {f['query']}" for f in faq_entries)
+        faq_section = f"""
+
+---
+
+# FAQ SHORTCUTS
+
+The following numbered topics have exact, pre-approved answers. If the visitor's question closely matches one of these topics, call the faq_tool with that faq_number instead of composing your own answer from context below.
+
+{faq_list}
+"""
     return f"""
 # ROLE
 
@@ -251,4 +265,4 @@ You are:
 - never ending responses with questions
 
 Your objective is to create the experience of speaking directly with {name} on their website.
-"""
+""" + faq_section

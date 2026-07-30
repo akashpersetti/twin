@@ -70,3 +70,55 @@ def test_chat_endpoint_falls_through_for_unknown_qn():
         resp = client.post("/chat", json={"message": "Q999", "session_id": "faq-test-2"})
     assert resp.status_code == 200
     mock_call_bedrock.assert_called_once()
+
+
+def test_call_bedrock_returns_direct_text_when_no_tool_use():
+    response = {
+        "output": {"message": {"content": [{"text": "Plain answer."}]}},
+        "stopReason": "end_turn",
+    }
+    mock_converse = MagicMock(return_value=response)
+    with patch.object(server.retrieval, "retrieve", return_value=[]), \
+         patch.object(server.bedrock_client, "converse", mock_converse):
+        result = server.call_bedrock([], "Tell me something.")
+    assert result == "Plain answer."
+    assert mock_converse.call_count == 1
+
+
+def test_call_bedrock_uses_faq_tool_when_model_requests_it():
+    tool_use_response = {
+        "output": {
+            "message": {
+                "role": "assistant",
+                "content": [
+                    {"toolUse": {"toolUseId": "tool-1", "name": "faq_tool", "input": {"faq_number": 1}}}
+                ],
+            }
+        },
+        "stopReason": "tool_use",
+    }
+    final_response = {
+        "output": {"message": {"content": [{"text": "Final answer using FAQ 1."}]}},
+        "stopReason": "end_turn",
+    }
+    mock_converse = MagicMock(side_effect=[tool_use_response, final_response])
+    with patch.object(server.retrieval, "retrieve", return_value=[]), \
+         patch.object(server.bedrock_client, "converse", mock_converse):
+        result = server.call_bedrock([], "What are you working on?")
+
+    assert result == "Final answer using FAQ 1."
+    assert mock_converse.call_count == 2
+
+    first_call_kwargs = mock_converse.call_args_list[0].kwargs
+    assert first_call_kwargs["toolConfig"] == server.FAQ_TOOL_CONFIG
+
+    second_call_messages = mock_converse.call_args_list[1].kwargs["messages"]
+    tool_result_message = second_call_messages[-1]
+    assert tool_result_message["role"] == "user"
+    tool_result_block = tool_result_message["content"][0]["toolResult"]
+    assert tool_result_block["toolUseId"] == "tool-1"
+
+    faq_one = server.get_faq(1)
+    result_text = tool_result_block["content"][0]["text"]
+    assert faq_one["question"] in result_text
+    assert faq_one["answer"] in result_text
