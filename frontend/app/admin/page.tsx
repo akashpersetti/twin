@@ -16,6 +16,7 @@ export default function AdminPage() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [threadMessages, setThreadMessages] = useState<AdminMessage[]>([]);
     const lastAdminPolledCountRef = useRef(0);
+    const adminReplyInFlightRef = useRef(false);
 
     const adminFetch = async (path: string, options: RequestInit = {}) => {
         const response = await fetch(`${API_URL}${path}`, {
@@ -68,16 +69,21 @@ export default function AdminPage() {
 
     const sendReply = async (content: string) => {
         if (!selectedId) return;
-        const response = await adminFetch(`/admin/conversations/${selectedId}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content }),
-        });
-        if (response.ok) {
-            const data = await response.json();
-            const messages = data.messages ?? [];
-            setThreadMessages(messages);
-            lastAdminPolledCountRef.current = messages.length;
+        adminReplyInFlightRef.current = true;
+        try {
+            const response = await adminFetch(`/admin/conversations/${selectedId}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content }),
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const messages = data.messages ?? [];
+                setThreadMessages(messages);
+                lastAdminPolledCountRef.current = messages.length;
+            }
+        } finally {
+            adminReplyInFlightRef.current = false;
         }
     };
 
@@ -88,7 +94,7 @@ export default function AdminPage() {
         let pollInFlight = false;
 
         const poll = async () => {
-            if (pollInFlight) return;
+            if (pollInFlight || adminReplyInFlightRef.current) return;
             pollInFlight = true;
             try {
                 const response = await adminFetch(`/admin/conversations/${selectedId}`);
