@@ -88,6 +88,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         clear: () => {
             setMessages([]);
             setSessionId('');
+            lastPolledMessageCountRef.current = 0;
         },
     }));
 
@@ -192,12 +193,15 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         const poll = async () => {
             try {
                 const response = await fetch(`${API_URL}/conversation/${sessionId}`);
+                if (cancelled) return;
                 if (response.ok) {
                     const data = await response.json();
+                    if (cancelled) return;
                     const allMessages: { role: string; content: string; timestamp: string }[] = data.messages ?? [];
                     const newOnes = allMessages.slice(lastPolledMessageCountRef.current);
                     const newHumanMessages = newOnes.filter(m => m.role === 'human');
                     if (newHumanMessages.length > 0) {
+                        if (cancelled) return;
                         setMessages(prev => [
                             ...prev,
                             ...newHumanMessages.map((m, i) => ({
