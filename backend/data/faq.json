@@ -9,12 +9,156 @@
     "faq": 2,
     "query": "education background",
     "question": "What's your educational background?",
-    "answer": "I have an M.S. in Computer Science from Indiana University Bloomington, completed in May 2026."
+    "answer": "I have an M.S. in Computer Science from Indiana University Bloomington, completed in May 2026, with a focus on Generative AI and Agentic AI systems. Before that I earned a B.Eng. in Computer Science from Visvesvaraya Technological University in India."
   },
   {
     "faq": 3,
     "query": "how to get in touch",
     "question": "How can I get in touch with you?",
     "answer": "The best way to reach me is via email or LinkedIn - both are linked in the site footer."
+  },
+  {
+    "faq": 4,
+    "query": "what kind of roles are you looking for job search",
+    "question": "What kind of roles are you looking for?",
+    "answer": "I'm looking for AI Engineer and Software Engineer roles, especially at AI-native startups where I can own agentic systems and LLM infrastructure end to end."
+  },
+  {
+    "faq": 5,
+    "query": "work authorization visa status",
+    "question": "What's your work authorization status?",
+    "answer": "I'm on post-completion OPT and authorized to work in the U.S."
+  },
+  {
+    "faq": 6,
+    "query": "where are you based location",
+    "question": "Where are you based?",
+    "answer": "I'm based in Bloomington, Indiana. I'm originally from India."
+  },
+  {
+    "faq": 7,
+    "query": "current job company what do you do",
+    "question": "Where do you work right now?",
+    "answer": "I'm an AI Engineer at MyEdMaster LLC, where I own the LLM integration layer for an adaptive certification learning platform."
+  },
+  {
+    "faq": 8,
+    "query": "myedmaster llm layer what you built",
+    "question": "What do you do at MyEdMaster?",
+    "answer": "I own the LLM integration layer for their adaptive certification learning platform. It runs on a four-call structured-output pipeline built with LiteLLM, Pydantic, and OpenAI/OpenRouter."
+  },
+  {
+    "faq": 9,
+    "query": "tech stack technologies you work with",
+    "question": "What's your tech stack?",
+    "answer": "I work mostly in Python with FastAPI on the backend and React/React Native on the frontend. For agents I use LangGraph, and for LLM orchestration I lean on LiteLLM and Pydantic. My cloud stack is AWS - Bedrock, Lambda, API Gateway, S3, CloudFront, Step Functions, DynamoDB - provisioned with Terraform and deployed through GitHub Actions OIDC."
+  },
+  {
+    "faq": 10,
+    "query": "aws cloud experience deployment",
+    "question": "What's your experience with AWS?",
+    "answer": "AWS is my primary cloud. I regularly work with Bedrock, Lambda, API Gateway, S3, CloudFront, Step Functions, DynamoDB, SQS, and Secrets Manager. I provision everything with Terraform and ship it through PR-to-deploy pipelines using GitHub Actions OIDC, so there are no long-lived credentials."
+  },
+  {
+    "faq": 11,
+    "query": "agentic systems agents experience",
+    "question": "What's your experience with agentic systems?",
+    "answer": "Agents are the core of my work. I build multi-agent pipelines with LangGraph - worker-evaluator loops, orchestrator/subagent/reviewer topologies, and multi-LLM fan-out for cross-checking. Projects include TerraformAgent, Wingman, TallyMark's dual-modal agent, and mcp-second-opinion."
+  },
+  {
+    "faq": 12,
+    "query": "terraform agent project what is it",
+    "question": "Tell me about TerraformAgent.",
+    "answer": "TerraformAgent is a six-node LangGraph pipeline that turns a natural-language infrastructure request into validated Terraform. It runs an orchestrator, a researcher, parallel domain subagents, an aggregator, a reviewer, and an evaluator. The evaluator actually writes the code to disk and runs terraform fmt and validate against a provider cache. It's deployed on Lambda and Step Functions with JWT auth, DynamoDB state, and 94 passing tests. You can try it at terraform-agent.akashpersetti.com."
+  },
+  {
+    "faq": 13,
+    "query": "evalbench llm evaluation project",
+    "question": "What is EvalBench?",
+    "answer": "EvalBench is a multi-provider LLM evaluation platform I built. It runs three benchmark suites - structured-output reliability, latency/cost quality, and RAG evaluation - with a FastAPI backend and a React dashboard."
+  },
+  {
+    "faq": 14,
+    "query": "mcp second opinion open source project",
+    "question": "What is mcp-second-opinion?",
+    "answer": "It's an open-source MCP stdio server I published to PyPI under the MIT license. It fans a query across OpenAI, Gemini, Anthropic, and Grok in parallel via LiteLLM, and exposes two tools: ask_other_model and ask_the_panel."
+  },
+  {
+    "faq": 15,
+    "query": "tallymark splitmirror expense app",
+    "question": "What is TallyMark?",
+    "answer": "TallyMark is a React Native/Expo expense-splitting app with a dual-modal (voice + text) LangGraph agent. It has a FastAPI/NeonDB backend and a debt-simplification algorithm that reduces who-owes-whom to the fewest transactions."
+  },
+  {
+    "faq": 16,
+    "query": "wingman agent project",
+    "question": "What is Wingman?",
+    "answer": "Wingman is a LangGraph worker-evaluator agent with up to five retries. It reconstructs its state from DynamoDB on each request and runs on Lambda/ECR, provisioned with Terraform and GitHub Actions OIDC."
+  },
+  {
+    "faq": 17,
+    "query": "laxora startup co-founder",
+    "question": "Tell me about Laxora.",
+    "answer": "I co-founded Laxora.ai as Founding Software Engineer. It's a HIPAA-compliant AI scheduling assistant for dental and physician offices, built on AWS Bedrock, WAF, SQS, RDS, and Cognito."
+  },
+  {
+    "faq": 18,
+    "query": "twin personal ai website how does it work",
+    "question": "How does this AI twin work?",
+    "answer": "This twin runs a RAG pipeline on my knowledge base. Retrieval uses Titan embeddings with cosine similarity and top-k chunking, and the model is Claude Sonnet 4.5 on AWS Bedrock. I also built an eval harness that scores it on recall@k, nDCG@k, MRR, precision, F1, and LLM-judged faithfulness."
+  },
+  {
+    "faq": 19,
+    "query": "portfolio projects what have you built",
+    "question": "What are some projects you've built?",
+    "answer": "A few highlights: TerraformAgent (natural language to validated Terraform), EvalBench (multi-provider LLM evaluation), mcp-second-opinion (open-source MCP server on PyPI), TallyMark (expense-splitting app with a voice+text agent), Wingman (worker-evaluator agent), and this AI twin itself. Most of them are agentic and deployed on AWS."
+  },
+  {
+    "faq": 20,
+    "query": "certifications credentials",
+    "question": "Do you have any certifications?",
+    "answer": "Yes - I completed all six of Ed Donner's AI engineering courses and earned the Proficient AI Engineer certification. I've also been preparing for the AWS Solutions Architect Associate (SAA-C03) exam."
+  },
+  {
+    "faq": 21,
+    "query": "machine learning computer vision experience",
+    "question": "Do you have machine learning experience beyond LLMs?",
+    "answer": "Yes. Earlier I did ML engineering work with MediaPipe computer vision, building exercise-tracking systems like a Kettlebell Front Raise Tracker, a Seated Leg Extension Analyzer, and a Virtual Coach. I've also built RAG systems with LangChain, ChromaDB, and Azure OpenAI."
+  },
+  {
+    "faq": 22,
+    "query": "rag retrieval augmented generation experience",
+    "question": "What's your experience with RAG?",
+    "answer": "I've built several RAG systems. This twin uses Titan embeddings with cosine similarity and top-k retrieval on Bedrock, evaluated with recall@k, nDCG@k, MRR, and LLM-judged faithfulness. I also built Sonika-LLM-RAG with LangChain, ChromaDB, Azure OpenAI, and FastAPI, and RAG is one of EvalBench's benchmark suites."
+  },
+  {
+    "faq": 23,
+    "query": "past experience work history internships",
+    "question": "What's your work history?",
+    "answer": "I'm currently an AI Engineer at MyEdMaster LLC, where I earlier did an ML engineering internship on computer vision. I co-founded Laxora.ai as Founding Software Engineer, and did web development at Squadcast Labs with React/TypeScript, Webflow, and SEO."
+  },
+  {
+    "faq": 24,
+    "query": "programming languages you know",
+    "question": "What programming languages do you work in?",
+    "answer": "Python is my main language, along with TypeScript/JavaScript for frontend work. I've also worked with Motoko for blockchain development."
+  },
+  {
+    "faq": 25,
+    "query": "how do you like to work development style",
+    "question": "How do you like to work?",
+    "answer": "I'm terminal-first and I keep my code modularized. I like GUI-based inputs over terminal prompts for the tools I build, and I lean on PR-to-deploy pipelines so shipping is clean and repeatable."
+  },
+  {
+    "faq": 26,
+    "query": "writing blog content online presence",
+    "question": "Do you write or share content anywhere?",
+    "answer": "Yes - I keep a content presence on Hashnode, Dev.to, and LinkedIn where I write about AI engineering and my projects."
+  },
+  {
+    "faq": 27,
+    "query": "hobbies interests outside work",
+    "question": "What do you do outside of work?",
+    "answer": "I'm into Indian and Korean cinema, café culture, and cricket - I'm an RCB and Virat Kohli fan. I also enjoy cooking, especially biryani and Indian food."
   }
 ]
