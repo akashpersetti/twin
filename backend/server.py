@@ -383,8 +383,8 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str,
         capture_live_eval(user_message, retrieved_chunks, full_response)
 
     # Save completed conversation
-    conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat()})
-    conversation.append({"role": "assistant", "content": full_response, "timestamp": datetime.now().isoformat()})
+    conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
+    conversation.append({"role": "assistant", "content": full_response, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
     save_conversation(session_id, conversation)
 
     yield f"data: {json.dumps({'done': True})}\n\n"
@@ -441,10 +441,10 @@ async def chat(request: ChatRequest):
             assistant_response = f"**Q{faq_match['faq']}:** {faq_match['question']}\n\n{faq_match['answer']}"
             conversation = load_conversation(session_id)
             conversation.append(
-                {"role": "user", "content": message, "timestamp": datetime.now().isoformat()}
+                {"role": "user", "content": message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
             )
             conversation.append(
-                {"role": "assistant", "content": assistant_response, "timestamp": datetime.now().isoformat()}
+                {"role": "assistant", "content": assistant_response, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
             )
             save_conversation(session_id, conversation)
             return ChatResponse(response=assistant_response, session_id=session_id)
@@ -462,13 +462,15 @@ async def chat(request: ChatRequest):
 
         # Update conversation history
         conversation.append(
-            {"role": "user", "content": message, "timestamp": datetime.now().isoformat()}
+            {"role": "user", "content": message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
         )
         conversation.append(
             {
                 "role": "assistant",
                 "content": assistant_response,
                 "timestamp": datetime.now().isoformat(),
+                "needs_attention": False,
+                "read": False,
             }
         )
 

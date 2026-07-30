@@ -3,9 +3,13 @@ import os
 import sys
 from unittest.mock import MagicMock, patch
 
+from fastapi.testclient import TestClient
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import server
+
+client = TestClient(server.app)
 
 
 def test_save_conversation_dynamodb_computes_aggregates_and_puts_item():
@@ -86,3 +90,31 @@ def test_save_conversation_local_file_index_preserves_other_conversations(tmp_pa
         index = json.loads(index_path.read_text())
         assert "session-x" in index
         assert "session-y" in index
+
+
+def test_chat_endpoint_saves_messages_with_needs_attention_and_read_defaults():
+    server._request_log.clear()
+    with patch.object(server, "call_bedrock", return_value="hi"), \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server.retrieval, "retrieve", return_value=[]):
+        client.post("/chat", json={"message": "hello", "session_id": "defaults-test"})
+    saved_conversation = mock_save.call_args.args[1]
+    assert len(saved_conversation) == 2
+    for msg in saved_conversation:
+        assert msg["needs_attention"] is False
+        assert msg["read"] is False
+
+
+def test_chat_endpoint_faq_shortcut_saves_messages_with_needs_attention_and_read_defaults():
+    server._request_log.clear()
+    with patch.object(server, "call_bedrock") as mock_call_bedrock, \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation") as mock_save:
+        client.post("/chat", json={"message": "Q1", "session_id": "defaults-test-faq"})
+    mock_call_bedrock.assert_not_called()
+    saved_conversation = mock_save.call_args.args[1]
+    assert len(saved_conversation) == 2
+    for msg in saved_conversation:
+        assert msg["needs_attention"] is False
+        assert msg["read"] is False
