@@ -21,7 +21,7 @@ def run_all(queries):
         retrieved_ids = [chunk.chunk_id for chunk, score in retrieved]
         retrieved_text = "\n\n".join(f"## {chunk.section_title}\n{chunk.text}" for chunk, score in retrieved)
 
-        answer = server.call_bedrock([], q["query"])
+        answer, _ = server.call_bedrock([], q["query"])
         time.sleep(2)
         judgment = judge.judge_answer(q["query"], retrieved_text, answer)
 

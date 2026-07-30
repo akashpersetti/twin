@@ -25,9 +25,9 @@ def test_run_all_assembles_expected_result_shape():
     fake_judgment = {"faithful": True, "hallucinated_claims": [], "correctly_refused": None, "rationale": "ok"}
 
     with patch.object(run_eval.retrieval, "retrieve", return_value=[(fake_chunk, 0.9)]), \
-         patch.object(run_eval.server, "call_bedrock", return_value="Wingman is a self-evaluating agent."), \
-         patch.object(run_eval.judge, "judge_answer", return_value=fake_judgment):
-        results = run_eval.run_all(queries)
+         patch.object(run_eval.server, "call_bedrock", return_value=("Wingman is a self-evaluating agent.", False)), \
+         patch.object(run_eval.judge, "judge_answer", return_value=fake_judgment) as mock_judge:
+         results = run_eval.run_all(queries)
 
     assert len(results) == 2
     first = results[0]
@@ -38,6 +38,9 @@ def test_run_all_assembles_expected_result_shape():
     assert first["ndcg_at_5"] == 1.0
     assert first["answer"] == "Wingman is a self-evaluating agent."
     assert first["judgment"] == fake_judgment
+    mock_judge.assert_called_with(
+        "Do you know Rust?", "## Project: Wingman\nWingman details.", "Wingman is a self-evaluating agent."
+    )
 
     second = results[1]
     assert second["id"] == "q02"
