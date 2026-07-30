@@ -135,15 +135,3 @@ jobs:
           echo "🌐 CloudFront URL: ${{ steps.deploy_outputs.outputs.cloudfront_url }}"
           echo "📡 API Gateway: ${{ steps.deploy_outputs.outputs.api_url }}"
           echo "🪣 Frontend Bucket: ${{ steps.deploy_outputs.outputs.frontend_bucket }}"
-
-      - name: Run synthetic eval snapshot
-        if: github.event_name == 'workflow_dispatch'
-        working-directory: ./backend
-        run: |
-          uv sync
-          uv run python ../evals/run_eval.py
-          uv run python ../evals/upload_snapshot.py
-        env:
-          EVALS_BUCKET: ${{ steps.deploy_outputs.outputs.evals_bucket }}
-          GITHUB_SHA: ${{ github.sha }}
-          DEFAULT_AWS_REGION: ${{ secrets.DEFAULT_AWS_REGION }}
