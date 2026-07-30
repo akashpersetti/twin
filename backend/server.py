@@ -305,23 +305,24 @@ async def notify_visitor(request: VisitorRequest):
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     try:
-        # Generate session ID if not provided
         session_id = request.session_id or str(uuid.uuid4())
+        check_rate_limit(session_id)
+        message = clamp_message(request.message)
 
         # Load conversation history
         conversation = load_conversation(session_id)
 
         # Call Bedrock for response
-        assistant_response = call_bedrock(conversation, request.message, user_name=request.user_name)
+        assistant_response = call_bedrock(conversation, message, user_name=request.user_name)
 
         # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
-        if request.message != "__greet__":
-            retrieved_chunks = retrieval.retrieve(request.message, k=5)
-            capture_live_eval(request.message, retrieved_chunks, assistant_response)
+        if message != "__greet__":
+            retrieved_chunks = retrieval.retrieve(message, k=5)
+            capture_live_eval(message, retrieved_chunks, assistant_response)
 
         # Update conversation history
         conversation.append(
-            {"role": "user", "content": request.message, "timestamp": datetime.now().isoformat()}
+            {"role": "user", "content": message, "timestamp": datetime.now().isoformat()}
         )
         conversation.append(
             {
@@ -347,9 +348,11 @@ async def chat(request: ChatRequest):
 async def chat_stream(request: ChatRequest):
     try:
         session_id = request.session_id or str(uuid.uuid4())
+        check_rate_limit(session_id)
+        message = clamp_message(request.message)
         conversation = load_conversation(session_id)
         return StreamingResponse(
-            stream_bedrock(conversation, request.message, session_id, user_name=request.user_name),
+            stream_bedrock(conversation, message, session_id, user_name=request.user_name),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
