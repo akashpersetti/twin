@@ -284,7 +284,7 @@ TOOL_CONFIG = {
         {
             "toolSpec": {
                 "name": "escalate_to_human_tool",
-                "description": "Flag this conversation for the human owner's personal attention when you cannot answer the visitor's question, or the visitor explicitly asks to speak with a human. Still answer as helpfully as you can in the same turn, and let the visitor know you've notified the human.",
+                "description": "Flag this conversation for the human owner's personal attention. Only call this after the visitor has clearly confirmed, in response to your prior offer, that they'd like the owner to step in - never on the first ask. Let the visitor know you've notified the owner and that they typically respond within about 2 minutes.",
                 "inputSchema": {
                     "json": {
                         "type": "object",
@@ -331,7 +331,7 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
                         )
                     elif tool_use["name"] == "escalate_to_human_tool":
                         escalated = True
-                        result_text = "Escalation recorded. Briefly acknowledge to the visitor, naturally, that you've notified the human owner."
+                        result_text = "Escalation recorded. Briefly acknowledge to the visitor, naturally, that you've notified the human owner and that they typically respond within about 2 minutes."
                     else:
                         result_text = "Unknown tool."
                     tool_result_content.append(
@@ -611,6 +611,16 @@ async def chat(request: ChatRequest):
 
         # Save conversation
         save_conversation(session_id, conversation)
+
+        if escalated and SNS_TOPIC_ARN:
+            try:
+                sns_client.publish(
+                    TopicArn=SNS_TOPIC_ARN,
+                    Subject="Digital twin: visitor needs your help",
+                    Message="A visitor's conversation was escalated - they confirmed they'd like you to step in personally. Check the admin panel for the conversation.",
+                )
+            except ClientError as e:
+                print(f"SNS escalation notification error: {e}")
 
         return ChatResponse(response=assistant_response, session_id=session_id)
 

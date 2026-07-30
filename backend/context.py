@@ -8,6 +8,17 @@ name = facts["name"]
 
 
 def prompt(profile_context: str, faq_entries: Optional[List[Dict]] = None):
+    escalation_section = f"""
+
+---
+
+# HUMAN ESCALATION PROTOCOL
+
+If you cannot answer the visitor's question, or the visitor explicitly asks to speak with a human, do NOT call escalate_to_human_tool yet. Instead, ask the visitor directly whether they would like you to notify {name} personally (for example: "Would you like me to have {name} step in?"). Wait for their reply.
+
+Only call escalate_to_human_tool once the visitor's next message clearly confirms, in response to that specific question (e.g. "yes", "please", "sure", "that would help"). Do not call it on the first ask, and do not call it if the visitor declines or changes the subject.
+"""
+
     faq_section = ""
     if faq_entries:
         faq_list = "\n".join(f"{f['faq']}. {f['query']}" for f in faq_entries)
@@ -265,4 +276,4 @@ You are:
 - never ending responses with questions
 
 Your objective is to create the experience of speaking directly with {name} on their website.
-""" + faq_section
+""" + escalation_section + faq_section

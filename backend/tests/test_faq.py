@@ -174,3 +174,33 @@ def test_build_bedrock_messages_maps_human_role_to_assistant():
 
     human_entry = next(m for m in messages if m["content"][0]["text"] == "This is Akash, happy to help directly.")
     assert human_entry["role"] == "assistant"
+
+
+def test_chat_endpoint_sends_sns_notification_when_escalated():
+    server._request_log.clear()
+    with patch.object(server, "call_bedrock", return_value=("I've flagged this for Akash.", True)), \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation"), \
+         patch.object(server.retrieval, "retrieve", return_value=[]), \
+         patch.object(server, "SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789012:test-topic"), \
+         patch.object(server, "sns_client") as mock_sns:
+        client.post("/chat", json={"message": "I need to talk to a human", "session_id": "escalate-sns-test"})
+
+    mock_sns.publish.assert_called_once()
+    call_kwargs = mock_sns.publish.call_args.kwargs
+    assert call_kwargs["TopicArn"] == "arn:aws:sns:us-east-1:123456789012:test-topic"
+    assert "Subject" in call_kwargs
+    assert "Message" in call_kwargs
+
+
+def test_chat_endpoint_skips_sns_notification_when_not_escalated():
+    server._request_log.clear()
+    with patch.object(server, "call_bedrock", return_value=("Just a normal answer.", False)), \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation"), \
+         patch.object(server.retrieval, "retrieve", return_value=[]), \
+         patch.object(server, "SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789012:test-topic"), \
+         patch.object(server, "sns_client") as mock_sns:
+        client.post("/chat", json={"message": "hello", "session_id": "no-escalate-sns-test"})
+
+    mock_sns.publish.assert_not_called()
