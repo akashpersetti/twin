@@ -85,19 +85,26 @@ export default function AdminPage() {
         if (view !== 'thread' || !selectedId) return;
 
         let cancelled = false;
+        let pollInFlight = false;
 
         const poll = async () => {
-            const response = await adminFetch(`/admin/conversations/${selectedId}`);
-            if (cancelled) return;
-            if (response.ok) {
-                const data = await response.json();
+            if (pollInFlight) return;
+            pollInFlight = true;
+            try {
+                const response = await adminFetch(`/admin/conversations/${selectedId}`);
                 if (cancelled) return;
-                const allMessages: AdminMessage[] = data.messages ?? [];
-                const newOnes = allMessages.slice(lastAdminPolledCountRef.current);
-                if (newOnes.length > 0) {
-                    setThreadMessages(prev => [...prev, ...newOnes]);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (cancelled) return;
+                    const allMessages: AdminMessage[] = data.messages ?? [];
+                    const newOnes = allMessages.slice(lastAdminPolledCountRef.current);
+                    if (newOnes.length > 0) {
+                        setThreadMessages(prev => [...prev, ...newOnes]);
+                    }
+                    lastAdminPolledCountRef.current = allMessages.length;
                 }
-                lastAdminPolledCountRef.current = allMessages.length;
+            } finally {
+                pollInFlight = false;
             }
         };
 
