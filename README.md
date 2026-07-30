@@ -79,7 +79,9 @@ The blog-admin API is a separate app and can be started from the same directory 
 uv run uvicorn blog_server:app --reload --port 8001
 ```
 
-Its authenticated operations also depend on AWS services and configured blog resources.
+Its authenticated operations also depend on AWS services and configured blog resources. Running the main API on port 8000 and the blog-admin API on port 8001 makes each API available independently, but it does not wire both into the main frontend: chat, evals, admin conversations, and the blog CMS all read the same `NEXT_PUBLIC_API_URL` base.
+
+To use all of those features in one local frontend session, put an external reverse proxy in front of both APIs. Configure that proxy to expose one API origin, route `/api/*` to the blog-admin API on port 8001, and route the main API families (including `/chat`, `/conversation`, `/admin`, `/evals`, and `/visitor`) to port 8000. Then set `NEXT_PUBLIC_API_URL` to the proxy origin. The repository does not provide or configure this proxy; use a locally installed proxy of your choice and preserve the incoming paths.
 
 ### Main Frontend
 
@@ -90,7 +92,7 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 ```
 
-Open `http://localhost:3000`. The portfolio, `TwinPanel`, admin inbox, eval dashboard, and blog CMS are routes within this application. Features that call AWS-backed APIs still require those APIs and their external resources to be configured.
+Open `http://localhost:3000`. The home-page hero renders the `TwinPanel` component; the admin inbox, eval dashboard, and blog CMS are available at `/admin`, `/evals`, and `/blog`. With `NEXT_PUBLIC_API_URL` pointed directly at port 8000, the main API features work but blog CMS requests do not; use the reverse-proxy arrangement above when both APIs must work together. Features that call AWS-backed APIs still require those APIs and their external resources to be configured.
 
 ### Public Blog Frontend
 
@@ -215,12 +217,21 @@ Important configuration surfaces include:
 | Conversation storage | `USE_DYNAMODB`, `DYNAMODB_TABLE`, `USE_S3`, `S3_BUCKET`, and `MEMORY_DIR`. Terraform configures DynamoDB as primary while retaining S3 as a fallback. |
 | Main API | `CORS_ORIGINS`, `EVALS_BUCKET`, `SNS_TOPIC_ARN`, and magic-link/SES settings used by the admin and notification flows. |
 | Main frontend | `NEXT_PUBLIC_API_URL` and optional `NEXT_PUBLIC_AVATAR_VERSION`. |
-| Blog admin | Blog content bucket, site URL, SSM token/PAT parameters, SES settings, and repository-dispatch configuration. See `backend/blog_server.py` and `terraform/main.tf`. |
-| Public blog | Markdown under the published-content prefix plus `NEXT_PUBLIC_SITE_URL` where configured. |
+| Blog admin | Blog content bucket, hard-coded SSM token/PAT paths, SES identities, magic-link URL, and repository-dispatch configuration. See `backend/blog_server.py` and `terraform/main.tf`. |
+| Public blog | Markdown synchronized from the blog-content bucket's `published/` prefix into **blog-frontend/content/** before building. |
 | Terraform | Project/environment variables, model IDs, domain aliases, certificate ARNs, notification email, blog domain, and GitHub repository values in `terraform/variables.tf` and tfvars files. |
 | GitHub Actions | OIDC role/account/region plus blog bucket and CloudFront values supplied as environment secrets. See the workflow files for exact names. |
 
 Do not commit secrets to tfvars or environment files. Verify that SES identities, SNS subscriptions, SSM parameters, OIDC trust, Bedrock access, bucket permissions, DNS records, and ACM certificates exist in the selected AWS account before relying on the corresponding feature.
+
+Environment isolation requires special attention for admin and publishing authentication. These values are currently hard-coded rather than derived from the selected Terraform workspace or `environment` variable:
+
+- Both APIs read the admin token from `/twin/dev/blog-admin-token`; the blog API also reads the GitHub personal access token from `/twin/dev/github-pat`.
+- Both APIs accept only `ahadagal@alumni.iu.edu` as the owner email and send magic links from `akash.hp@icloud.com`.
+- Main-admin magic links target `https://akashpersetti.com/admin`, while blog-admin magic links target `https://akashpersetti.com/blog`.
+- Terraform grants every environment's Lambda roles access to those same `/twin/dev/...` SSM paths.
+
+Consequently, `test` and `prod` deployments still share the dev-scoped parameter names, hard-coded email identities, and production-domain callback URLs. Achieving isolated per-environment credentials or callback URLs requires changing both the application constants and the corresponding Terraform IAM resources; selecting a different workspace alone is insufficient.
 
 ## Operational Notes
 
