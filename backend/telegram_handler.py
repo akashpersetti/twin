@@ -24,9 +24,10 @@ def _config(name: str) -> str:
 
 def _get_bot_token() -> str:
     global _BOT_TOKEN
+    parameter_name = _config("TELEGRAM_BOT_TOKEN_PARAMETER")
     if _BOT_TOKEN is None:
         response = ssm_client.get_parameter(
-            Name=_config("TELEGRAM_BOT_TOKEN_PARAMETER"),
+            Name=parameter_name,
             WithDecryption=True,
         )
         _BOT_TOKEN = response["Parameter"]["Value"]
@@ -78,6 +79,8 @@ def _send_message(subject: str, message: str) -> None:
     except Exception:
         raise RuntimeError("Telegram notification delivery failed") from None
 
+    if not isinstance(result, dict):
+        raise RuntimeError("Telegram notification delivery failed")
     if not result.get("ok"):
         raise RuntimeError("Telegram rejected the notification")
 

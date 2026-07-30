@@ -97,6 +97,19 @@ def test_handler_rejects_missing_configuration(monkeypatch, missing_name):
         )
 
 
+def test_handler_validates_token_parameter_before_using_cached_token(monkeypatch):
+    monkeypatch.delenv("TELEGRAM_BOT_TOKEN_PARAMETER")
+    telegram_handler._BOT_TOKEN = "cached-bot-token"
+
+    with patch.object(telegram_handler.ssm_client, "get_parameter") as get_parameter, \
+         patch.object(telegram_handler.request, "urlopen") as urlopen:
+        with pytest.raises(RuntimeError, match="Telegram notifier is not configured"):
+            telegram_handler.handler(sns_event(("Subject", "Message")), None)
+
+    get_parameter.assert_not_called()
+    urlopen.assert_not_called()
+
+
 def test_handler_raises_when_telegram_rejects_message():
     with patch.object(telegram_handler.ssm_client, "get_parameter") as get_parameter, \
          patch.object(telegram_handler.request, "urlopen") as urlopen:
@@ -141,6 +154,17 @@ def test_handler_raises_on_malformed_telegram_json():
          patch.object(telegram_handler.request, "urlopen") as urlopen:
         get_parameter.return_value = {"Parameter": {"Value": "bot-token"}}
         urlopen.return_value.__enter__.return_value = telegram_response(b"not json")
+
+        with pytest.raises(RuntimeError, match="Telegram notification delivery failed"):
+            telegram_handler.handler(sns_event(("Subject", "Message")), None)
+
+
+@pytest.mark.parametrize("payload", [b"null", b"[]"])
+def test_handler_raises_sanitized_error_for_non_object_telegram_json(payload):
+    with patch.object(telegram_handler.ssm_client, "get_parameter") as get_parameter, \
+         patch.object(telegram_handler.request, "urlopen") as urlopen:
+        get_parameter.return_value = {"Parameter": {"Value": "bot-token"}}
+        urlopen.return_value.__enter__.return_value = telegram_response(payload)
 
         with pytest.raises(RuntimeError, match="Telegram notification delivery failed"):
             telegram_handler.handler(sns_event(("Subject", "Message")), None)
