@@ -10,7 +10,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface Message {
     id: string;
-    role: 'user' | 'assistant';
+    role: 'user' | 'assistant' | 'human';
     content: string;
     timestamp: Date;
 }
@@ -77,6 +77,9 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     const [visitorName, setVisitorName] = useState<string | null>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
     const hiddenInputRef = useRef<HTMLInputElement>(null);
+    const lastPolledMessageCountRef = useRef(0);
+    const lastActivityRef = useRef(Date.now());
+    const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [avatarError, setAvatarError] = useState(false);
     const avatarSrc = `/avatar.png${typeof process.env.NEXT_PUBLIC_AVATAR_VERSION === 'string' ? `?v=${process.env.NEXT_PUBLIC_AVATAR_VERSION}` : ''}`;
@@ -85,6 +88,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         clear: () => {
             setMessages([]);
             setSessionId('');
+            lastPolledMessageCountRef.current = 0;
         },
     }));
 
@@ -181,9 +185,58 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    useEffect(() => {
+        if (!sessionId) return;
+
+        let cancelled = false;
+
+        const poll = async () => {
+            try {
+                const response = await fetch(`${API_URL}/conversation/${sessionId}`);
+                if (cancelled) return;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (cancelled) return;
+                    const allMessages: { role: string; content: string; timestamp: string }[] = data.messages ?? [];
+                    const newOnes = allMessages.slice(lastPolledMessageCountRef.current);
+                    const newHumanMessages = newOnes.filter(m => m.role === 'human');
+                    if (newHumanMessages.length > 0) {
+                        if (cancelled) return;
+                        setMessages(prev => [
+                            ...prev,
+                            ...newHumanMessages.map((m, i) => ({
+                                id: `human-${Date.now()}-${i}`,
+                                role: 'human' as const,
+                                content: m.content,
+                                timestamp: new Date(m.timestamp),
+                            })),
+                        ]);
+                        lastActivityRef.current = Date.now();
+                    }
+                    lastPolledMessageCountRef.current = allMessages.length;
+                }
+            } catch {
+                // Silent - retry next tick
+            }
+
+            if (cancelled) return;
+            const idleFor = Date.now() - lastActivityRef.current;
+            const delay = idleFor > 5 * 60 * 1000 ? 60_000 : 10_000;
+            pollTimeoutRef.current = setTimeout(poll, delay);
+        };
+
+        pollTimeoutRef.current = setTimeout(poll, 10_000);
+
+        return () => {
+            cancelled = true;
+            if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+        };
+    }, [sessionId]);
+
     const sendMessage = async (overrideText?: string) => {
         const text = overrideText ?? input;
         if (!text.trim() || isLoading || isStreaming) return;
+        lastActivityRef.current = Date.now();
 
         const userMessage: Message = {
             id: Date.now().toString(),
@@ -330,12 +383,12 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
 
     const busy = isLoading || isStreaming;
 
-    // Helper: determine if this message should show avatar (last in consecutive assistant run)
+    // Helper: determine if this message should show avatar (last in consecutive non-user run)
     const getShowAvatar = (idx: number) => {
         const msg = messages[idx];
-        if (msg.role !== 'assistant') return false;
+        if (msg.role === 'user') return false;
         const nextMsg = messages[idx + 1];
-        return !nextMsg || nextMsg.role !== 'assistant';
+        return !nextMsg || nextMsg.role === 'user';
     };
 
     // Helper: get tight spacing for consecutive messages of same role
@@ -428,6 +481,34 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                             className="max-w-[85%] rounded-2xl rounded-br-md px-3.5 py-2.5 text-[13px] leading-relaxed"
                                             style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.18)', color: '#fafafa' }}
                                         >
+                                            <span>{message.content}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Human (owner) message bubble */}
+                                {message.role === 'human' && (
+                                    <div className="flex items-end gap-2 max-w-[85%]">
+                                        {showAvatar ? (
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src="/avatar.png" alt="" className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/10" />
+                                        ) : (
+                                            <div className="w-7 shrink-0" />
+                                        )}
+                                        <div
+                                            className="rounded-2xl rounded-bl-md px-3.5 py-2.5 text-[13px] leading-relaxed"
+                                            style={{
+                                                background: 'rgba(255,255,255,0.04)',
+                                                borderTop: '1px solid rgba(251,191,36,0.18)',
+                                                borderRight: '1px solid rgba(251,191,36,0.18)',
+                                                borderBottom: '1px solid rgba(251,191,36,0.18)',
+                                                borderLeft: '2px solid var(--accent)',
+                                                color: '#d4d4d8',
+                                            }}
+                                        >
+                                            <p style={{ color: 'var(--accent)', fontSize: '0.7em', fontWeight: 600, marginBottom: '0.25em', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                Akash
+                                            </p>
                                             <span>{message.content}</span>
                                         </div>
                                     </div>
