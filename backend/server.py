@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+import secrets
 import os
 from dotenv import load_dotenv
 from typing import Optional, List, Dict, Generator
@@ -17,6 +18,7 @@ from context import prompt
 import retrieval
 from bedrock_client import bedrock_client, BEDROCK_MODEL_ID
 from resources import faq_entries
+import auth
 
 # Load environment variables
 load_dotenv()
@@ -76,6 +78,10 @@ class ChatResponse(BaseModel):
 class VisitorRequest(BaseModel):
     name: str
     contact: Optional[str] = None
+
+
+class MagicLinkRequest(BaseModel):
+    email: str
 
 
 class Message(BaseModel):
@@ -427,6 +433,45 @@ async def notify_visitor(request: VisitorRequest):
         print(f"SNS notification error: {e}")
 
     return {"status": "ok"}
+
+
+ADMIN_MAGIC_LINK_BASE_URL = "https://akashpersetti.com/admin"
+
+
+@app.post("/admin/auth/request")
+def request_admin_magic_link(req: MagicLinkRequest):
+    if req.email != auth.OWNER_EMAIL:
+        return {"sent": True}
+
+    token = secrets.token_hex(32)
+    expires_at = int(time.time()) + auth.MAGIC_TOKEN_TTL_SECONDS
+    auth.magic_tokens_table.put_item(Item={"token": token, "expires_at": expires_at})
+
+    link = f"{ADMIN_MAGIC_LINK_BASE_URL}?magic={token}"
+    auth.ses.send_email(
+        Source=auth.SES_SENDER_EMAIL,
+        Destination={"ToAddresses": [auth.OWNER_EMAIL]},
+        Message={
+            "Subject": {"Data": "Your chat admin sign-in link", "Charset": "UTF-8"},
+            "Body": {
+                "Text": {
+                    "Data": f"Sign in to the chat admin:\n\n{link}\n\nThis link expires in 15 minutes.",
+                    "Charset": "UTF-8",
+                },
+                "Html": {
+                    "Data": f'<p><a href="{link}">Sign in to the chat admin</a></p><p>This link expires in 15 minutes.</p>',
+                    "Charset": "UTF-8",
+                },
+            },
+        },
+    )
+    return {"sent": True}
+
+
+@app.get("/admin/auth/verify")
+def verify_admin_magic_link(token: Optional[str] = None):
+    auth.consume_magic_token(token)
+    return {"admin_token": auth.get_admin_token()}
 
 
 @app.post("/chat", response_model=ChatResponse)
