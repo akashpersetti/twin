@@ -76,6 +76,42 @@ variable "notification_email" {
   default     = ""
 }
 
+variable "telegram_chat_id" {
+  description = "Private Telegram chat ID for visitor notifications; empty disables Telegram delivery"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.telegram_chat_id == "" || can(regex("^-?[0-9]+$", var.telegram_chat_id))
+    error_message = "telegram_chat_id must be empty or a numeric Telegram chat ID."
+  }
+}
+
+variable "telegram_bot_token_parameter_name" {
+  description = "SSM SecureString parameter name containing the Telegram bot token; empty disables Telegram delivery"
+  type        = string
+  default     = ""
+
+  validation {
+    condition = (
+      var.telegram_bot_token_parameter_name == "" ||
+      can(regex("^/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$", var.telegram_bot_token_parameter_name))
+    )
+    error_message = "telegram_bot_token_parameter_name must be empty or an absolute SSM parameter path without wildcards."
+  }
+}
+
+variable "telegram_admin_url" {
+  description = "Admin-panel URL attached to Telegram notifications"
+  type        = string
+  default     = "https://akashpersetti.com/admin"
+
+  validation {
+    condition     = can(regex("^https://", var.telegram_admin_url))
+    error_message = "telegram_admin_url must use HTTPS."
+  }
+}
+
 variable "blog_domain" {
   description = "Full blog subdomain, e.g. blog.akashpersetti.com. Empty string = no custom domain."
   type        = string

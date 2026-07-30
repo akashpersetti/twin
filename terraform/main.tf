@@ -1,5 +1,6 @@
 # Data source to get current AWS account ID
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 locals {
   # Prefer explicit domain_aliases (BYOC path); fall back to Route53-managed path; else none
@@ -18,6 +19,10 @@ locals {
     Environment = var.environment
     ManagedBy   = "terraform"
   }
+
+  telegram_notifications_enabled = (
+    var.telegram_chat_id != "" && var.telegram_bot_token_parameter_name != ""
+  )
 }
 
 # S3 bucket for conversation memory
@@ -214,6 +219,87 @@ resource "aws_iam_role_policy" "lambda_sns" {
       }
     ]
   })
+}
+
+resource "aws_iam_role" "telegram_notifier" {
+  count = local.telegram_notifications_enabled ? 1 : 0
+  name  = "${local.name_prefix}-telegram-notifier-role"
+  tags  = local.common_tags
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "telegram_notifier_basic" {
+  count      = local.telegram_notifications_enabled ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.telegram_notifier[0].name
+}
+
+resource "aws_iam_role_policy" "telegram_notifier_ssm" {
+  count = local.telegram_notifications_enabled ? 1 : 0
+  name  = "${local.name_prefix}-telegram-notifier-ssm-policy"
+  role  = aws_iam_role.telegram_notifier[0].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ssm:GetParameter"]
+      Resource = "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter${var.telegram_bot_token_parameter_name}"
+    }]
+  })
+}
+
+resource "aws_lambda_function" "telegram_notifier" {
+  count            = local.telegram_notifications_enabled ? 1 : 0
+  filename         = "${path.module}/../backend/lambda-deployment.zip"
+  function_name    = "${local.name_prefix}-telegram-notifier"
+  role             = aws_iam_role.telegram_notifier[0].arn
+  handler          = "telegram_handler.handler"
+  source_code_hash = filebase64sha256("${path.module}/../backend/lambda-deployment.zip")
+  runtime          = "python3.12"
+  architectures    = ["x86_64"]
+  timeout          = 15
+  tags             = local.common_tags
+
+  environment {
+    variables = {
+      TELEGRAM_BOT_TOKEN_PARAMETER = var.telegram_bot_token_parameter_name
+      TELEGRAM_CHAT_ID             = var.telegram_chat_id
+      TELEGRAM_ADMIN_URL           = var.telegram_admin_url
+    }
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.telegram_notifier_basic,
+    aws_iam_role_policy.telegram_notifier_ssm,
+  ]
+}
+
+resource "aws_lambda_permission" "allow_sns_telegram_notifier" {
+  count         = local.telegram_notifications_enabled ? 1 : 0
+  statement_id  = "AllowExecutionFromSNS"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.telegram_notifier[0].function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.visitor_notifications.arn
+}
+
+resource "aws_sns_topic_subscription" "visitor_telegram" {
+  count      = local.telegram_notifications_enabled ? 1 : 0
+  topic_arn  = aws_sns_topic.visitor_notifications.arn
+  protocol   = "lambda"
+  endpoint   = aws_lambda_function.telegram_notifier[0].arn
+  depends_on = [aws_lambda_permission.allow_sns_telegram_notifier]
 }
 
 # Lambda function
