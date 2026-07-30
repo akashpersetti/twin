@@ -1,5 +1,6 @@
 # Data source to get current AWS account ID
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 locals {
   # Prefer explicit domain_aliases (BYOC path); fall back to Route53-managed path; else none
@@ -253,7 +254,7 @@ resource "aws_iam_role_policy" "telegram_notifier_ssm" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["ssm:GetParameter"]
-      Resource = "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter${var.telegram_bot_token_parameter_name}"
+      Resource = "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter${var.telegram_bot_token_parameter_name}"
     }]
   })
 }

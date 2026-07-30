@@ -75,12 +75,31 @@ def test_handler_sends_each_sns_record_and_caches_token():
         {},
         {"Records": []},
         {"Records": [{}]},
+        {"Records": [{"Sns": {"Message": "Missing subject"}}]},
+        {"Records": [{"Sns": {"Subject": "", "Message": "Empty subject"}}]},
         {"Records": [{"Sns": {"Subject": "Missing message"}}]},
     ],
 )
 def test_handler_rejects_malformed_sns_events(event):
     with pytest.raises(ValueError):
         telegram_handler.handler(event, None)
+
+
+def test_handler_validates_all_records_before_delivery():
+    event = {
+        "Records": [
+            {"Sns": {"Subject": "Valid", "Message": "Valid message"}},
+            {"Sns": {"Message": "Missing subject"}},
+        ]
+    }
+
+    with patch.object(telegram_handler.ssm_client, "get_parameter") as get_parameter, \
+         patch.object(telegram_handler.request, "urlopen") as urlopen:
+        with pytest.raises(ValueError):
+            telegram_handler.handler(event, None)
+
+    get_parameter.assert_not_called()
+    urlopen.assert_not_called()
 
 
 @pytest.mark.parametrize(

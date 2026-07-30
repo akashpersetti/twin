@@ -41,11 +41,12 @@ Confirm that Telegram returns `"ok": true` and the message appears in the privat
 
 ## Store The Token In SSM
 
-Select the same AWS account and region used by the target Terraform workspace, then run:
+Select the same AWS account and region used by the target Terraform workspace. Set the environment to the workspace that serves the site; the current site uses `dev`:
 
 ```bash
+export ENVIRONMENT=dev
 aws ssm put-parameter \
-  --name '/twin/prod/telegram-bot-token' \
+  --name "/twin/${ENVIRONMENT}/telegram-bot-token" \
   --type SecureString \
   --value "$TELEGRAM_BOT_TOKEN" \
   --overwrite
@@ -59,8 +60,8 @@ Export only non-secret Terraform inputs:
 
 ```bash
 export TF_VAR_telegram_chat_id="$TELEGRAM_CHAT_ID"
-export TF_VAR_telegram_bot_token_parameter_name='/twin/prod/telegram-bot-token'
-./scripts/deploy.sh prod twin
+export TF_VAR_telegram_bot_token_parameter_name="/twin/${ENVIRONMENT}/telegram-bot-token"
+./scripts/deploy.sh "$ENVIRONMENT" twin
 ```
 
 The existing deployment builds `backend/lambda-deployment.zip`, and Terraform creates the notifier because both Telegram variables are non-empty.
@@ -70,7 +71,7 @@ The existing deployment builds `backend/lambda-deployment.zip`, and Terraform cr
 1. Trigger `/visitor` and confirm both email and Telegram arrive.
 2. Trigger and confirm a human escalation and confirm both email and Telegram arrive.
 3. Use the Telegram `Open admin panel` button and confirm it opens the admin page.
-4. Inspect `/aws/lambda/twin-prod-telegram-notifier` in CloudWatch if Telegram does not arrive.
+4. Inspect `/aws/lambda/twin-${ENVIRONMENT}-telegram-notifier` in CloudWatch if Telegram does not arrive.
 
 ## Rotate Or Disable
 
@@ -78,7 +79,7 @@ Rotate the bot token with `@BotFather`, rerun `aws ssm put-parameter` with the n
 
 ```bash
 aws lambda update-function-configuration \
-  --function-name twin-prod-telegram-notifier \
+  --function-name "twin-${ENVIRONMENT}-telegram-notifier" \
   --description "Telegram token rotated $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 ```
 

@@ -93,8 +93,11 @@ variable "telegram_bot_token_parameter_name" {
   default     = ""
 
   validation {
-    condition     = var.telegram_bot_token_parameter_name == "" || startswith(var.telegram_bot_token_parameter_name, "/")
-    error_message = "telegram_bot_token_parameter_name must be empty or start with '/'."
+    condition = (
+      var.telegram_bot_token_parameter_name == "" ||
+      can(regex("^/[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*$", var.telegram_bot_token_parameter_name))
+    )
+    error_message = "telegram_bot_token_parameter_name must be empty or an absolute SSM parameter path without wildcards."
   }
 }
 

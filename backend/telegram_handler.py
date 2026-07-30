@@ -44,8 +44,8 @@ def _notification(record: dict) -> tuple[str, str]:
     if not isinstance(message, str) or not message:
         raise ValueError("Malformed SNS notification")
 
-    subject = sns.get("Subject") or "Digital twin notification"
-    if not isinstance(subject, str):
+    subject = sns.get("Subject")
+    if not isinstance(subject, str) or not subject:
         raise ValueError("Malformed SNS notification")
     return subject, message
 
@@ -90,8 +90,8 @@ def handler(event: dict, context: object) -> dict[str, int]:
     if not isinstance(records, list) or not records:
         raise ValueError("Malformed SNS notification")
 
-    for record in records:
-        subject, message = _notification(record)
+    notifications = [_notification(record) for record in records]
+    for subject, message in notifications:
         _send_message(subject, message)
 
     return {"delivered": len(records)}
