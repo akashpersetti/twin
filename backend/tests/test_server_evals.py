@@ -72,7 +72,7 @@ def test_chat_endpoint_still_200s_when_capture_fails():
     with patch.object(server, "evals_s3_client", mock_s3), \
          patch.object(server, "EVALS_BUCKET", "test-evals-bucket"), \
          patch.object(retrieval, "retrieve", return_value=[(fake_chunk, 0.9)]), \
-         patch.object(server, "call_bedrock", return_value="Akash is an AI engineer."), \
+         patch.object(server, "call_bedrock", return_value=("Akash is an AI engineer.", False)), \
          patch.object(server, "load_conversation", return_value=[]), \
          patch.object(server, "save_conversation"):
         resp = client.post("/chat", json={"message": "What does Akash do?"})
