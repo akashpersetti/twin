@@ -63,7 +63,7 @@ def test_chat_endpoint_answers_qn_shortcut_without_calling_bedrock():
 
 def test_chat_endpoint_falls_through_for_unknown_qn():
     server._request_log.clear()
-    with patch.object(server, "call_bedrock", return_value="hi") as mock_call_bedrock, \
+    with patch.object(server, "call_bedrock", return_value=("hi", False)) as mock_call_bedrock, \
          patch.object(server, "load_conversation", return_value=[]), \
          patch.object(server, "save_conversation"), \
          patch.object(server.retrieval, "retrieve", return_value=[]):
@@ -81,7 +81,7 @@ def test_call_bedrock_returns_direct_text_when_no_tool_use():
     with patch.object(server.retrieval, "retrieve", return_value=[]), \
          patch.object(server.bedrock_client, "converse", mock_converse):
         result = server.call_bedrock([], "Tell me something.")
-    assert result == "Plain answer."
+    assert result == ("Plain answer.", False)
     assert mock_converse.call_count == 1
 
 
@@ -106,11 +106,11 @@ def test_call_bedrock_uses_faq_tool_when_model_requests_it():
          patch.object(server.bedrock_client, "converse", mock_converse):
         result = server.call_bedrock([], "What are you working on?")
 
-    assert result == "Final answer using FAQ 1."
+    assert result == ("Final answer using FAQ 1.", False)
     assert mock_converse.call_count == 2
 
     first_call_kwargs = mock_converse.call_args_list[0].kwargs
-    assert first_call_kwargs["toolConfig"] == server.FAQ_TOOL_CONFIG
+    assert first_call_kwargs["toolConfig"] == server.TOOL_CONFIG
 
     second_call_messages = mock_converse.call_args_list[1].kwargs["messages"]
     tool_result_message = second_call_messages[-1]
@@ -122,3 +122,55 @@ def test_call_bedrock_uses_faq_tool_when_model_requests_it():
     result_text = tool_result_block["content"][0]["text"]
     assert faq_one["question"] in result_text
     assert faq_one["answer"] in result_text
+
+
+def test_call_bedrock_escalates_when_model_requests_it():
+    tool_use_response = {
+        "output": {
+            "message": {
+                "role": "assistant",
+                "content": [
+                    {"toolUse": {"toolUseId": "tool-2", "name": "escalate_to_human_tool", "input": {"reason": "visitor wants a demo"}}}
+                ],
+            }
+        },
+        "stopReason": "tool_use",
+    }
+    final_response = {
+        "output": {"message": {"content": [{"text": "I've let Akash know and he'll follow up."}]}},
+        "stopReason": "end_turn",
+    }
+    mock_converse = MagicMock(side_effect=[tool_use_response, final_response])
+    with patch.object(server.retrieval, "retrieve", return_value=[]), \
+         patch.object(server.bedrock_client, "converse", mock_converse):
+        result = server.call_bedrock([], "Can I talk to a real person?")
+
+    assert result == ("I've let Akash know and he'll follow up.", True)
+    assert mock_converse.call_count == 2
+
+
+def test_chat_endpoint_sets_needs_attention_when_escalated():
+    server._request_log.clear()
+    with patch.object(server, "call_bedrock", return_value=("I've flagged this for Akash.", True)), \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server.retrieval, "retrieve", return_value=[]):
+        client.post("/chat", json={"message": "I need to talk to a human", "session_id": "escalate-test"})
+
+    saved_conversation = mock_save.call_args.args[1]
+    assistant_message = next(m for m in saved_conversation if m["role"] == "assistant")
+    assert assistant_message["needs_attention"] is True
+    user_message = next(m for m in saved_conversation if m["role"] == "user")
+    assert user_message["needs_attention"] is False
+
+
+def test_build_bedrock_messages_maps_human_role_to_assistant():
+    conversation = [
+        {"role": "user", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": False},
+        {"role": "human", "content": "This is Akash, happy to help directly.", "timestamp": "t2", "needs_attention": False, "read": True},
+    ]
+    with patch.object(server.retrieval, "retrieve", return_value=[]):
+        messages = server.build_bedrock_messages(conversation, "another question")
+
+    human_entry = next(m for m in messages if m["content"][0]["text"] == "This is Akash, happy to help directly.")
+    assert human_entry["role"] == "assistant"

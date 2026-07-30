@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import secrets
 import os
 from dotenv import load_dotenv
-from typing import Optional, List, Dict, Generator
+from typing import Optional, List, Dict, Generator, Tuple
 import json
 import uuid
 from datetime import datetime
@@ -248,12 +248,13 @@ def build_bedrock_messages(conversation: List[Dict], user_message: str, user_nam
     messages = []
     messages.append({"role": "user", "content": [{"text": f"System: {system}"}]})
     for msg in conversation[-20:]:
-        messages.append({"role": msg["role"], "content": [{"text": msg["content"]}]})
+        bedrock_role = "assistant" if msg["role"] in ("assistant", "human") else "user"
+        messages.append({"role": bedrock_role, "content": [{"text": msg["content"]}]})
     messages.append({"role": "user", "content": [{"text": user_message}]})
     return messages
 
 
-FAQ_TOOL_CONFIG = {
+TOOL_CONFIG = {
     "tools": [
         {
             "toolSpec": {
@@ -272,12 +273,30 @@ FAQ_TOOL_CONFIG = {
                     }
                 },
             }
-        }
+        },
+        {
+            "toolSpec": {
+                "name": "escalate_to_human_tool",
+                "description": "Flag this conversation for the human owner's personal attention when you cannot answer the visitor's question, or the visitor explicitly asks to speak with a human. Still answer as helpfully as you can in the same turn, and let the visitor know you've notified the human.",
+                "inputSchema": {
+                    "json": {
+                        "type": "object",
+                        "properties": {
+                            "reason": {
+                                "type": "string",
+                                "description": "Brief reason for escalation, shown to the human owner.",
+                            }
+                        },
+                        "required": [],
+                    }
+                },
+            }
+        },
     ]
 }
 
 
-def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> str:
+def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> Tuple[str, bool]:
     """Call AWS Bedrock with conversation history"""
     messages = build_bedrock_messages(conversation, user_message, user_name=user_name)
     try:
@@ -285,9 +304,10 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
             modelId=BEDROCK_MODEL_ID,
             messages=messages,
             inferenceConfig={"maxTokens": 2000, "temperature": 0.7},
-            toolConfig=FAQ_TOOL_CONFIG,
+            toolConfig=TOOL_CONFIG,
         )
         output_message = response["output"]["message"]
+        escalated = False
 
         if response.get("stopReason") == "tool_use":
             messages.append(output_message)
@@ -295,12 +315,18 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
             for block in output_message["content"]:
                 if "toolUse" in block:
                     tool_use = block["toolUse"]
-                    faq_entry = get_faq(tool_use["input"].get("faq_number"))
-                    result_text = (
-                        f"Q: {faq_entry['question']}\nA: {faq_entry['answer']}"
-                        if faq_entry
-                        else "No FAQ found with that number. Answer from general context instead."
-                    )
+                    if tool_use["name"] == "faq_tool":
+                        faq_entry = get_faq(tool_use["input"].get("faq_number"))
+                        result_text = (
+                            f"Q: {faq_entry['question']}\nA: {faq_entry['answer']}"
+                            if faq_entry
+                            else "No FAQ found with that number. Answer from general context instead."
+                        )
+                    elif tool_use["name"] == "escalate_to_human_tool":
+                        escalated = True
+                        result_text = "Escalation recorded. Briefly acknowledge to the visitor, naturally, that you've notified the human owner."
+                    else:
+                        result_text = "Unknown tool."
                     tool_result_content.append(
                         {
                             "toolResult": {
@@ -314,11 +340,11 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
                 modelId=BEDROCK_MODEL_ID,
                 messages=messages,
                 inferenceConfig={"maxTokens": 2000, "temperature": 0.7},
-                toolConfig=FAQ_TOOL_CONFIG,
+                toolConfig=TOOL_CONFIG,
             )
             output_message = response["output"]["message"]
 
-        return output_message["content"][0]["text"]
+        return output_message["content"][0]["text"], escalated
     except ClientError as e:
         error_code = e.response['Error']['Code']
         if error_code == 'ValidationException':
@@ -498,7 +524,7 @@ async def chat(request: ChatRequest):
         conversation = load_conversation(session_id)
 
         # Call Bedrock for response
-        assistant_response = call_bedrock(conversation, message, user_name=request.user_name)
+        assistant_response, escalated = call_bedrock(conversation, message, user_name=request.user_name)
 
         # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
         if message != "__greet__":
@@ -514,7 +540,7 @@ async def chat(request: ChatRequest):
                 "role": "assistant",
                 "content": assistant_response,
                 "timestamp": datetime.now().isoformat(),
-                "needs_attention": False,
+                "needs_attention": escalated,
                 "read": False,
             }
         )

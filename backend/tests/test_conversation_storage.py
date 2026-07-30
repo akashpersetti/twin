@@ -94,7 +94,7 @@ def test_save_conversation_local_file_index_preserves_other_conversations(tmp_pa
 
 def test_chat_endpoint_saves_messages_with_needs_attention_and_read_defaults():
     server._request_log.clear()
-    with patch.object(server, "call_bedrock", return_value="hi"), \
+    with patch.object(server, "call_bedrock", return_value=("hi", False)), \
          patch.object(server, "load_conversation", return_value=[]), \
          patch.object(server, "save_conversation") as mock_save, \
          patch.object(server.retrieval, "retrieve", return_value=[]):
