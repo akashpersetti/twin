@@ -43,6 +43,40 @@ resource "aws_s3_bucket_ownership_controls" "memory" {
   }
 }
 
+# DynamoDB table for conversation storage (replaces the S3 memory bucket above for new conversations)
+resource "aws_dynamodb_table" "conversations" {
+  name           = "${local.name_prefix}-conversations"
+  billing_mode   = "PROVISIONED"
+  hash_key       = "conversation_id"
+  read_capacity  = 5
+  write_capacity = 5
+  tags           = local.common_tags
+
+  attribute {
+    name = "conversation_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "gsi_pk"
+    type = "S"
+  }
+
+  attribute {
+    name = "last_activity"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name            = "by-recency"
+    hash_key        = "gsi_pk"
+    range_key       = "last_activity"
+    projection_type = "ALL"
+    read_capacity   = 5
+    write_capacity  = 5
+  }
+}
+
 # S3 bucket for frontend static website
 resource "aws_s3_bucket" "frontend" {
   bucket = "${local.name_prefix}-frontend-${data.aws_caller_identity.current.account_id}"
@@ -123,6 +157,11 @@ resource "aws_iam_role_policy_attachment" "lambda_s3" {
   role       = aws_iam_role.lambda_role.name
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_dynamodb" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+  role       = aws_iam_role.lambda_role.name
+}
+
 resource "aws_sns_topic" "visitor_notifications" {
   name = "${local.name_prefix}-visitor-notifications"
 }
@@ -164,6 +203,8 @@ resource "aws_lambda_function" "api" {
   environment {
     variables = {
       CORS_ORIGINS     = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      USE_DYNAMODB     = "true"
+      DYNAMODB_TABLE   = aws_dynamodb_table.conversations.name
       S3_BUCKET        = aws_s3_bucket.memory.id
       USE_S3           = "true"
       BEDROCK_MODEL_ID = var.bedrock_model_id
