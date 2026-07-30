@@ -9,6 +9,10 @@ terraform.tfstate.d/
 # Lambda packages
 lambda-deployment.zip
 lambda-package/
+blog-lambda.zip
+blog-lambda-package/
+live-judge-lambda.zip
+live-judge-package/
 
 # Memory storage (contains conversation history)
 memory/
@@ -27,6 +31,9 @@ out/
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+.coverage
+htmlcov/
 .venv/
 venv/
 
