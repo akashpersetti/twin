@@ -99,10 +99,12 @@ def _compute_conversation_aggregates(messages: List[Dict]) -> Dict:
     last_activity = messages[-1]["timestamp"] if messages else datetime.now().isoformat()
     needs_attention = any(m.get("needs_attention", False) for m in messages)
     unread_count = sum(1 for m in messages if not m.get("read", False))
+    preview = messages[-1]["content"][:140] if messages else ""
     return {
         "last_activity": last_activity,
         "needs_attention": needs_attention,
         "unread_count": unread_count,
+        "preview": preview,
     }
 
 

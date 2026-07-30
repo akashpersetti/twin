@@ -30,6 +30,7 @@ def test_save_conversation_dynamodb_computes_aggregates_and_puts_item():
     assert item["last_activity"] == "2026-01-01T00:00:05"
     assert item["needs_attention"] is True
     assert item["unread_count"] == 1
+    assert item["preview"] == "hello"
 
 
 def test_save_conversation_dynamodb_handles_empty_messages():
@@ -40,6 +41,7 @@ def test_save_conversation_dynamodb_handles_empty_messages():
     item = mock_table.put_item.call_args.kwargs["Item"]
     assert item["needs_attention"] is False
     assert item["unread_count"] == 0
+    assert item["preview"] == ""
 
 
 def test_load_conversation_dynamodb_returns_empty_list_when_no_item():
@@ -75,6 +77,7 @@ def test_save_conversation_local_file_updates_index(tmp_path):
         assert index["session-local-1"]["last_activity"] == "2026-01-01T00:00:05"
         assert index["session-local-1"]["needs_attention"] is True
         assert index["session-local-1"]["unread_count"] == 1
+        assert index["session-local-1"]["preview"] == "hello"
 
         assert server.load_conversation("session-local-1") == messages
 
