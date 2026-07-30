@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from boto3.dynamodb.conditions import Key
 from pydantic import BaseModel
 import secrets
 import os
@@ -82,6 +83,10 @@ class VisitorRequest(BaseModel):
 
 class MagicLinkRequest(BaseModel):
     email: str
+
+
+class HumanMessageRequest(BaseModel):
+    content: str
 
 
 class Message(BaseModel):
@@ -500,6 +505,63 @@ def request_admin_magic_link(req: MagicLinkRequest):
 def verify_admin_magic_link(token: Optional[str] = None):
     auth.consume_magic_token(token)
     return {"admin_token": auth.get_admin_token()}
+
+
+@app.get("/admin/conversations")
+async def list_conversations(_: None = Depends(auth.verify_token)):
+    if USE_DYNAMODB:
+        response = conversations_table.query(
+            IndexName="by-recency",
+            KeyConditionExpression=Key("gsi_pk").eq("CONVO"),
+            ScanIndexForward=False,
+        )
+        conversations = [
+            {
+                "conversation_id": item["conversation_id"],
+                "last_activity": item["last_activity"],
+                "needs_attention": item["needs_attention"],
+                "unread_count": item["unread_count"],
+                "preview": item.get("preview", ""),
+            }
+            for item in response.get("Items", [])
+        ]
+    else:
+        index = _load_conversations_index()
+        conversations = [{"conversation_id": cid, **aggregates} for cid, aggregates in index.items()]
+        conversations.sort(key=lambda c: c["last_activity"], reverse=True)
+    return {"conversations": conversations}
+
+
+@app.get("/admin/conversations/{conversation_id}")
+async def get_admin_conversation(conversation_id: str, _: None = Depends(auth.verify_token)):
+    messages = load_conversation(conversation_id)
+    if not messages:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    for msg in messages:
+        msg["read"] = True
+        msg["needs_attention"] = False
+    save_conversation(conversation_id, messages)
+
+    return {"conversation_id": conversation_id, "messages": messages}
+
+
+@app.post("/admin/conversations/{conversation_id}/messages")
+async def post_human_message(
+    conversation_id: str, request: HumanMessageRequest, _: None = Depends(auth.verify_token)
+):
+    messages = load_conversation(conversation_id)
+    messages.append(
+        {
+            "role": "human",
+            "content": request.content,
+            "timestamp": datetime.now().isoformat(),
+            "needs_attention": False,
+            "read": True,
+        }
+    )
+    save_conversation(conversation_id, messages)
+    return {"conversation_id": conversation_id, "messages": messages}
 
 
 @app.post("/chat", response_model=ChatResponse)

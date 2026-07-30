@@ -89,3 +89,83 @@ def test_admin_endpoint_missing_token_returns_401():
 def test_admin_endpoint_wrong_token_returns_401():
     response = client.get("/admin/conversations", headers={"Authorization": "Bearer wrong"})
     assert response.status_code == 401
+
+
+def test_list_conversations_dynamodb_sorted_by_recency():
+    mock_table = MagicMock()
+    mock_table.query.return_value = {
+        "Items": [
+            {"conversation_id": "c1", "last_activity": "2026-02-01T00:00:00", "needs_attention": False, "unread_count": 0, "preview": "hi"},
+            {"conversation_id": "c2", "last_activity": "2026-01-01T00:00:00", "needs_attention": True, "unread_count": 2, "preview": "help"},
+        ]
+    }
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        response = client.get("/admin/conversations", headers=auth_headers())
+
+    assert response.status_code == 200
+    conversations = response.json()["conversations"]
+    assert [c["conversation_id"] for c in conversations] == ["c1", "c2"]
+    assert conversations[1]["needs_attention"] is True
+
+
+def test_list_conversations_local_index_sorted_by_recency(tmp_path):
+    with patch.object(server, "USE_DYNAMODB", False), \
+         patch.object(server, "USE_S3", False), \
+         patch.object(server, "MEMORY_DIR", str(tmp_path)):
+        server.save_conversation("c-old", [{"role": "user", "content": "a", "timestamp": "2026-01-01T00:00:00", "needs_attention": False, "read": False}])
+        server.save_conversation("c-new", [{"role": "user", "content": "b", "timestamp": "2026-02-01T00:00:00", "needs_attention": False, "read": False}])
+
+        response = client.get("/admin/conversations", headers=auth_headers())
+
+    assert response.status_code == 200
+    conversations = response.json()["conversations"]
+    assert [c["conversation_id"] for c in conversations] == ["c-new", "c-old"]
+
+
+def test_get_conversation_marks_read_and_clears_needs_attention():
+    messages = [
+        {"role": "user", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": False},
+        {"role": "assistant", "content": "hello", "timestamp": "t2", "needs_attention": True, "read": False},
+    ]
+    with patch.object(server, "load_conversation", return_value=messages), \
+         patch.object(server, "save_conversation") as mock_save:
+        response = client.get("/admin/conversations/convo-1", headers=auth_headers())
+
+    assert response.status_code == 200
+    body = response.json()
+    assert all(m["read"] is True for m in body["messages"])
+    assert all(m["needs_attention"] is False for m in body["messages"])
+    saved = mock_save.call_args.args[1]
+    assert all(m["read"] is True and m["needs_attention"] is False for m in saved)
+
+
+def test_get_conversation_404_when_unknown():
+    with patch.object(server, "load_conversation", return_value=[]):
+        response = client.get("/admin/conversations/unknown-convo", headers=auth_headers())
+    assert response.status_code == 404
+
+
+def test_post_human_message_appends_and_does_not_call_bedrock():
+    with patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server, "call_bedrock") as mock_call_bedrock:
+        response = client.post(
+            "/admin/conversations/convo-2/messages",
+            json={"content": "This is Akash, happy to help!"},
+            headers=auth_headers(),
+        )
+
+    assert response.status_code == 200
+    mock_call_bedrock.assert_not_called()
+    saved = mock_save.call_args.args[1]
+    assert saved[-1]["role"] == "human"
+    assert saved[-1]["content"] == "This is Akash, happy to help!"
+    assert saved[-1]["read"] is True
+    assert saved[-1]["needs_attention"] is False
+
+
+def test_admin_endpoints_401_without_token():
+    assert client.get("/admin/conversations").status_code == 401
+    assert client.get("/admin/conversations/x").status_code == 401
+    assert client.post("/admin/conversations/x/messages", json={"content": "hi"}).status_code == 401
