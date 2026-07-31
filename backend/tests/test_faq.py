@@ -1,6 +1,8 @@
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import server
@@ -43,6 +45,12 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 client = TestClient(server.app)
+
+
+@pytest.fixture(autouse=True)
+def bot_controlled_by_default():
+    with patch.object(server, "get_controlled_by", return_value="bot"):
+        yield
 
 
 def test_chat_endpoint_answers_qn_shortcut_without_calling_bedrock():
@@ -175,6 +183,18 @@ def test_build_bedrock_messages_maps_human_role_to_assistant():
 
     human_entry = next(m for m in messages if m["content"][0]["text"] == "This is Akash, happy to help directly.")
     assert human_entry["role"] == "assistant"
+
+
+def test_build_bedrock_messages_maps_system_role_to_assistant():
+    conversation = [
+        {"role": "user", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": False},
+        {"role": "system", "content": "You're now chatting with the assistant again.", "timestamp": "t2", "needs_attention": False, "read": True},
+    ]
+    with patch.object(server.retrieval, "retrieve", return_value=[]):
+        messages = server.build_bedrock_messages(conversation, "another question")
+
+    system_entry = next(m for m in messages if m["content"][0]["text"] == "You're now chatting with the assistant again.")
+    assert system_entry["role"] == "assistant"
 
 
 def test_chat_endpoint_sends_sns_notification_when_escalated():

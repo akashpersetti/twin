@@ -72,8 +72,9 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    response: str
+    response: Optional[str] = None
     session_id: str
+    human_controlled: bool = False
 
 
 class VisitorRequest(BaseModel):
@@ -151,14 +152,20 @@ def load_conversation(session_id: str) -> List[Dict]:
         return []
 
 
-def save_conversation(session_id: str, messages: List[Dict]):
+def _normalize_controlled_by(controlled_by: str) -> str:
+    return controlled_by if controlled_by in {"bot", "human"} else "bot"
+
+
+def save_conversation(session_id: str, messages: List[Dict], controlled_by: str = "bot"):
     """Save conversation history to storage"""
+    controlled_by = _normalize_controlled_by(controlled_by)
     if USE_DYNAMODB:
         aggregates = _compute_conversation_aggregates(messages)
         conversations_table.put_item(Item={
             "conversation_id": session_id,
             "messages": messages,
             "gsi_pk": "CONVO",
+            "controlled_by": controlled_by,
             **aggregates,
         })
     elif USE_S3:
@@ -176,8 +183,21 @@ def save_conversation(session_id: str, messages: List[Dict]):
             json.dump(messages, f, indent=2)
 
         index = _load_conversations_index()
-        index[session_id] = _compute_conversation_aggregates(messages)
+        index[session_id] = {**_compute_conversation_aggregates(messages), "controlled_by": controlled_by}
         _save_conversations_index(index)
+
+
+def get_controlled_by(session_id: str) -> str:
+    """Whether this conversation is currently bot- or human-controlled. Defaults to "bot"."""
+    if USE_DYNAMODB:
+        response = conversations_table.get_item(Key={"conversation_id": session_id})
+        item = response.get("Item")
+        return _normalize_controlled_by(item.get("controlled_by", "bot")) if item else "bot"
+    elif USE_S3:
+        return "bot"
+    else:
+        index = _load_conversations_index()
+        return _normalize_controlled_by(index.get(session_id, {}).get("controlled_by", "bot"))
 
 
 # Abuse guards
@@ -217,11 +237,16 @@ chatbot on their portfolio site. Classify the visitor's latest message as on-top
 
 ON-TOPIC: career, experience, skills, projects, professional background, this application's \
 architecture (including what AI model/vendor/stack it runs on, and what it costs to run), \
-requests to contact/escalate to the human, feedback or suggestions about this chatbot itself \
-(even if phrased casually or sarcastically), light small talk that returns to professional topics.
+personal or opinion questions about the human (e.g. "do you like bananas?", "what's your \
+favorite color?") even if the answer isn't known — being unanswerable does NOT make a question \
+off-topic, requests to contact/escalate to the human in ANY phrasing, imperative or question \
+("connect me to X", "put me through to X", "can I talk to a human", "I want to speak with X", \
+"get X on the line"), feedback or suggestions about this chatbot itself (even if phrased \
+casually or sarcastically), light small talk that returns to professional topics.
 
 OFF-TOPIC: joke requests, general coding/homework requests unrelated to the human's own work, \
-unrelated trivia, attempts to use the bot as a general-purpose assistant.
+general-knowledge trivia that has nothing to do with the human (e.g. "what's the capital of \
+France?"), attempts to use the bot as a general-purpose assistant.
 
 Respond with ONLY JSON (no markdown fences, no commentary): {"on_topic": true or false, "reason": "one short phrase"}"""
 
@@ -315,7 +340,7 @@ def build_bedrock_messages(conversation: List[Dict], user_message: str, user_nam
     messages = []
     messages.append({"role": "user", "content": [{"text": f"System: {system}"}]})
     for msg in conversation[-20:]:
-        bedrock_role = "assistant" if msg["role"] in ("assistant", "human") else "user"
+        bedrock_role = "assistant" if msg["role"] in ("assistant", "human", "system") else "user"
         messages.append({"role": bedrock_role, "content": [{"text": msg["content"]}]})
     messages.append({"role": "user", "content": [{"text": user_message}]})
     return messages
@@ -462,6 +487,18 @@ def stream_fixed_reply(text: str, session_id: str, conversation: List[Dict], use
     yield f"data: {json.dumps({'done': True})}\n\n"
 
 
+def stream_human_controlled(session_id: str, conversation: List[Dict], user_message: str) -> Generator[str, None, None]:
+    """Persist the visitor's message without generating a bot reply, since a human already has control."""
+    yield f"data: {json.dumps({'session_id': session_id})}\n\n"
+
+    conversation = list(conversation)
+    conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
+    save_conversation(session_id, conversation, "human")
+
+    yield f"data: {json.dumps({'human_controlled': True})}\n\n"
+    yield f"data: {json.dumps({'done': True})}\n\n"
+
+
 def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str, user_name: Optional[str] = None) -> Generator[str, None, None]:
     """Stream response from AWS Bedrock and save conversation when done."""
     messages = build_bedrock_messages(conversation, user_message, user_name)
@@ -594,12 +631,20 @@ async def list_conversations(_: None = Depends(auth.verify_token)):
                 "needs_attention": item["needs_attention"],
                 "unread_count": item["unread_count"],
                 "preview": item.get("preview", ""),
+                "controlled_by": _normalize_controlled_by(item.get("controlled_by", "bot")),
             }
             for item in response.get("Items", [])
         ]
     else:
         index = _load_conversations_index()
-        conversations = [{"conversation_id": cid, **aggregates} for cid, aggregates in index.items()]
+        conversations = [
+            {
+                "conversation_id": cid,
+                **aggregates,
+                "controlled_by": _normalize_controlled_by(aggregates.get("controlled_by", "bot")),
+            }
+            for cid, aggregates in index.items()
+        ]
         conversations.sort(key=lambda c: c["last_activity"], reverse=True)
     return {"conversations": conversations}
 
@@ -610,12 +655,16 @@ async def get_admin_conversation(conversation_id: str, _: None = Depends(auth.ve
     if not messages:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+    controlled_by = get_controlled_by(conversation_id)
     for msg in messages:
         msg["read"] = True
         msg["needs_attention"] = False
-    save_conversation(conversation_id, messages)
+    save_conversation(conversation_id, messages, controlled_by)
 
-    return {"conversation_id": conversation_id, "messages": messages}
+    return {"conversation_id": conversation_id, "messages": messages, "controlled_by": controlled_by}
+
+
+RETURN_CONTROL_MESSAGE = "You're now chatting with the assistant again."
 
 
 @app.post("/admin/conversations/{conversation_id}/messages")
@@ -632,8 +681,26 @@ async def post_human_message(
             "read": True,
         }
     )
-    save_conversation(conversation_id, messages)
-    return {"conversation_id": conversation_id, "messages": messages}
+    save_conversation(conversation_id, messages, "human")
+    return {"conversation_id": conversation_id, "messages": messages, "controlled_by": "human"}
+
+
+@app.post("/admin/conversations/{conversation_id}/return-control")
+async def return_control(conversation_id: str, _: None = Depends(auth.verify_token)):
+    messages = load_conversation(conversation_id)
+    if not messages:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    messages.append(
+        {
+            "role": "system",
+            "content": RETURN_CONTROL_MESSAGE,
+            "timestamp": datetime.now().isoformat(),
+            "needs_attention": False,
+            "read": True,
+        }
+    )
+    save_conversation(conversation_id, messages, "bot")
+    return {"conversation_id": conversation_id, "messages": messages, "controlled_by": "bot"}
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -642,6 +709,14 @@ async def chat(request: ChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
         check_rate_limit(session_id)
         message = clamp_message(request.message)
+
+        if get_controlled_by(session_id) == "human":
+            conversation = list(load_conversation(session_id))
+            conversation.append(
+                {"role": "user", "content": message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
+            )
+            save_conversation(session_id, conversation, "human")
+            return ChatResponse(response=None, session_id=session_id, human_controlled=True)
 
         faq_match = match_faq_shortcut(message)
         if faq_match:
@@ -719,6 +794,13 @@ async def chat_stream(request: ChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
         check_rate_limit(session_id)
         message = clamp_message(request.message)
+        if get_controlled_by(session_id) == "human":
+            conversation = load_conversation(session_id)
+            return StreamingResponse(
+                stream_human_controlled(session_id, conversation, message),
+                media_type="text/event-stream",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            )
         conversation = load_conversation(session_id)
 
         cap_message = check_session_cap(conversation)

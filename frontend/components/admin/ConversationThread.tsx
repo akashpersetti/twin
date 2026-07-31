@@ -10,13 +10,16 @@ export interface AdminMessage {
 
 interface ConversationThreadProps {
     messages: AdminMessage[];
+    controlledBy: string;
     onBack: () => void;
     onSend: (content: string) => Promise<void>;
+    onReturnControl: () => Promise<void>;
 }
 
-export default function ConversationThread({ messages, onBack, onSend }: ConversationThreadProps) {
+export default function ConversationThread({ messages, controlledBy, onBack, onSend, onReturnControl }: ConversationThreadProps) {
     const [reply, setReply] = useState('');
     const [sending, setSending] = useState(false);
+    const [returning, setReturning] = useState(false);
 
     const handleSend = async () => {
         const content = reply.trim();
@@ -30,11 +33,41 @@ export default function ConversationThread({ messages, onBack, onSend }: Convers
         }
     };
 
+    const handleReturnControl = async () => {
+        if (returning) return;
+        setReturning(true);
+        try {
+            await onReturnControl();
+        } finally {
+            setReturning(false);
+        }
+    };
+
     return (
         <div className="glass p-4">
-            <button onClick={onBack} className="text-sm mb-4" style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                ← Back to conversations
-            </button>
+            <div className="flex items-center justify-between mb-4">
+                <button onClick={onBack} className="text-sm" style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    ← Back to conversations
+                </button>
+                {controlledBy === 'human' && (
+                    <button
+                        onClick={handleReturnControl}
+                        disabled={returning}
+                        className="text-sm"
+                        style={{
+                            color: 'var(--accent)',
+                            background: 'none',
+                            border: '1px solid var(--border)',
+                            borderRadius: '999px',
+                            cursor: returning ? 'not-allowed' : 'pointer',
+                            padding: '4px 12px',
+                            opacity: returning ? 0.5 : 1,
+                        }}
+                    >
+                        Return to bot
+                    </button>
+                )}
+            </div>
 
             <div className="flex flex-col gap-3 mb-4">
                 {messages.map((m, idx) => {
@@ -69,6 +102,18 @@ export default function ConversationThread({ messages, onBack, onSend }: Convers
                                     </p>
                                     {m.content}
                                 </div>
+                            </div>
+                        );
+                    }
+                    if (m.role === 'system') {
+                        return (
+                            <div key={idx} className="flex justify-center">
+                                <span
+                                    className="text-[11px] px-3 py-1 rounded-full"
+                                    style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                                >
+                                    {m.content}
+                                </span>
                             </div>
                         );
                     }

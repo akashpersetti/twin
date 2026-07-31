@@ -15,6 +15,7 @@ export default function AdminPage() {
     const [conversations, setConversations] = useState<ConversationSummary[]>([]);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [threadMessages, setThreadMessages] = useState<AdminMessage[]>([]);
+    const [controlledBy, setControlledBy] = useState<string>('bot');
     const lastAdminPolledCountRef = useRef(0);
     const adminReplyInFlightRef = useRef(false);
 
@@ -55,6 +56,7 @@ export default function AdminPage() {
             const messages = data.messages ?? [];
             setThreadMessages(messages);
             lastAdminPolledCountRef.current = messages.length;
+            setControlledBy(data.controlled_by ?? 'bot');
             setSelectedId(conversationId);
             setView('thread');
         }
@@ -64,6 +66,7 @@ export default function AdminPage() {
         setSelectedId(null);
         setThreadMessages([]);
         lastAdminPolledCountRef.current = 0;
+        setControlledBy('bot');
         setView('inbox');
     };
 
@@ -81,9 +84,24 @@ export default function AdminPage() {
                 const messages = data.messages ?? [];
                 setThreadMessages(messages);
                 lastAdminPolledCountRef.current = messages.length;
+                setControlledBy(data.controlled_by ?? 'human');
             }
         } finally {
             adminReplyInFlightRef.current = false;
+        }
+    };
+
+    const returnControl = async () => {
+        if (!selectedId) return;
+        const response = await adminFetch(`/admin/conversations/${selectedId}/return-control`, {
+            method: 'POST',
+        });
+        if (response.ok) {
+            const data = await response.json();
+            const messages = data.messages ?? [];
+            setThreadMessages(messages);
+            lastAdminPolledCountRef.current = messages.length;
+            setControlledBy(data.controlled_by ?? 'bot');
         }
     };
 
@@ -103,6 +121,7 @@ export default function AdminPage() {
                     const data = await response.json();
                     if (cancelled) return;
                     const allMessages: AdminMessage[] = data.messages ?? [];
+                    setControlledBy(data.controlled_by ?? 'bot');
                     const newOnes = allMessages.slice(lastAdminPolledCountRef.current);
                     if (newOnes.length > 0) {
                         setThreadMessages(prev => [...prev, ...newOnes]);
@@ -144,7 +163,13 @@ export default function AdminPage() {
                     <ConversationInbox conversations={conversations} onSelect={openConversation} />
                 )}
                 {view === 'thread' && selectedId && (
-                    <ConversationThread messages={threadMessages} onBack={closeThread} onSend={sendReply} />
+                    <ConversationThread
+                        messages={threadMessages}
+                        controlledBy={controlledBy}
+                        onBack={closeThread}
+                        onSend={sendReply}
+                        onReturnControl={returnControl}
+                    />
                 )}
             </div>
         </main>

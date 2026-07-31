@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -13,6 +14,12 @@ import auth as auth_module
 VALID_TOKEN = "test-secret-admin-token"
 
 client = TestClient(server.app)
+
+
+@pytest.fixture(autouse=True)
+def bot_controlled_by_default():
+    with patch.object(server, "get_controlled_by", return_value="bot"):
+        yield
 
 
 @pytest.fixture(autouse=True)
@@ -123,6 +130,54 @@ def test_list_conversations_local_index_sorted_by_recency(tmp_path):
     assert [c["conversation_id"] for c in conversations] == ["c-new", "c-old"]
 
 
+def test_list_conversations_dynamodb_includes_controlled_by():
+    mock_table = MagicMock()
+    mock_table.query.return_value = {
+        "Items": [
+            {"conversation_id": "c1", "last_activity": "2026-02-01T00:00:00", "needs_attention": False, "unread_count": 0, "preview": "hi", "controlled_by": "human"},
+            {"conversation_id": "c2", "last_activity": "2026-01-01T00:00:00", "needs_attention": False, "unread_count": 0, "preview": "hi"},
+        ]
+    }
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        response = client.get("/admin/conversations", headers=auth_headers())
+
+    conversations = response.json()["conversations"]
+    assert conversations[0]["controlled_by"] == "human"
+    assert conversations[1]["controlled_by"] == "bot"
+
+
+def test_list_conversations_local_index_includes_controlled_by(tmp_path):
+    with patch.object(server, "USE_DYNAMODB", False), \
+         patch.object(server, "USE_S3", False), \
+         patch.object(server, "MEMORY_DIR", str(tmp_path)):
+        server.save_conversation("c-human", [{"role": "human", "content": "a", "timestamp": "2026-01-01T00:00:00", "needs_attention": False, "read": True}], "human")
+
+        response = client.get("/admin/conversations", headers=auth_headers())
+
+    conversations = response.json()["conversations"]
+    assert conversations[0]["controlled_by"] == "human"
+
+
+def test_list_conversations_local_legacy_index_defaults_controlled_by_to_bot(tmp_path):
+    with patch.object(server, "USE_DYNAMODB", False), \
+         patch.object(server, "USE_S3", False), \
+         patch.object(server, "MEMORY_DIR", str(tmp_path)):
+        tmp_path.joinpath("conversations_index.json").write_text(json.dumps({
+            "c-legacy": {
+                "last_activity": "2026-01-01T00:00:00",
+                "needs_attention": False,
+                "unread_count": 0,
+                "preview": "legacy",
+            }
+        }))
+
+        response = client.get("/admin/conversations", headers=auth_headers())
+
+    conversations = response.json()["conversations"]
+    assert conversations[0]["controlled_by"] == "bot"
+
+
 def test_get_conversation_marks_read_and_clears_needs_attention():
     messages = [
         {"role": "user", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": False},
@@ -163,6 +218,59 @@ def test_post_human_message_appends_and_does_not_call_bedrock():
     assert saved[-1]["content"] == "This is Akash, happy to help!"
     assert saved[-1]["read"] is True
     assert saved[-1]["needs_attention"] is False
+
+
+def test_post_human_message_sets_controlled_by_human():
+    with patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation") as mock_save:
+        response = client.post(
+            "/admin/conversations/convo-3/messages",
+            json={"content": "Taking over now."},
+            headers=auth_headers(),
+        )
+
+    assert response.status_code == 200
+    assert response.json()["controlled_by"] == "human"
+    assert mock_save.call_args.args[2] == "human"
+
+
+def test_get_admin_conversation_preserves_controlled_by_on_resave():
+    messages = [{"role": "human", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": False}]
+    with patch.object(server, "load_conversation", return_value=messages), \
+         patch.object(server, "get_controlled_by", return_value="human"), \
+         patch.object(server, "save_conversation") as mock_save:
+        response = client.get("/admin/conversations/convo-4", headers=auth_headers())
+
+    assert response.status_code == 200
+    assert response.json()["controlled_by"] == "human"
+    assert mock_save.call_args.args[2] == "human"
+
+
+def test_return_control_appends_system_message_and_flips_to_bot():
+    messages = [{"role": "human", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": True}]
+    with patch.object(server, "load_conversation", return_value=messages), \
+         patch.object(server, "save_conversation") as mock_save:
+        response = client.post("/admin/conversations/convo-5/return-control", headers=auth_headers())
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["controlled_by"] == "bot"
+    assert body["messages"][-1]["role"] == "system"
+    assert body["messages"][-1]["content"] == "You're now chatting with the assistant again."
+
+    saved_conversation = mock_save.call_args.args[1]
+    assert saved_conversation[-1]["role"] == "system"
+    assert mock_save.call_args.args[2] == "bot"
+
+
+def test_return_control_404_when_unknown():
+    with patch.object(server, "load_conversation", return_value=[]):
+        response = client.post("/admin/conversations/unknown-convo/return-control", headers=auth_headers())
+    assert response.status_code == 404
+
+
+def test_return_control_requires_auth():
+    assert client.post("/admin/conversations/x/return-control").status_code == 401
 
 
 def test_admin_endpoints_401_without_token():
