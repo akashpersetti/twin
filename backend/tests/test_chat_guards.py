@@ -228,6 +228,8 @@ def test_chat_endpoint_skips_bot_when_human_controlled():
     with patch.object(server, "get_controlled_by", return_value="human"), \
          patch.object(server, "load_conversation", return_value=[]), \
          patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server, "check_session_cap") as mock_check_session_cap, \
+         patch.object(server, "check_scope") as mock_check_scope, \
          patch.object(server, "call_bedrock") as mock_call_bedrock:
         resp = client.post("/chat", json={"message": "are you still there?", "session_id": "human-controlled-test"})
 
@@ -235,6 +237,8 @@ def test_chat_endpoint_skips_bot_when_human_controlled():
     body = resp.json()
     assert body["response"] is None
     assert body["human_controlled"] is True
+    mock_check_session_cap.assert_not_called()
+    mock_check_scope.assert_not_called()
     mock_call_bedrock.assert_not_called()
 
     saved_conversation = mock_save.call_args.args[1]
@@ -249,11 +253,15 @@ def test_chat_endpoint_skips_faq_shortcut_when_human_controlled():
     with patch.object(server, "get_controlled_by", return_value="human"), \
          patch.object(server, "load_conversation", return_value=[]), \
          patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server, "check_session_cap") as mock_check_session_cap, \
+         patch.object(server, "check_scope") as mock_check_scope, \
          patch.object(server, "call_bedrock") as mock_call_bedrock:
         resp = client.post("/chat", json={"message": "Q1", "session_id": "human-controlled-faq-test"})
 
     assert resp.status_code == 200
     assert resp.json()["response"] is None
+    mock_check_session_cap.assert_not_called()
+    mock_check_scope.assert_not_called()
     mock_call_bedrock.assert_not_called()
     saved_conversation = mock_save.call_args.args[1]
     assert saved_conversation[0]["content"] == "Q1"
