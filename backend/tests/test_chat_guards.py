@@ -153,3 +153,63 @@ def test_chat_endpoint_clamps_long_message_before_bedrock_call():
     saved_conversation = mock_save.call_args.args[1]
     stored_user_message = next(m["content"] for m in saved_conversation if m["role"] == "user")
     assert stored_user_message == sent_message
+
+
+def test_chat_endpoint_skips_bedrock_when_off_topic():
+    server._request_log.clear()
+    with patch.object(server, "call_bedrock") as mock_call_bedrock, \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation"), \
+         patch.object(server, "check_scope", return_value=False):
+        resp = client.post("/chat", json={"message": "tell me a joke", "session_id": "scope-test"})
+    assert resp.status_code == 200
+    assert resp.json()["response"] == server.SCOPE_DEFLECTION
+    mock_call_bedrock.assert_not_called()
+
+
+def test_chat_endpoint_skips_bedrock_at_hard_cap():
+    server._request_log.clear()
+    full_conversation = _fake_messages(30)
+    with patch.object(server, "call_bedrock") as mock_call_bedrock, \
+         patch.object(server, "load_conversation", return_value=full_conversation), \
+         patch.object(server, "save_conversation"):
+        resp = client.post("/chat", json={"message": "one more thing", "session_id": "cap-test"})
+    assert resp.status_code == 200
+    assert resp.json()["response"] == server.SESSION_CAP_MESSAGE
+    mock_call_bedrock.assert_not_called()
+
+
+def test_chat_endpoint_appends_nudge_once_past_threshold():
+    server._request_log.clear()
+    conversation_at_threshold = _fake_messages(15)
+    with patch.object(server, "call_bedrock", return_value=("Here's my answer.", False)), \
+         patch.object(server, "load_conversation", return_value=conversation_at_threshold), \
+         patch.object(server, "save_conversation"), \
+         patch.object(server, "check_scope", return_value=True):
+        resp = client.post("/chat", json={"message": "tell me more", "session_id": "nudge-test"})
+    assert resp.json()["response"] == "Here's my answer." + server.SESSION_NUDGE_NOTICE
+
+    conversation_already_nudged = _fake_messages(17)
+    conversation_already_nudged.append(
+        {"role": "assistant", "content": f"Earlier reply.{server.SESSION_NUDGE_NOTICE}"}
+    )
+    with patch.object(server, "call_bedrock", return_value=("Another answer.", False)), \
+         patch.object(server, "load_conversation", return_value=conversation_already_nudged), \
+         patch.object(server, "save_conversation"), \
+         patch.object(server, "check_scope", return_value=True):
+        resp = client.post("/chat", json={"message": "and more", "session_id": "nudge-test-2"})
+    assert resp.json()["response"] == "Another answer."
+
+
+def test_chat_endpoint_rate_limit_short_circuits_before_scope_check():
+    server._request_log.clear()
+    with patch.object(server, "call_bedrock", return_value=("hi", False)), \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation"), \
+         patch.object(server, "check_scope") as mock_check_scope:
+        for _ in range(20):
+            resp = client.post("/chat", json={"message": "hello", "session_id": "rate-vs-scope-test"})
+            assert resp.status_code == 200
+        resp = client.post("/chat", json={"message": "hello", "session_id": "rate-vs-scope-test"})
+    assert resp.status_code == 429
+    assert mock_check_scope.call_count == 20

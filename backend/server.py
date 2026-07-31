@@ -646,13 +646,23 @@ async def chat(request: ChatRequest):
         # Load conversation history
         conversation = load_conversation(session_id)
 
-        # Call Bedrock for response
-        assistant_response, escalated = call_bedrock(conversation, message, user_name=request.user_name)
+        cap_message = check_session_cap(conversation)
+        if cap_message is not None:
+            assistant_response, escalated = cap_message, False
+        elif not check_scope(conversation, message):
+            assistant_response, escalated = SCOPE_DEFLECTION, False
+        else:
+            assistant_response, escalated = call_bedrock(conversation, message, user_name=request.user_name)
+            if len(conversation) >= SESSION_NUDGE_THRESHOLD and not already_nudged(conversation):
+                assistant_response += SESSION_NUDGE_NOTICE
 
-        # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
-        if message != "__greet__":
-            retrieved_chunks = retrieval.retrieve(message, k=5)
-            capture_live_eval(message, retrieved_chunks, assistant_response)
+            # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
+            if message != "__greet__":
+                retrieved_chunks = retrieval.retrieve(message, k=5)
+                capture_live_eval(message, retrieved_chunks, assistant_response)
+
+        # Do not mutate the list returned by storage while extending the history.
+        conversation = list(conversation)
 
         # Update conversation history
         conversation.append(
