@@ -121,6 +121,7 @@ export default function AdminPage() {
                     const data = await response.json();
                     if (cancelled) return;
                     const allMessages: AdminMessage[] = data.messages ?? [];
+                    setControlledBy(data.controlled_by ?? 'bot');
                     const newOnes = allMessages.slice(lastAdminPolledCountRef.current);
                     if (newOnes.length > 0) {
                         setThreadMessages(prev => [...prev, ...newOnes]);
