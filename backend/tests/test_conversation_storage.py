@@ -95,6 +95,70 @@ def test_save_conversation_local_file_index_preserves_other_conversations(tmp_pa
         assert "session-y" in index
 
 
+def test_get_controlled_by_defaults_to_bot_when_dynamodb_item_missing():
+    mock_table = MagicMock()
+    mock_table.get_item.return_value = {}
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        assert server.get_controlled_by("session-missing") == "bot"
+
+
+def test_get_controlled_by_reads_dynamodb_item():
+    mock_table = MagicMock()
+    mock_table.get_item.return_value = {"Item": {"conversation_id": "session-h", "controlled_by": "human"}}
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        assert server.get_controlled_by("session-h") == "human"
+
+
+def test_get_controlled_by_defaults_to_bot_for_s3():
+    with patch.object(server, "USE_DYNAMODB", False), \
+         patch.object(server, "USE_S3", True):
+        assert server.get_controlled_by("any-session") == "bot"
+
+
+def test_get_controlled_by_reads_local_index(tmp_path):
+    with patch.object(server, "USE_DYNAMODB", False), \
+         patch.object(server, "USE_S3", False), \
+         patch.object(server, "MEMORY_DIR", str(tmp_path)):
+        server.save_conversation(
+            "session-local-human",
+            [{"role": "human", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": True}],
+            "human",
+        )
+        assert server.get_controlled_by("session-local-human") == "human"
+        assert server.get_controlled_by("session-never-saved") == "bot"
+
+
+def test_save_conversation_dynamodb_persists_controlled_by():
+    mock_table = MagicMock()
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        server.save_conversation("session-c", [], "human")
+    item = mock_table.put_item.call_args.kwargs["Item"]
+    assert item["controlled_by"] == "human"
+
+
+def test_save_conversation_defaults_controlled_by_to_bot():
+    mock_table = MagicMock()
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        server.save_conversation("session-d", [])
+    item = mock_table.put_item.call_args.kwargs["Item"]
+    assert item["controlled_by"] == "bot"
+
+
+def test_save_conversation_local_file_index_stores_controlled_by(tmp_path):
+    with patch.object(server, "USE_DYNAMODB", False), \
+         patch.object(server, "USE_S3", False), \
+         patch.object(server, "MEMORY_DIR", str(tmp_path)):
+        server.save_conversation("session-local-2", [{"role": "user", "content": "hi", "timestamp": "t", "needs_attention": False, "read": False}], "human")
+
+        index_path = tmp_path / "conversations_index.json"
+        index = json.loads(index_path.read_text())
+        assert index["session-local-2"]["controlled_by"] == "human"
+
+
 def test_chat_endpoint_saves_messages_with_needs_attention_and_read_defaults():
     server._request_log.clear()
     with patch.object(server, "call_bedrock", return_value=("hi", False)), \

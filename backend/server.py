@@ -151,7 +151,7 @@ def load_conversation(session_id: str) -> List[Dict]:
         return []
 
 
-def save_conversation(session_id: str, messages: List[Dict]):
+def save_conversation(session_id: str, messages: List[Dict], controlled_by: str = "bot"):
     """Save conversation history to storage"""
     if USE_DYNAMODB:
         aggregates = _compute_conversation_aggregates(messages)
@@ -159,6 +159,7 @@ def save_conversation(session_id: str, messages: List[Dict]):
             "conversation_id": session_id,
             "messages": messages,
             "gsi_pk": "CONVO",
+            "controlled_by": controlled_by,
             **aggregates,
         })
     elif USE_S3:
@@ -176,8 +177,21 @@ def save_conversation(session_id: str, messages: List[Dict]):
             json.dump(messages, f, indent=2)
 
         index = _load_conversations_index()
-        index[session_id] = _compute_conversation_aggregates(messages)
+        index[session_id] = {**_compute_conversation_aggregates(messages), "controlled_by": controlled_by}
         _save_conversations_index(index)
+
+
+def get_controlled_by(session_id: str) -> str:
+    """Whether this conversation is currently bot- or human-controlled. Defaults to "bot"."""
+    if USE_DYNAMODB:
+        response = conversations_table.get_item(Key={"conversation_id": session_id})
+        item = response.get("Item")
+        return item.get("controlled_by", "bot") if item else "bot"
+    elif USE_S3:
+        return "bot"
+    else:
+        index = _load_conversations_index()
+        return index.get(session_id, {}).get("controlled_by", "bot")
 
 
 # Abuse guards
@@ -599,6 +613,7 @@ async def list_conversations(_: None = Depends(auth.verify_token)):
                 "needs_attention": item["needs_attention"],
                 "unread_count": item["unread_count"],
                 "preview": item.get("preview", ""),
+                "controlled_by": item.get("controlled_by", "bot"),
             }
             for item in response.get("Items", [])
         ]

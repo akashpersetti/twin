@@ -123,6 +123,35 @@ def test_list_conversations_local_index_sorted_by_recency(tmp_path):
     assert [c["conversation_id"] for c in conversations] == ["c-new", "c-old"]
 
 
+def test_list_conversations_dynamodb_includes_controlled_by():
+    mock_table = MagicMock()
+    mock_table.query.return_value = {
+        "Items": [
+            {"conversation_id": "c1", "last_activity": "2026-02-01T00:00:00", "needs_attention": False, "unread_count": 0, "preview": "hi", "controlled_by": "human"},
+            {"conversation_id": "c2", "last_activity": "2026-01-01T00:00:00", "needs_attention": False, "unread_count": 0, "preview": "hi"},
+        ]
+    }
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        response = client.get("/admin/conversations", headers=auth_headers())
+
+    conversations = response.json()["conversations"]
+    assert conversations[0]["controlled_by"] == "human"
+    assert conversations[1]["controlled_by"] == "bot"
+
+
+def test_list_conversations_local_index_includes_controlled_by(tmp_path):
+    with patch.object(server, "USE_DYNAMODB", False), \
+         patch.object(server, "USE_S3", False), \
+         patch.object(server, "MEMORY_DIR", str(tmp_path)):
+        server.save_conversation("c-human", [{"role": "human", "content": "a", "timestamp": "2026-01-01T00:00:00", "needs_attention": False, "read": True}], "human")
+
+        response = client.get("/admin/conversations", headers=auth_headers())
+
+    conversations = response.json()["conversations"]
+    assert conversations[0]["controlled_by"] == "human"
+
+
 def test_get_conversation_marks_read_and_clears_needs_attention():
     messages = [
         {"role": "user", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": False},
