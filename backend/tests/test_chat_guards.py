@@ -145,6 +145,7 @@ def test_chat_endpoint_clamps_long_message_before_bedrock_call():
     with patch.object(server, "call_bedrock", return_value="hi") as mock_call_bedrock, \
          patch.object(server, "load_conversation", return_value=[]), \
          patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server, "check_scope", return_value=True), \
          patch.object(server.retrieval, "retrieve", return_value=[]):
         resp = client.post("/chat", json={"message": long_message, "session_id": "clamp-test"})
     assert resp.status_code == 200
