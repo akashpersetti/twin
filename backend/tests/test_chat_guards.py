@@ -61,6 +61,44 @@ def test_check_rate_limit_expires_old_entries():
         server.check_rate_limit("session-e")  # window expired, must not raise
 
 
+def test_check_scope_returns_true_for_on_topic_message():
+    fake_response = {
+        "output": {"message": {"content": [{"text": '{"on_topic": true, "reason": "career question"}'}]}}
+    }
+    with patch.object(server.bedrock_client, "converse", return_value=fake_response):
+        assert server.check_scope([], "what's your experience with Python?") is True
+
+
+def test_check_scope_returns_false_for_off_topic_message():
+    fake_response = {
+        "output": {"message": {"content": [{"text": '{"on_topic": false, "reason": "joke request"}'}]}}
+    }
+    with patch.object(server.bedrock_client, "converse", return_value=fake_response):
+        assert server.check_scope([], "tell me a joke") is False
+
+
+def test_check_scope_fails_open_when_bedrock_call_raises():
+    with patch.object(server.bedrock_client, "converse", side_effect=Exception("throttled")):
+        assert server.check_scope([], "anything") is True
+
+
+def test_check_scope_uses_judge_model_and_recent_context():
+    fake_response = {
+        "output": {"message": {"content": [{"text": '{"on_topic": true, "reason": "ok"}'}]}}
+    }
+    conversation = [
+        {"role": "user", "content": "tell me about your projects", "timestamp": "t1"},
+        {"role": "assistant", "content": "Sure, here's one...", "timestamp": "t2"},
+    ]
+    with patch.object(server.bedrock_client, "converse", return_value=fake_response) as mock_converse:
+        server.check_scope(conversation, "no need")
+    call_kwargs = mock_converse.call_args.kwargs
+    assert call_kwargs["modelId"] == server.JUDGE_MODEL_ID
+    sent_text = call_kwargs["messages"][0]["content"][0]["text"]
+    assert "no need" in sent_text
+    assert "tell me about your projects" in sent_text
+
+
 def test_chat_endpoint_returns_429_when_rate_limited():
     server._request_log.clear()
     with patch.object(server, "call_bedrock", return_value="hi"), \

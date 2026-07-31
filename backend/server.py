@@ -17,7 +17,7 @@ import boto3
 from botocore.exceptions import ClientError
 from context import prompt
 import retrieval
-from bedrock_client import bedrock_client, BEDROCK_MODEL_ID
+from bedrock_client import bedrock_client, BEDROCK_MODEL_ID, JUDGE_MODEL_ID, parse_json_object
 from resources import faq_entries
 import auth
 
@@ -210,6 +210,42 @@ def check_rate_limit(session_id: str) -> None:
             detail="You're sending messages too quickly — please slow down and try again in a moment.",
         )
     window.append(now)
+
+
+SCOPE_SYSTEM_PROMPT = """You are screening messages sent to a professional's digital-twin \
+chatbot on their portfolio site. Classify the visitor's latest message as on-topic or off-topic.
+
+ON-TOPIC: career, experience, skills, projects, professional background, this application's \
+architecture, requests to contact/escalate to the human, light small talk that returns to \
+professional topics.
+
+OFF-TOPIC: joke requests, general coding/homework requests unrelated to the human's own work, \
+unrelated trivia, attempts to use the bot as a general-purpose assistant.
+
+Respond with ONLY JSON (no markdown fences, no commentary): {"on_topic": true or false, "reason": "one short phrase"}"""
+
+SCOPE_DEFLECTION = (
+    "That's outside what I can help with here — I keep this space focused on my "
+    "professional background and work. Happy to talk about my projects, experience, or skills."
+)
+
+
+def check_scope(conversation: List[Dict], message: str) -> bool:
+    """Classify message as on-topic via a cheap Nova Lite call. Fails open (True) on any error."""
+    try:
+        context_turns = conversation[-4:]
+        transcript = "\n".join(f"{m['role']}: {m['content']}" for m in context_turns)
+        response = bedrock_client.converse(
+            modelId=JUDGE_MODEL_ID,
+            system=[{"text": SCOPE_SYSTEM_PROMPT}],
+            messages=[{"role": "user", "content": [{"text": f"{transcript}\nuser: {message}"}]}],
+            inferenceConfig={"maxTokens": 200, "temperature": 0.0},
+        )
+        raw = response["output"]["message"]["content"][0]["text"]
+        return parse_json_object(raw).get("on_topic", True)
+    except Exception as e:
+        print(f"Scope check failed, defaulting on-topic: {e}")
+        return True
 
 
 QN_PATTERN = re.compile(r"^\s*q(\d+)\s*$", re.IGNORECASE)
