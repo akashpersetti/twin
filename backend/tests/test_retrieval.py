@@ -11,12 +11,10 @@ EXPECTED_CHUNK_IDS = [
     "technical-identity-and-working-style",
     "current-role-ai-engineer-at-myedmaster-llc",
     "previous-role-machine-learning-intern-at-myedmaster-llc",
-    "previous-role-web-development-intern-at-squadcast-labs",
+    "projects-terraformagent-evalbench-and-repomodernizer",
     "project-wingman-self-evaluating-agentic-co-worker",
     "project-twin-streaming-ai-digital-twin",
-    "project-tallymark-voice-text-agentic-expense-splitter",
     "project-mcp-second-opinion-open-source-mcp-server",
-    "laxora-ai-founding-software-engineer",
     "education",
     "technical-skills",
     "certifications",
@@ -45,8 +43,7 @@ def test_current_role_chunk_has_correct_database():
         text = f.read()
     chunks = retrieval.chunk_profile_text(text)
     current_role = next(c for c in chunks if c.chunk_id == "current-role-ai-engineer-at-myedmaster-llc")
-    assert "PostgreSQL" in current_role.text
-    assert "pgvector" in current_role.text
+    assert "MySQL" in current_role.text
 
 
 import json
