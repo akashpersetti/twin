@@ -208,7 +208,7 @@ def test_chat_endpoint_rate_limit_short_circuits_before_scope_check():
     with patch.object(server, "call_bedrock", return_value=("hi", False)), \
          patch.object(server, "load_conversation", return_value=[]), \
          patch.object(server, "save_conversation"), \
-         patch.object(server, "check_scope") as mock_check_scope:
+         patch.object(server, "check_scope", return_value=True) as mock_check_scope:
         for _ in range(20):
             resp = client.post("/chat", json={"message": "hello", "session_id": "rate-vs-scope-test"})
             assert resp.status_code == 200
