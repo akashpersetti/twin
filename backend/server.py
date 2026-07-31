@@ -216,8 +216,9 @@ SCOPE_SYSTEM_PROMPT = """You are screening messages sent to a professional's dig
 chatbot on their portfolio site. Classify the visitor's latest message as on-topic or off-topic.
 
 ON-TOPIC: career, experience, skills, projects, professional background, this application's \
-architecture, requests to contact/escalate to the human, light small talk that returns to \
-professional topics.
+architecture (including what AI model/vendor/stack it runs on, and what it costs to run), \
+requests to contact/escalate to the human, feedback or suggestions about this chatbot itself \
+(even if phrased casually or sarcastically), light small talk that returns to professional topics.
 
 OFF-TOPIC: joke requests, general coding/homework requests unrelated to the human's own work, \
 unrelated trivia, attempts to use the bot as a general-purpose assistant.
