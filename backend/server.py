@@ -248,6 +248,29 @@ def check_scope(conversation: List[Dict], message: str) -> bool:
         return True
 
 
+SESSION_NUDGE_THRESHOLD = 15
+SESSION_HARD_CAP = 30
+SESSION_NUDGE_NOTICE = "\n\nBy the way, if you'd like to go deeper, feel free to reach out to Akash directly."
+SESSION_CAP_MESSAGE = (
+    "This conversation has covered a lot of ground — for anything further, "
+    "please reach out to Akash directly. Thanks for stopping by!"
+)
+
+
+def check_session_cap(conversation: List[Dict]) -> Optional[str]:
+    """Return the hard-cap message once the conversation has grown too long, else None."""
+    if len(conversation) >= SESSION_HARD_CAP:
+        return SESSION_CAP_MESSAGE
+    return None
+
+
+def already_nudged(conversation: List[Dict]) -> bool:
+    """True if the soft-cap nudge notice has already been sent this session."""
+    return any(
+        SESSION_NUDGE_NOTICE in m["content"] for m in conversation if m["role"] == "assistant"
+    )
+
+
 QN_PATTERN = re.compile(r"^\s*q(\d+)\s*$", re.IGNORECASE)
 
 

@@ -99,6 +99,32 @@ def test_check_scope_uses_judge_model_and_recent_context():
     assert "tell me about your projects" in sent_text
 
 
+def _fake_messages(n):
+    return [{"role": "user" if i % 2 == 0 else "assistant", "content": f"msg {i}"} for i in range(n)]
+
+
+def test_check_session_cap_returns_none_under_hard_cap():
+    assert server.check_session_cap(_fake_messages(29)) is None
+
+
+def test_check_session_cap_returns_message_at_hard_cap():
+    assert server.check_session_cap(_fake_messages(30)) == server.SESSION_CAP_MESSAGE
+
+
+def test_check_session_cap_returns_message_above_hard_cap():
+    assert server.check_session_cap(_fake_messages(45)) == server.SESSION_CAP_MESSAGE
+
+
+def test_already_nudged_false_on_fresh_conversation():
+    assert server.already_nudged(_fake_messages(10)) is False
+
+
+def test_already_nudged_true_once_notice_present():
+    conversation = _fake_messages(16)
+    conversation.append({"role": "assistant", "content": f"Some reply.{server.SESSION_NUDGE_NOTICE}"})
+    assert server.already_nudged(conversation) is True
+
+
 def test_chat_endpoint_returns_429_when_rate_limited():
     server._request_log.clear()
     with patch.object(server, "call_bedrock", return_value="hi"), \
