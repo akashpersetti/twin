@@ -185,6 +185,18 @@ def test_build_bedrock_messages_maps_human_role_to_assistant():
     assert human_entry["role"] == "assistant"
 
 
+def test_build_bedrock_messages_maps_system_role_to_assistant():
+    conversation = [
+        {"role": "user", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": False},
+        {"role": "system", "content": "You're now chatting with the assistant again.", "timestamp": "t2", "needs_attention": False, "read": True},
+    ]
+    with patch.object(server.retrieval, "retrieve", return_value=[]):
+        messages = server.build_bedrock_messages(conversation, "another question")
+
+    system_entry = next(m for m in messages if m["content"][0]["text"] == "You're now chatting with the assistant again.")
+    assert system_entry["role"] == "assistant"
+
+
 def test_chat_endpoint_sends_sns_notification_when_escalated():
     server._request_log.clear()
     with patch.object(server, "call_bedrock", return_value=("I've flagged this for Akash.", True)), \

@@ -17,6 +17,12 @@ client = TestClient(server.app)
 
 
 @pytest.fixture(autouse=True)
+def bot_controlled_by_default():
+    with patch.object(server, "get_controlled_by", return_value="bot"):
+        yield
+
+
+@pytest.fixture(autouse=True)
 def reset_admin_token():
     auth_module._admin_token = VALID_TOKEN
     yield
@@ -212,6 +218,59 @@ def test_post_human_message_appends_and_does_not_call_bedrock():
     assert saved[-1]["content"] == "This is Akash, happy to help!"
     assert saved[-1]["read"] is True
     assert saved[-1]["needs_attention"] is False
+
+
+def test_post_human_message_sets_controlled_by_human():
+    with patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation") as mock_save:
+        response = client.post(
+            "/admin/conversations/convo-3/messages",
+            json={"content": "Taking over now."},
+            headers=auth_headers(),
+        )
+
+    assert response.status_code == 200
+    assert response.json()["controlled_by"] == "human"
+    assert mock_save.call_args.args[2] == "human"
+
+
+def test_get_admin_conversation_preserves_controlled_by_on_resave():
+    messages = [{"role": "human", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": False}]
+    with patch.object(server, "load_conversation", return_value=messages), \
+         patch.object(server, "get_controlled_by", return_value="human"), \
+         patch.object(server, "save_conversation") as mock_save:
+        response = client.get("/admin/conversations/convo-4", headers=auth_headers())
+
+    assert response.status_code == 200
+    assert response.json()["controlled_by"] == "human"
+    assert mock_save.call_args.args[2] == "human"
+
+
+def test_return_control_appends_system_message_and_flips_to_bot():
+    messages = [{"role": "human", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": True}]
+    with patch.object(server, "load_conversation", return_value=messages), \
+         patch.object(server, "save_conversation") as mock_save:
+        response = client.post("/admin/conversations/convo-5/return-control", headers=auth_headers())
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["controlled_by"] == "bot"
+    assert body["messages"][-1]["role"] == "system"
+    assert body["messages"][-1]["content"] == "You're now chatting with the assistant again."
+
+    saved_conversation = mock_save.call_args.args[1]
+    assert saved_conversation[-1]["role"] == "system"
+    assert mock_save.call_args.args[2] == "bot"
+
+
+def test_return_control_404_when_unknown():
+    with patch.object(server, "load_conversation", return_value=[]):
+        response = client.post("/admin/conversations/unknown-convo/return-control", headers=auth_headers())
+    assert response.status_code == 404
+
+
+def test_return_control_requires_auth():
+    assert client.post("/admin/conversations/x/return-control").status_code == 401
 
 
 def test_admin_endpoints_401_without_token():

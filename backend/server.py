@@ -340,7 +340,7 @@ def build_bedrock_messages(conversation: List[Dict], user_message: str, user_nam
     messages = []
     messages.append({"role": "user", "content": [{"text": f"System: {system}"}]})
     for msg in conversation[-20:]:
-        bedrock_role = "assistant" if msg["role"] in ("assistant", "human") else "user"
+        bedrock_role = "assistant" if msg["role"] in ("assistant", "human", "system") else "user"
         messages.append({"role": bedrock_role, "content": [{"text": msg["content"]}]})
     messages.append({"role": "user", "content": [{"text": user_message}]})
     return messages
@@ -655,12 +655,16 @@ async def get_admin_conversation(conversation_id: str, _: None = Depends(auth.ve
     if not messages:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
+    controlled_by = get_controlled_by(conversation_id)
     for msg in messages:
         msg["read"] = True
         msg["needs_attention"] = False
-    save_conversation(conversation_id, messages)
+    save_conversation(conversation_id, messages, controlled_by)
 
-    return {"conversation_id": conversation_id, "messages": messages}
+    return {"conversation_id": conversation_id, "messages": messages, "controlled_by": controlled_by}
+
+
+RETURN_CONTROL_MESSAGE = "You're now chatting with the assistant again."
 
 
 @app.post("/admin/conversations/{conversation_id}/messages")
@@ -677,8 +681,26 @@ async def post_human_message(
             "read": True,
         }
     )
-    save_conversation(conversation_id, messages)
-    return {"conversation_id": conversation_id, "messages": messages}
+    save_conversation(conversation_id, messages, "human")
+    return {"conversation_id": conversation_id, "messages": messages, "controlled_by": "human"}
+
+
+@app.post("/admin/conversations/{conversation_id}/return-control")
+async def return_control(conversation_id: str, _: None = Depends(auth.verify_token)):
+    messages = load_conversation(conversation_id)
+    if not messages:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    messages.append(
+        {
+            "role": "system",
+            "content": RETURN_CONTROL_MESSAGE,
+            "timestamp": datetime.now().isoformat(),
+            "needs_attention": False,
+            "read": True,
+        }
+    )
+    save_conversation(conversation_id, messages, "bot")
+    return {"conversation_id": conversation_id, "messages": messages, "controlled_by": "bot"}
 
 
 @app.post("/chat", response_model=ChatResponse)
