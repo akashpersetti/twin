@@ -450,6 +450,12 @@ resource "aws_apigatewayv2_route" "post_admin_conversation_message" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "post_admin_conversation_return_control" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /admin/conversations/{conversation_id}/return-control"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
 # Lambda permission for API Gateway
 resource "aws_lambda_permission" "api_gw" {
   statement_id  = "AllowExecutionFromAPIGateway"
