@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -214,3 +215,34 @@ def test_chat_endpoint_rate_limit_short_circuits_before_scope_check():
         resp = client.post("/chat", json={"message": "hello", "session_id": "rate-vs-scope-test"})
     assert resp.status_code == 429
     assert mock_check_scope.call_count == 20
+
+
+def _read_sse_events(response):
+    events = []
+    for line in response.text.splitlines():
+        if line.startswith("data: "):
+            events.append(json.loads(line[len("data: "):]))
+    return events
+
+
+def test_chat_stream_skips_bedrock_when_off_topic():
+    server._request_log.clear()
+    with patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server.bedrock_client, "converse_stream") as mock_stream, \
+         patch.object(server, "check_scope", return_value=False), \
+         patch.object(server, "save_conversation"):
+        resp = client.post("/chat/stream", json={"message": "tell me a joke", "session_id": "scope-stream-test"})
+    events = _read_sse_events(resp)
+    mock_stream.assert_not_called()
+    assert any(e.get("chunk") == server.SCOPE_DEFLECTION for e in events)
+
+
+def test_chat_stream_skips_bedrock_at_hard_cap():
+    server._request_log.clear()
+    with patch.object(server, "load_conversation", return_value=_fake_messages(30)), \
+         patch.object(server.bedrock_client, "converse_stream") as mock_stream, \
+         patch.object(server, "save_conversation"):
+        resp = client.post("/chat/stream", json={"message": "one more", "session_id": "cap-stream-test"})
+    events = _read_sse_events(resp)
+    mock_stream.assert_not_called()
+    assert any(e.get("chunk") == server.SESSION_CAP_MESSAGE for e in events)

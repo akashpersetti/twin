@@ -449,6 +449,18 @@ def capture_live_eval(query: str, retrieved_chunks: List, answer: str) -> None:
         print(f"Live eval capture failed (non-fatal): {e}")
 
 
+def stream_fixed_reply(text: str, session_id: str, conversation: List[Dict], user_message: str) -> Generator[str, None, None]:
+    """Emit a fixed string as a single SSE chunk (guard short-circuit path), then persist it same as a real turn."""
+    yield f"data: {json.dumps({'session_id': session_id})}\n\n"
+    yield f"data: {json.dumps({'chunk': text})}\n\n"
+
+    conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
+    conversation.append({"role": "assistant", "content": text, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
+    save_conversation(session_id, conversation)
+
+    yield f"data: {json.dumps({'done': True})}\n\n"
+
+
 def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str, user_name: Optional[str] = None) -> Generator[str, None, None]:
     """Stream response from AWS Bedrock and save conversation when done."""
     messages = build_bedrock_messages(conversation, user_message, user_name)
@@ -707,6 +719,21 @@ async def chat_stream(request: ChatRequest):
         check_rate_limit(session_id)
         message = clamp_message(request.message)
         conversation = load_conversation(session_id)
+
+        cap_message = check_session_cap(conversation)
+        if cap_message is not None:
+            return StreamingResponse(
+                stream_fixed_reply(cap_message, session_id, conversation, message),
+                media_type="text/event-stream",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            )
+        if not check_scope(conversation, message):
+            return StreamingResponse(
+                stream_fixed_reply(SCOPE_DEFLECTION, session_id, conversation, message),
+                media_type="text/event-stream",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            )
+
         return StreamingResponse(
             stream_bedrock(conversation, message, session_id, user_name=request.user_name),
             media_type="text/event-stream",
