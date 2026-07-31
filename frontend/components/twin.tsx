@@ -10,7 +10,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface Message {
     id: string;
-    role: 'user' | 'assistant' | 'human';
+    role: 'user' | 'assistant' | 'human' | 'system';
     content: string;
     timestamp: Date;
 }
@@ -199,14 +199,14 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                     if (cancelled) return;
                     const allMessages: { role: string; content: string; timestamp: string }[] = data.messages ?? [];
                     const newOnes = allMessages.slice(lastPolledMessageCountRef.current);
-                    const newHumanMessages = newOnes.filter(m => m.role === 'human');
-                    if (newHumanMessages.length > 0) {
+                    const newRelevantMessages = newOnes.filter(m => m.role === 'human' || m.role === 'system');
+                    if (newRelevantMessages.length > 0) {
                         if (cancelled) return;
                         setMessages(prev => [
                             ...prev,
-                            ...newHumanMessages.map((m, i) => ({
-                                id: `human-${Date.now()}-${i}`,
-                                role: 'human' as const,
+                            ...newRelevantMessages.map((m, i) => ({
+                                id: `${m.role}-${Date.now()}-${i}`,
+                                role: m.role as 'human' | 'system',
                                 content: m.content,
                                 timestamp: new Date(m.timestamp),
                             })),
@@ -266,6 +266,11 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
 
             const data = await response.json();
             if (data.session_id && !sessionId) setSessionId(data.session_id);
+
+            if (data.human_controlled) {
+                setIsLoading(false);
+                return;
+            }
 
             // Add placeholder and begin typewriter animation
             setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', timestamp: new Date() }]);
@@ -511,6 +516,18 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                             </p>
                                             <span>{message.content}</span>
                                         </div>
+                                    </div>
+                                )}
+
+                                {/* System message (control handoff notice) */}
+                                {message.role === 'system' && (
+                                    <div className="flex justify-center">
+                                        <span
+                                            className="text-[11px] px-3 py-1 rounded-full"
+                                            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                                        >
+                                            {message.content}
+                                        </span>
                                     </div>
                                 )}
 
