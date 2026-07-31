@@ -66,6 +66,7 @@ def test_chat_endpoint_falls_through_for_unknown_qn():
     with patch.object(server, "call_bedrock", return_value=("hi", False)) as mock_call_bedrock, \
          patch.object(server, "load_conversation", return_value=[]), \
          patch.object(server, "save_conversation"), \
+         patch.object(server, "check_scope", return_value=True), \
          patch.object(server.retrieval, "retrieve", return_value=[]):
         resp = client.post("/chat", json={"message": "Q999", "session_id": "faq-test-2"})
     assert resp.status_code == 200
