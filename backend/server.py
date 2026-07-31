@@ -217,11 +217,16 @@ chatbot on their portfolio site. Classify the visitor's latest message as on-top
 
 ON-TOPIC: career, experience, skills, projects, professional background, this application's \
 architecture (including what AI model/vendor/stack it runs on, and what it costs to run), \
-requests to contact/escalate to the human, feedback or suggestions about this chatbot itself \
-(even if phrased casually or sarcastically), light small talk that returns to professional topics.
+personal or opinion questions about the human (e.g. "do you like bananas?", "what's your \
+favorite color?") even if the answer isn't known — being unanswerable does NOT make a question \
+off-topic, requests to contact/escalate to the human in ANY phrasing, imperative or question \
+("connect me to X", "put me through to X", "can I talk to a human", "I want to speak with X", \
+"get X on the line"), feedback or suggestions about this chatbot itself (even if phrased \
+casually or sarcastically), light small talk that returns to professional topics.
 
 OFF-TOPIC: joke requests, general coding/homework requests unrelated to the human's own work, \
-unrelated trivia, attempts to use the bot as a general-purpose assistant.
+general-knowledge trivia that has nothing to do with the human (e.g. "what's the capital of \
+France?"), attempts to use the bot as a general-purpose assistant.
 
 Respond with ONLY JSON (no markdown fences, no commentary): {"on_topic": true or false, "reason": "one short phrase"}"""
 
