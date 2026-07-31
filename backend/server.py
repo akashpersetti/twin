@@ -487,6 +487,18 @@ def stream_fixed_reply(text: str, session_id: str, conversation: List[Dict], use
     yield f"data: {json.dumps({'done': True})}\n\n"
 
 
+def stream_human_controlled(session_id: str, conversation: List[Dict], user_message: str) -> Generator[str, None, None]:
+    """Persist the visitor's message without generating a bot reply, since a human already has control."""
+    yield f"data: {json.dumps({'session_id': session_id})}\n\n"
+
+    conversation = list(conversation)
+    conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
+    save_conversation(session_id, conversation, "human")
+
+    yield f"data: {json.dumps({'human_controlled': True})}\n\n"
+    yield f"data: {json.dumps({'done': True})}\n\n"
+
+
 def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str, user_name: Optional[str] = None) -> Generator[str, None, None]:
     """Stream response from AWS Bedrock and save conversation when done."""
     messages = build_bedrock_messages(conversation, user_message, user_name)
@@ -760,6 +772,13 @@ async def chat_stream(request: ChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
         check_rate_limit(session_id)
         message = clamp_message(request.message)
+        if get_controlled_by(session_id) == "human":
+            conversation = load_conversation(session_id)
+            return StreamingResponse(
+                stream_human_controlled(session_id, conversation, message),
+                media_type="text/event-stream",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            )
         conversation = load_conversation(session_id)
 
         cap_message = check_session_cap(conversation)

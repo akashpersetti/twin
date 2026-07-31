@@ -296,3 +296,22 @@ def test_chat_stream_skips_bedrock_at_hard_cap():
     events = _read_sse_events(resp)
     mock_stream.assert_not_called()
     assert any(e.get("chunk") == server.SESSION_CAP_MESSAGE for e in events)
+
+
+def test_chat_stream_skips_bedrock_when_human_controlled():
+    server._request_log.clear()
+    with patch.object(server, "get_controlled_by", return_value="human"), \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server.bedrock_client, "converse_stream") as mock_stream, \
+         patch.object(server, "save_conversation") as mock_save:
+        resp = client.post("/chat/stream", json={"message": "hello?", "session_id": "human-controlled-stream-test"})
+
+    events = _read_sse_events(resp)
+    mock_stream.assert_not_called()
+    assert any(e.get("human_controlled") is True for e in events)
+    assert not any("chunk" in e for e in events)
+
+    saved_conversation = mock_save.call_args.args[1]
+    assert len(saved_conversation) == 1
+    assert saved_conversation[0]["role"] == "user"
+    assert mock_save.call_args.args[2] == "human"
