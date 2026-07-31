@@ -1,6 +1,8 @@
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import server
@@ -43,6 +45,12 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 client = TestClient(server.app)
+
+
+@pytest.fixture(autouse=True)
+def bot_controlled_by_default():
+    with patch.object(server, "get_controlled_by", return_value="bot"):
+        yield
 
 
 def test_chat_endpoint_answers_qn_shortcut_without_calling_bedrock():

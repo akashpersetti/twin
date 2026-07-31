@@ -14,6 +14,12 @@ import server
 client = TestClient(server.app)
 
 
+@pytest.fixture(autouse=True)
+def bot_controlled_by_default():
+    with patch.object(server, "get_controlled_by", return_value="bot"):
+        yield
+
+
 def test_clamp_message_leaves_short_message_unchanged():
     assert server.clamp_message("hello") == "hello"
 
@@ -215,6 +221,42 @@ def test_chat_endpoint_rate_limit_short_circuits_before_scope_check():
         resp = client.post("/chat", json={"message": "hello", "session_id": "rate-vs-scope-test"})
     assert resp.status_code == 429
     assert mock_check_scope.call_count == 20
+
+
+def test_chat_endpoint_skips_bot_when_human_controlled():
+    server._request_log.clear()
+    with patch.object(server, "get_controlled_by", return_value="human"), \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server, "call_bedrock") as mock_call_bedrock:
+        resp = client.post("/chat", json={"message": "are you still there?", "session_id": "human-controlled-test"})
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["response"] is None
+    assert body["human_controlled"] is True
+    mock_call_bedrock.assert_not_called()
+
+    saved_conversation = mock_save.call_args.args[1]
+    assert len(saved_conversation) == 1
+    assert saved_conversation[0]["role"] == "user"
+    assert saved_conversation[0]["content"] == "are you still there?"
+    assert mock_save.call_args.args[2] == "human"
+
+
+def test_chat_endpoint_skips_faq_shortcut_when_human_controlled():
+    server._request_log.clear()
+    with patch.object(server, "get_controlled_by", return_value="human"), \
+         patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server, "call_bedrock") as mock_call_bedrock:
+        resp = client.post("/chat", json={"message": "Q1", "session_id": "human-controlled-faq-test"})
+
+    assert resp.status_code == 200
+    assert resp.json()["response"] is None
+    mock_call_bedrock.assert_not_called()
+    saved_conversation = mock_save.call_args.args[1]
+    assert saved_conversation[0]["content"] == "Q1"
 
 
 def _read_sse_events(response):

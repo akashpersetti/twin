@@ -72,8 +72,9 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    response: str
+    response: Optional[str] = None
     session_id: str
+    human_controlled: bool = False
 
 
 class VisitorRequest(BaseModel):
@@ -674,6 +675,14 @@ async def chat(request: ChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
         check_rate_limit(session_id)
         message = clamp_message(request.message)
+
+        if get_controlled_by(session_id) == "human":
+            conversation = list(load_conversation(session_id))
+            conversation.append(
+                {"role": "user", "content": message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
+            )
+            save_conversation(session_id, conversation, "human")
+            return ChatResponse(response=None, session_id=session_id, human_controlled=True)
 
         faq_match = match_faq_shortcut(message)
         if faq_match:

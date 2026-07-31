@@ -3,6 +3,7 @@ import os
 import sys
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -10,6 +11,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import server
 
 client = TestClient(server.app)
+get_controlled_by = server.get_controlled_by
+
+
+@pytest.fixture(autouse=True)
+def bot_controlled_by_default():
+    with patch.object(server, "get_controlled_by", return_value="bot"):
+        yield
 
 
 def test_save_conversation_dynamodb_computes_aggregates_and_puts_item():
@@ -100,7 +108,7 @@ def test_get_controlled_by_defaults_to_bot_when_dynamodb_item_missing():
     mock_table.get_item.return_value = {}
     with patch.object(server, "USE_DYNAMODB", True), \
          patch.object(server, "conversations_table", mock_table, create=True):
-        assert server.get_controlled_by("session-missing") == "bot"
+        assert get_controlled_by("session-missing") == "bot"
 
 
 def test_get_controlled_by_reads_dynamodb_item():
@@ -108,7 +116,7 @@ def test_get_controlled_by_reads_dynamodb_item():
     mock_table.get_item.return_value = {"Item": {"conversation_id": "session-h", "controlled_by": "human"}}
     with patch.object(server, "USE_DYNAMODB", True), \
          patch.object(server, "conversations_table", mock_table, create=True):
-        assert server.get_controlled_by("session-h") == "human"
+        assert get_controlled_by("session-h") == "human"
 
 
 def test_get_controlled_by_defaults_to_bot_for_invalid_dynamodb_value():
@@ -116,13 +124,13 @@ def test_get_controlled_by_defaults_to_bot_for_invalid_dynamodb_value():
     mock_table.get_item.return_value = {"Item": {"conversation_id": "session-invalid", "controlled_by": "operator"}}
     with patch.object(server, "USE_DYNAMODB", True), \
          patch.object(server, "conversations_table", mock_table, create=True):
-        assert server.get_controlled_by("session-invalid") == "bot"
+        assert get_controlled_by("session-invalid") == "bot"
 
 
 def test_get_controlled_by_defaults_to_bot_for_s3():
     with patch.object(server, "USE_DYNAMODB", False), \
          patch.object(server, "USE_S3", True):
-        assert server.get_controlled_by("any-session") == "bot"
+        assert get_controlled_by("any-session") == "bot"
 
 
 def test_get_controlled_by_reads_local_index(tmp_path):
@@ -134,8 +142,8 @@ def test_get_controlled_by_reads_local_index(tmp_path):
             [{"role": "human", "content": "hi", "timestamp": "t1", "needs_attention": False, "read": True}],
             "human",
         )
-        assert server.get_controlled_by("session-local-human") == "human"
-        assert server.get_controlled_by("session-never-saved") == "bot"
+        assert get_controlled_by("session-local-human") == "human"
+        assert get_controlled_by("session-never-saved") == "bot"
 
 
 def test_save_conversation_dynamodb_persists_controlled_by():

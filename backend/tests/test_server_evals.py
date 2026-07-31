@@ -3,6 +3,8 @@ import os
 import sys
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import server
@@ -11,6 +13,12 @@ import retrieval
 from fastapi.testclient import TestClient
 
 client = TestClient(server.app)
+
+
+@pytest.fixture(autouse=True)
+def bot_controlled_by_default():
+    with patch.object(server, "get_controlled_by", return_value="bot"):
+        yield
 
 
 def _fake_chunk(chunk_id="professional-summary"):
