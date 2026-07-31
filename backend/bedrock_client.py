@@ -1,3 +1,4 @@
+import json
 import os
 import boto3
 from botocore.config import Config
@@ -25,3 +26,20 @@ BEDROCK_MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.anthropic.claude-sonnet-4-5
 # power. Decoupled from BEDROCK_MODEL_ID to cut token cost (Nova Lite is far
 # cheaper than Sonnet) and to spread load across a separate model quota.
 JUDGE_MODEL_ID = os.getenv("JUDGE_MODEL_ID", "amazon.nova-lite-v1:0")
+
+
+def parse_json_object(raw: str) -> dict:
+    """Extract and parse the first balanced {...} JSON object found in raw text."""
+    raw = raw.strip()
+    start = raw.find("{")
+    if start != -1:
+        depth = 0
+        for i, ch in enumerate(raw[start:], start=start):
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    raw = raw[start:i + 1]
+                    break
+    return json.loads(raw)

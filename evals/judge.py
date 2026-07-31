@@ -1,6 +1,3 @@
-import json
-import re
-
 import bedrock_client
 
 JUDGE_SYSTEM_PROMPT = """You are grading whether an AI-generated answer is faithful to the provided source material. Be strict: any claim in the answer not directly supported by the source material counts as a hallucination, even if it sounds plausible.
@@ -36,16 +33,5 @@ def judge_answer(query: str, retrieved_text: str, answer: str) -> dict:
         messages=[{"role": "user", "content": [{"text": _build_judge_prompt(query, retrieved_text, answer)}]}],
         inferenceConfig={"maxTokens": 500, "temperature": 0.0},
     )
-    raw = response["output"]["message"]["content"][0]["text"].strip()
-    start = raw.find("{")
-    if start != -1:
-        depth = 0
-        for i, ch in enumerate(raw[start:], start=start):
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-                if depth == 0:
-                    raw = raw[start:i + 1]
-                    break
-    return json.loads(raw)
+    raw = response["output"]["message"]["content"][0]["text"]
+    return bedrock_client.parse_json_object(raw)
