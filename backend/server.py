@@ -151,8 +151,13 @@ def load_conversation(session_id: str) -> List[Dict]:
         return []
 
 
+def _normalize_controlled_by(controlled_by: str) -> str:
+    return controlled_by if controlled_by in {"bot", "human"} else "bot"
+
+
 def save_conversation(session_id: str, messages: List[Dict], controlled_by: str = "bot"):
     """Save conversation history to storage"""
+    controlled_by = _normalize_controlled_by(controlled_by)
     if USE_DYNAMODB:
         aggregates = _compute_conversation_aggregates(messages)
         conversations_table.put_item(Item={
@@ -186,12 +191,12 @@ def get_controlled_by(session_id: str) -> str:
     if USE_DYNAMODB:
         response = conversations_table.get_item(Key={"conversation_id": session_id})
         item = response.get("Item")
-        return item.get("controlled_by", "bot") if item else "bot"
+        return _normalize_controlled_by(item.get("controlled_by", "bot")) if item else "bot"
     elif USE_S3:
         return "bot"
     else:
         index = _load_conversations_index()
-        return index.get(session_id, {}).get("controlled_by", "bot")
+        return _normalize_controlled_by(index.get(session_id, {}).get("controlled_by", "bot"))
 
 
 # Abuse guards
@@ -613,13 +618,20 @@ async def list_conversations(_: None = Depends(auth.verify_token)):
                 "needs_attention": item["needs_attention"],
                 "unread_count": item["unread_count"],
                 "preview": item.get("preview", ""),
-                "controlled_by": item.get("controlled_by", "bot"),
+                "controlled_by": _normalize_controlled_by(item.get("controlled_by", "bot")),
             }
             for item in response.get("Items", [])
         ]
     else:
         index = _load_conversations_index()
-        conversations = [{"conversation_id": cid, **aggregates} for cid, aggregates in index.items()]
+        conversations = [
+            {
+                "conversation_id": cid,
+                **aggregates,
+                "controlled_by": _normalize_controlled_by(aggregates.get("controlled_by", "bot")),
+            }
+            for cid, aggregates in index.items()
+        ]
         conversations.sort(key=lambda c: c["last_activity"], reverse=True)
     return {"conversations": conversations}
 

@@ -111,6 +111,14 @@ def test_get_controlled_by_reads_dynamodb_item():
         assert server.get_controlled_by("session-h") == "human"
 
 
+def test_get_controlled_by_defaults_to_bot_for_invalid_dynamodb_value():
+    mock_table = MagicMock()
+    mock_table.get_item.return_value = {"Item": {"conversation_id": "session-invalid", "controlled_by": "operator"}}
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        assert server.get_controlled_by("session-invalid") == "bot"
+
+
 def test_get_controlled_by_defaults_to_bot_for_s3():
     with patch.object(server, "USE_DYNAMODB", False), \
          patch.object(server, "USE_S3", True):
@@ -137,6 +145,15 @@ def test_save_conversation_dynamodb_persists_controlled_by():
         server.save_conversation("session-c", [], "human")
     item = mock_table.put_item.call_args.kwargs["Item"]
     assert item["controlled_by"] == "human"
+
+
+def test_save_conversation_defaults_invalid_controlled_by_to_bot():
+    mock_table = MagicMock()
+    with patch.object(server, "USE_DYNAMODB", True), \
+         patch.object(server, "conversations_table", mock_table, create=True):
+        server.save_conversation("session-invalid", [], "operator")
+    item = mock_table.put_item.call_args.kwargs["Item"]
+    assert item["controlled_by"] == "bot"
 
 
 def test_save_conversation_defaults_controlled_by_to_bot():

@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -150,6 +151,25 @@ def test_list_conversations_local_index_includes_controlled_by(tmp_path):
 
     conversations = response.json()["conversations"]
     assert conversations[0]["controlled_by"] == "human"
+
+
+def test_list_conversations_local_legacy_index_defaults_controlled_by_to_bot(tmp_path):
+    with patch.object(server, "USE_DYNAMODB", False), \
+         patch.object(server, "USE_S3", False), \
+         patch.object(server, "MEMORY_DIR", str(tmp_path)):
+        tmp_path.joinpath("conversations_index.json").write_text(json.dumps({
+            "c-legacy": {
+                "last_activity": "2026-01-01T00:00:00",
+                "needs_attention": False,
+                "unread_count": 0,
+                "preview": "legacy",
+            }
+        }))
+
+        response = client.get("/admin/conversations", headers=auth_headers())
+
+    conversations = response.json()["conversations"]
+    assert conversations[0]["controlled_by"] == "bot"
 
 
 def test_get_conversation_marks_read_and_clears_needs_attention():
