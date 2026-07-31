@@ -6,6 +6,7 @@ export interface ConversationSummary {
     needs_attention: boolean;
     unread_count: number;
     preview: string;
+    controlled_by: string;
 }
 
 interface ConversationInboxProps {
@@ -40,6 +41,14 @@ export default function ConversationInbox({ conversations, onSelect }: Conversat
                                 </p>
                             </div>
                             <div className="flex flex-col items-end gap-1 shrink-0">
+                                {c.controlled_by === 'human' && (
+                                    <span
+                                        className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
+                                        style={{ background: 'rgba(251,191,36,0.12)', color: 'var(--accent)' }}
+                                    >
+                                        Human controlling
+                                    </span>
+                                )}
                                 {c.needs_attention && (
                                     <span
                                         className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
