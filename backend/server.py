@@ -745,7 +745,7 @@ async def return_control(conversation_id: str, _: None = Depends(auth.verify_tok
 
 @app.post("/admin/resume", status_code=202)
 async def upload_resume(file: UploadFile = File(...), _: None = Depends(auth.verify_token)):
-    if file.content_type != "application/pdf" or not file.filename.lower().endswith(".pdf"):
+    if file.content_type != "application/pdf" or not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="File must be a PDF")
 
     contents = await file.read()

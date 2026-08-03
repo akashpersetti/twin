@@ -1,6 +1,8 @@
+import asyncio
 import json
 import os
 import sys
+from io import BytesIO
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -301,6 +303,17 @@ def test_admin_resume_rejects_non_pdf():
 
     assert response.status_code == 400
     mock_trigger.assert_not_called()
+
+
+def test_admin_resume_without_filename_returns_400():
+    upload = server.UploadFile(
+        file=BytesIO(b"%PDF-1.4 fake"), filename=None, headers={"content-type": "application/pdf"}
+    )
+
+    with pytest.raises(server.HTTPException) as exc_info:
+        asyncio.run(server.upload_resume(upload))
+
+    assert exc_info.value.status_code == 400
 
 
 def test_admin_resume_uploads_and_triggers_workflow():
