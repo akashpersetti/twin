@@ -317,6 +317,7 @@ def test_admin_resume_uploads_and_triggers_workflow():
 
     assert response.status_code == 202
     body = response.json()
+    assert body == {"status": "submitted", "s3_key": "resume-uploads/1000.pdf"}
     assert body["s3_key"] == "resume-uploads/1000.pdf"
     mock_s3.put_object.assert_called_once_with(
         Bucket="test-bucket",
@@ -330,6 +331,21 @@ def test_admin_resume_uploads_and_triggers_workflow():
 def test_admin_resume_s3_failure_returns_502():
     mock_s3 = MagicMock()
     mock_s3.put_object.side_effect = ClientError({"Error": {"Code": "500", "Message": "boom"}}, "PutObject")
+    with patch.object(server, "s3_client", mock_s3, create=True), \
+         patch.object(server, "trigger_resume_workflow") as mock_trigger:
+        response = client.post(
+            "/admin/resume",
+            files={"file": ("resume.pdf", b"%PDF-1.4 fake", "application/pdf")},
+            headers=auth_headers(),
+        )
+
+    assert response.status_code == 502
+    mock_trigger.assert_not_called()
+
+
+def test_admin_resume_unexpected_s3_failure_returns_502():
+    mock_s3 = MagicMock()
+    mock_s3.put_object.side_effect = RuntimeError("network failure")
     with patch.object(server, "s3_client", mock_s3, create=True), \
          patch.object(server, "trigger_resume_workflow") as mock_trigger:
         response = client.post(

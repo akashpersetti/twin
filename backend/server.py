@@ -758,7 +758,7 @@ async def upload_resume(file: UploadFile = File(...), _: None = Depends(auth.ver
             Body=contents,
             ContentType="application/pdf",
         )
-    except ClientError as e:
+    except Exception as e:
         raise HTTPException(status_code=502, detail=f"S3 upload failed: {e}")
 
     try:
