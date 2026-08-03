@@ -8,6 +8,7 @@
   "linkedin": "https://linkedin.com/in/akash-hp",
   "github": "https://github.com/akashpersetti",
   "website": "https://akashpersetti.com",
+  "phone": "812-837-7651",
   "specialties": [
     "Software Engineering",
     "Full Stack Development",
@@ -35,7 +36,7 @@
         "Python",
         "LLMs (OpenAI SDK)",
         "MySQL",
-        "Claude Code"
+        "Pydantic"
       ]
     },
     {
@@ -44,15 +45,11 @@
       "location": "Leesburg, VA, United States",
       "type": "Remote",
       "period": "Jun 2025 - Aug 2025",
-      "summary": "Built a real-time computer-vision exercise-assessment system that cut repetition miscounting by roughly 30% and reached over 92% count accuracy across 3 exercise types (Kettlebell Front Raise, Seated Leg Extensions, Jack Knives) by adding calibration routines and motion-consistency checks in Python and MediaPipe, lowering estimated coach intervention time by about 40%. Held form-detection latency under 100ms per frame by engineering real-time pose-landmark extraction and joint-angle calculations, delivering sub-second corrective feedback so users could self-correct during live sessions without instructor oversight."
-    },
-    {
-      "title": "Software Development Intern",
-      "company": "Humaximus Inc.",
-      "location": "Dallas, TX, United States",
-      "type": "Remote/Hybrid",
-      "period": "Jul 2026 - Present",
-      "summary": "Contributing frontend, backend, API-integration, and workflow-debugging work to an early-stage healthcare coordination platform preparing its MVP for pilot partnerships; researching FHIR, HL7, and EHR integration requirements to guide implementation, working across GitHub and Jira."
+      "summary": "Built a real-time computer-vision exercise-assessment system that cut repetition miscounting by roughly 30% and reached over 92% count accuracy across 3 exercise types (Kettlebell Front Raise, Seated Leg Extensions, Jack Knives) by adding calibration routines and motion-consistency checks in Python and MediaPipe, lowering estimated coach intervention time by about 40%. Held form-detection latency under 100ms per frame by engineering real-time pose-landmark extraction and joint-angle calculations, delivering sub-second corrective feedback so users could self-correct during live sessions without instructor oversight.",
+      "stack": [
+        "Python",
+        "MediaPipe"
+      ]
     }
   ],
   "education": [
@@ -72,39 +69,103 @@
   "projects": [
     {
       "name": "RepoModernizer",
-      "description": "Built a 5-node LangGraph state machine (ingest, install deps, plan, migrate-file loop, finalize) that plans a file-by-file migration from a natural-language goal, rewrites each file with an LLM, and gates any diff above a risk threshold behind a human-in-the-loop interrupt() before it touches disk. Detects a cloned target repo\u2019s own dependency manifest (pip or npm) and installs it into an isolated per-task virtual environment, decoupled from the worker\u2019s own runtime, so the target\u2019s real test suite runs against its real dependencies \u2013 and fails fast before spending any LLM cost if install itself breaks. Computed diffs from known-good before/after file content rather than trusting LLM-authored diffs, added bounded retries with Bedrock primary/fallback failover on transient or provider errors, and enforced guardrails (forbidden paths, max changed lines, no deletions) plus a hard per-task cost cap. Deployed on API Gateway, Lambda (FastAPI via Mangum), SQS, and one-shot Fargate tasks with DynamoDB checkpointing and an EFS-mounted workspace so a fresh container resumes mid-migration after a crash; provisioned through Terraform and GitHub Actions OIDC, with 96 passing tests and no long-lived AWS credentials.",
-      "url": "repo-modernizer.akashpersetti.com"
+      "description": "Built a 5-node LangGraph state machine (ingest, install deps, plan, migrate-file loop, finalize) that plans a file-by-file migration from a natural-language goal, rewrites each file with an LLM, and gates any diff above a risk threshold behind a human-in-the-loop interrupt() before it touches disk. Detects a cloned target repo's own dependency manifest (pip or npm) and installs it into an isolated per-task virtual environment, decoupled from the worker's own runtime, so the target's real test suite runs against its real dependencies \u2013 and fails fast before spending any LLM cost if install itself breaks. Computed diffs from known-good before/after file content rather than trusting LLM-authored diffs, added bounded retries with Bedrock primary/fallback failover on transient or provider errors, and enforced guardrails (forbidden paths, max changed lines, no deletions) plus a hard per-task cost cap. Deployed on API Gateway, Lambda (FastAPI via Mangum), SQS, and one-shot Fargate tasks with DynamoDB checkpointing and an EFS-mounted workspace so a fresh container resumes mid-migration after a crash; provisioned through Terraform and GitHub Actions OIDC, with 96 passing tests and no long-lived AWS credentials.",
+      "url": "repo-modernizer.akashpersetti.com",
+      "stack": [
+        "LangGraph",
+        "FastAPI",
+        "Fargate",
+        "EFS",
+        "Lambda",
+        "API Gateway",
+        "SQS",
+        "DynamoDB",
+        "Terraform",
+        "GitHub Actions"
+      ]
     },
     {
       "name": "TerraformAgent",
-      "description": "Built a 6-node LangGraph pipeline (orchestrator, researcher, parallel domain subagents, aggregator, reviewer, evaluator) that turns a natural-language infrastructure request into validated Terraform, with a conditional edge that reruns only the domains a review flags for up to a capped number of targeted retries. Gated output on a real evaluator that writes the generated code to disk and runs terraform fmt and terraform validate against a provider cache baked into the Docker image, reaching full offline validation by copying the read-only cache into a writable path once per execution environment. Hardened the review step with a multi-LLM fan-out (reusing my mcp-second-opinion pattern) that queries OpenAI and Anthropic in parallel and blocks on any security veto.",
-      "url": "terraform-agent.akashpersetti.com"
+      "description": "Built a 6-node LangGraph pipeline (orchestrator, researcher, parallel domain subagents, aggregator, reviewer, evaluator) that turns a natural-language infrastructure request into validated Terraform, with a conditional edge that reruns only the domains a review flags for up to a capped number of targeted retries. Gated output on a real evaluator that writes the generated code to disk and runs terraform fmt and terraform validate against a provider cache baked into the Docker image, reaching full offline validation by copying the read-only cache into a writable path once per execution environment. Hardened the review step with a multi-LLM fan-out (reusing my mcp-second-opinion pattern) that queries OpenAI and Anthropic in parallel and blocks on any security veto, falling back to single-LLM review so a provider outage degrades quality instead of failing the run. Deployed the containerized service on Lambda and Step Functions with JWT authentication, DynamoDB state, SQS failure handling, and Secrets Manager; provisioned the stack through Terraform and GitHub Actions OIDC, with 94 passing tests and no long-lived AWS credentials.",
+      "url": "terraform-agent.akashpersetti.com",
+      "stack": [
+        "LangGraph",
+        "FastAPI",
+        "Lambda",
+        "Step Functions",
+        "DynamoDB",
+        "SQS",
+        "Secrets Manager",
+        "Terraform",
+        "GitHub Actions"
+      ]
     },
     {
       "name": "EvalBench",
-      "description": "Architected a pluggable-suite eval harness where every benchmark emits one shared MetricRecord contract persisted to a single JSON-column table, so adding a suite is a three-file change that never touches the runner, store, or dashboard core. Shipped 3 benchmark suites on that harness: structured-output reliability (schema-valid rate, retries-to-valid, retry-only cost accounting), latency/cost with pairwise judge scoring, and RAG with recall@k, nDCG@k, and faithfulness across swappable chunking strategies.",
-      "url": "evalbench.akashpersetti.com"
+      "description": "Architected a pluggable-suite eval harness where every benchmark emits one shared MetricRecord contract persisted to a single JSON-column table, so adding a suite is a three-file change that never touches the runner, store, or dashboard core. Shipped 3 benchmark suites on that harness: structured-output reliability (schema-valid rate, retries-to-valid, retry-only cost accounting), latency/cost with pairwise judge scoring, and RAG with recall@k, nDCG@k, and faithfulness across swappable chunking strategies. Ran 27 evaluation runs across 75 tasks and 7 model/config variants, surfacing an 8-point first-attempt schema-validity gap between providers on structured output and a p95 latency spread of 6.0s vs 9.4s; found that semantic chunking doubled RAG context precision (0.13 to 0.26) over fixed-window at comparable faithfulness. Hand-implemented statistically honest aggregation, attaching 95% Wilson intervals to proportions and binomial order-statistic intervals to p95 latency, with per-metric sample sizes on every leaderboard cell so no aggregate renders as a bare mean. Deployed serverless on AWS: dual Lambda (API plus async runner), API Gateway v2, CloudFront, DynamoDB run tracking, and SES magic-link auth; backed by 262 passing tests using injected LiteLLM callables and temporary SQLite databases, running the full suite with no provider calls or model cost.",
+      "url": "evalbench.akashpersetti.com",
+      "stack": [
+        "FastAPI",
+        "LiteLLM",
+        "Next.js",
+        "Lambda",
+        "API Gateway",
+        "CloudFront",
+        "DynamoDB",
+        "SES",
+        "Terraform"
+      ]
     },
     {
       "name": "Wingman",
-      "description": "Designed a worker-evaluator state machine in LangGraph where a structured-output evaluator checks worker responses against user-defined criteria and reinjects feedback for up to 5 retry turns, raising answer-validity rates before surfacing a result. Integrated 5 tool domains through LangChain ToolNode and bind tools: web search (Serper), Wikipedia, sandboxed Python REPL, sandboxed file I/O, and Pushover notifications.",
-      "url": "wingman.akashpersetti.com"
+      "description": "Designed a worker-evaluator state machine in LangGraph where a structured-output evaluator checks worker responses against user-defined criteria and reinjects feedback for up to 5 retry turns, raising answer-validity rates before surfacing a result. Made the agent serverless-safe by reconstructing LangGraph state from DynamoDB on every request instead of an in-memory checkpointer, eliminating cold-start state loss across Lambda invocations. Integrated 5 tool domains through LangChain ToolNode and bind tools: web search (Serper), Wikipedia, sandboxed Python REPL, sandboxed file I/O, and Pushover notifications, and shipped the full serverless stack (containerized FastAPI on ECR, Lambda, API Gateway v2, CloudFront) via the same OIDC pipeline.",
+      "url": "wingman.akashpersetti.com",
+      "stack": [
+        "LangGraph",
+        "LangChain",
+        "FastAPI",
+        "Lambda",
+        "DynamoDB",
+        "API Gateway",
+        "CloudFront",
+        "ECR"
+      ]
     },
     {
       "name": "Twin",
       "description": "Built a tool-calling personal-website agent on Bedrock Claude Sonnet 4.5 using Titan-v2 retrieval over a persona corpus assembled at Lambda cold-start, with a pre-approved FAQ tool and an escalate-to-human tool that SNS-notifies the owner for a live reply via a DynamoDB-backed admin inbox. Shipped a public evals dashboard scoring retrieval quality (recall@k, nDCG@k) on 35 labeled queries per push and LLM-judged faithfulness on live traffic via an S3-event-driven judge Lambda that adds zero latency to chat responses. Cut full-stack deployment to a single command across dev, test, and prod by chaining Docker build, Lambda upload, Terraform apply, Next.js export, S3 sync, and CloudFront invalidation through GitHub Actions and AWS OIDC.",
-      "url": "akashpersetti.com"
+      "url": "akashpersetti.com",
+      "stack": [
+        "FastAPI",
+        "Next.js",
+        "AWS Bedrock",
+        "Lambda",
+        "S3",
+        "DynamoDB",
+        "SNS",
+        "CloudFront",
+        "Terraform"
+      ]
     },
     {
       "name": "mcp-second-opinion",
       "description": "Built and published an MIT-licensed MCP server that lets any MCP-aware agent consult rival LLMs (OpenAI, Gemini, Anthropic, Grok) mid-conversation, exposing two tools: one to query a single model and one to fan out to all enabled providers in parallel and compare answers. Unified four provider APIs behind a single LiteLLM interface, returning per-call latency, token counts, and cost; gracefully disables providers with no API key instead of failing, and ships as a pip-installable CLI (71 downloads in its first month) registered through standard MCP client config.",
-      "url": "https://pypi.org/project/mcp-second-opinion"
+      "url": "https://pypi.org/project/mcp-second-opinion",
+      "stack": [
+        "Python",
+        "MCP",
+        "LiteLLM",
+        "OpenAI",
+        "Anthropic",
+        "Gemini",
+        "Grok"
+      ]
     }
   ],
   "certifications": [
     {
       "title": "Proficient AI Engineer",
-      "issuer": "Ed Donner",
+      "issuer": "Ed Donner / The AI Engineer track",
       "year": 2026,
       "credential": "credential"
     },
@@ -136,7 +197,7 @@
       "LLM evaluation and observability"
     ],
     "cloud_devops": [
-      "AWS (Lambda, Bedrock, API Gateway, DynamoDB, S3, CloudFront, ECR)",
+      "AWS (Lambda, Bedrock, API Gateway, DynamoDB, S3, CloudFront, ECR, Fargate, EFS, Step Functions, SQS, SNS, SES, Secrets Manager)",
       "Docker",
       "Terraform (IaC)",
       "GitHub Actions CI/CD (OIDC)",
@@ -147,7 +208,8 @@
       "embedding models",
       "Hugging Face",
       "scikit-learn",
-      "MediaPipe"
+      "MediaPipe",
+      "LiteLLM"
     ],
     "backend_frontend_databases": [
       "FastAPI (REST APIs, microservices)",

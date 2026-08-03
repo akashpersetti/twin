@@ -3,7 +3,7 @@ export const resume = {
     name: "Akash Hadagali Persetti",
     title: "Applied AI Engineer | M.S. Computer Science",
     location: "Bloomington, IN",
-    address: "421 W Hoosier Court Ave, Bloomington, IN - 47404",
+    address: "Bloomington, IN",
     email: "hadagalipersettiakash@gmail.com",
     linkedin: "linkedin.com/in/akash-hp",
     linkedinUrl: "https://linkedin.com/in/akash-hp",
@@ -19,10 +19,10 @@ export const resume = {
   },
 
   impact: [
-    { value: 60, unit: "%", label: "Manual effort reduced (Wingman)" },
+    { value: 40, unit: "%", label: "Coach intervention time reduced (ML Intern)" },
     { value: 30, unit: "%", label: "Miscounting errors cut (ML Intern)" },
     { value: 71, unit: "", label: "PyPI downloads in first month (mcp-second-opinion)", icon: "download" },
-    { value: 2, unit: "x", label: "RAG precision from a chunking strategy I found (EvalBench)" },
+    { value: 2, unit: "x", label: "RAG precision from semantic chunking (EvalBench)" },
   ],
 
   experience: [
@@ -34,7 +34,7 @@ export const resume = {
       period: "Jun 2026 – Present",
       project: "Adaptive AI Tutoring Product",
       bullets: [
-        "Building an adaptive AI tutoring product that assesses a learner’s existing knowledge of a target topic or certification and generates a customized, real-time training program covering only the gaps, using Python, LLMs (OpenAI SDK), and MySQL.",
+        "Building an adaptive AI tutoring product that assesses a learner's existing knowledge of a target topic or certification and generates a customized, real-time training program covering only the gaps, using Python, LLMs (OpenAI SDK), and MySQL.",
         "Developed the initial assessment and curriculum-generation services using structured outputs, Pydantic validation schemas, and automated test cases, keeping generated coursework grounded and aligned to certification requirements while enabling rapid prototype iteration toward a QA-approved milestone.",
       ],
     },
@@ -68,7 +68,7 @@ export const resume = {
       ],
       bullets: [
         "Built a 5-node LangGraph state machine (ingest, install deps, plan, migrate-file loop, finalize) that plans a file-by-file migration from a natural-language goal, rewrites each file with an LLM, and gates any diff above a risk threshold behind a human-in-the-loop interrupt() before it touches disk.",
-        "Detects a cloned target repo’s own dependency manifest (pip or npm) and installs it into an isolated per-task virtual environment, decoupled from the worker’s own runtime, so the target’s real test suite runs against its real dependencies – and fails fast before spending any LLM cost if install itself breaks.",
+        "Detects a cloned target repo's own dependency manifest (pip or npm) and installs it into an isolated per-task virtual environment, decoupled from the worker's own runtime, so the target's real test suite runs against its real dependencies – and fails fast before spending any LLM cost if install itself breaks.",
         "Computed diffs from known-good before/after file content rather than trusting LLM-authored diffs, added bounded retries with Bedrock primary/fallback failover on transient or provider errors, and enforced guardrails (forbidden paths, max changed lines, no deletions) plus a hard per-task cost cap.",
         "Deployed on API Gateway, Lambda (FastAPI via Mangum), SQS, and one-shot Fargate tasks with DynamoDB checkpointing and an EFS-mounted workspace so a fresh container resumes mid-migration after a crash; provisioned through Terraform and GitHub Actions OIDC, with 96 passing tests and no long-lived AWS credentials.",
       ],
