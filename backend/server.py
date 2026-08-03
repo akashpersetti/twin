@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from boto3.dynamodb.conditions import Key
@@ -12,6 +12,8 @@ import uuid
 from datetime import datetime
 import time
 import re
+import urllib.request
+import urllib.error
 from collections import deque
 import boto3
 from botocore.exceptions import ClientError
@@ -42,6 +44,44 @@ DYNAMODB_TABLE = os.getenv("DYNAMODB_TABLE", "")
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
 S3_BUCKET = os.getenv("S3_BUCKET", "")
 MEMORY_DIR = os.getenv("MEMORY_DIR", "../memory")
+SSM_GITHUB_PAT_PARAM = "/twin/dev/github-pat"
+GITHUB_REPO = os.getenv("GITHUB_REPO", "akashpersetti/twin")
+
+_github_pat: Optional[str] = None
+
+
+def get_github_pat() -> str:
+    global _github_pat
+    if _github_pat is None:
+        ssm_client = boto3.client(
+            "ssm",
+            region_name=os.getenv("AWS_DEFAULT_REGION", os.getenv("DEFAULT_AWS_REGION", "us-east-1")),
+        )
+        _github_pat = ssm_client.get_parameter(
+            Name=SSM_GITHUB_PAT_PARAM, WithDecryption=True
+        )["Parameter"]["Value"]
+    return _github_pat
+
+
+def trigger_resume_workflow(s3_key: str) -> None:
+    """Fire a repository_dispatch event to run the resume-update pipeline."""
+    pat = get_github_pat()
+    data = json.dumps({
+        "event_type": "resume-update",
+        "client_payload": {"s3_bucket": S3_BUCKET, "s3_key": s3_key},
+    }).encode()
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{GITHUB_REPO}/dispatches",
+        data=data,
+        headers={
+            "Authorization": f"Bearer {pat}",
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        method="POST",
+    )
+    urllib.request.urlopen(req, timeout=10)
 
 # Initialize DynamoDB resource if needed
 if USE_DYNAMODB:
@@ -701,6 +741,32 @@ async def return_control(conversation_id: str, _: None = Depends(auth.verify_tok
     )
     save_conversation(conversation_id, messages, "bot")
     return {"conversation_id": conversation_id, "messages": messages, "controlled_by": "bot"}
+
+
+@app.post("/admin/resume", status_code=202)
+async def upload_resume(file: UploadFile = File(...), _: None = Depends(auth.verify_token)):
+    if file.content_type != "application/pdf" or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="File must be a PDF")
+
+    contents = await file.read()
+    s3_key = f"resume-uploads/{int(time.time())}.pdf"
+
+    try:
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=s3_key,
+            Body=contents,
+            ContentType="application/pdf",
+        )
+    except ClientError as e:
+        raise HTTPException(status_code=502, detail=f"S3 upload failed: {e}")
+
+    try:
+        trigger_resume_workflow(s3_key)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"GitHub dispatch failed: {e}")
+
+    return {"status": "submitted", "s3_key": s3_key}
 
 
 @app.post("/chat", response_model=ChatResponse)

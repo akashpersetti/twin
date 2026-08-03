@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import pytest
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
+from botocore.exceptions import ClientError
 
 import server
 import auth as auth_module
@@ -277,3 +278,77 @@ def test_admin_endpoints_401_without_token():
     assert client.get("/admin/conversations").status_code == 401
     assert client.get("/admin/conversations/x").status_code == 401
     assert client.post("/admin/conversations/x/messages", json={"content": "hi"}).status_code == 401
+
+
+# ── Resume upload ────────────────────────────────────────────────────────────
+
+def test_admin_resume_requires_auth():
+    response = client.post(
+        "/admin/resume",
+        files={"file": ("resume.pdf", b"%PDF-1.4 fake", "application/pdf")},
+    )
+    assert response.status_code == 401
+
+
+def test_admin_resume_rejects_non_pdf():
+    with patch.object(server, "s3_client", MagicMock(), create=True), \
+         patch.object(server, "trigger_resume_workflow") as mock_trigger:
+        response = client.post(
+            "/admin/resume",
+            files={"file": ("resume.txt", b"not a pdf", "text/plain")},
+            headers=auth_headers(),
+        )
+
+    assert response.status_code == 400
+    mock_trigger.assert_not_called()
+
+
+def test_admin_resume_uploads_and_triggers_workflow():
+    mock_s3 = MagicMock()
+    with patch.object(server, "s3_client", mock_s3, create=True), \
+         patch.object(server, "S3_BUCKET", "test-bucket"), \
+         patch.object(server, "trigger_resume_workflow") as mock_trigger, \
+         patch("time.time", return_value=1_000):
+        response = client.post(
+            "/admin/resume",
+            files={"file": ("resume.pdf", b"%PDF-1.4 fake", "application/pdf")},
+            headers=auth_headers(),
+        )
+
+    assert response.status_code == 202
+    body = response.json()
+    assert body["s3_key"] == "resume-uploads/1000.pdf"
+    mock_s3.put_object.assert_called_once_with(
+        Bucket="test-bucket",
+        Key="resume-uploads/1000.pdf",
+        Body=b"%PDF-1.4 fake",
+        ContentType="application/pdf",
+    )
+    mock_trigger.assert_called_once_with("resume-uploads/1000.pdf")
+
+
+def test_admin_resume_s3_failure_returns_502():
+    mock_s3 = MagicMock()
+    mock_s3.put_object.side_effect = ClientError({"Error": {"Code": "500", "Message": "boom"}}, "PutObject")
+    with patch.object(server, "s3_client", mock_s3, create=True), \
+         patch.object(server, "trigger_resume_workflow") as mock_trigger:
+        response = client.post(
+            "/admin/resume",
+            files={"file": ("resume.pdf", b"%PDF-1.4 fake", "application/pdf")},
+            headers=auth_headers(),
+        )
+
+    assert response.status_code == 502
+    mock_trigger.assert_not_called()
+
+
+def test_admin_resume_dispatch_failure_returns_502():
+    with patch.object(server, "s3_client", MagicMock(), create=True), \
+         patch.object(server, "trigger_resume_workflow", side_effect=RuntimeError("dispatch failed")):
+        response = client.post(
+            "/admin/resume",
+            files={"file": ("resume.pdf", b"%PDF-1.4 fake", "application/pdf")},
+            headers=auth_headers(),
+        )
+
+    assert response.status_code == 502
