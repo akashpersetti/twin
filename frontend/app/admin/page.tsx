@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import AdminLogin from '@/components/admin/AdminLogin';
 import ConversationInbox, { ConversationSummary } from '@/components/admin/ConversationInbox';
 import ConversationThread, { AdminMessage } from '@/components/admin/ConversationThread';
+import ResumeUpload from '@/components/admin/ResumeUpload';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-type View = 'login' | 'inbox' | 'thread';
+type View = 'login' | 'inbox' | 'thread' | 'resume';
 
 export default function AdminPage() {
     const [adminToken, setAdminToken] = useState<string | null>(null);
@@ -160,7 +161,17 @@ export default function AdminPage() {
             <div className="max-w-2xl mx-auto">
                 {view === 'login' && <AdminLogin apiUrl={API_URL} onLoggedIn={handleLoggedIn} />}
                 {view === 'inbox' && (
-                    <ConversationInbox conversations={conversations} onSelect={openConversation} />
+                    <>
+                        <div className="flex justify-end mb-4">
+                            <button
+                                onClick={() => setView('resume')}
+                                className="text-sm text-[var(--text-secondary)] underline"
+                            >
+                                Update resume
+                            </button>
+                        </div>
+                        <ConversationInbox conversations={conversations} onSelect={openConversation} />
+                    </>
                 )}
                 {view === 'thread' && selectedId && (
                     <ConversationThread
@@ -170,6 +181,9 @@ export default function AdminPage() {
                         onSend={sendReply}
                         onReturnControl={returnControl}
                     />
+                )}
+                {view === 'resume' && (
+                    <ResumeUpload adminFetch={adminFetch} onBack={() => setView('inbox')} />
                 )}
             </div>
         </main>
