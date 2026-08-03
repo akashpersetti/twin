@@ -169,8 +169,8 @@ resource "aws_iam_role_policy" "lambda_ssm" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["ssm:GetParameter"]
+      Effect = "Allow"
+      Action = ["ssm:GetParameter"]
       Resource = [
         "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/twin/dev/blog-admin-token",
         "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/twin/dev/github-pat",
