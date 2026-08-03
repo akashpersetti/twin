@@ -10,6 +10,7 @@ Twin is Akash Hadagali Persetti's AI-assisted portfolio, conversation system, ev
 - An eval dashboard for synthetic snapshots and judged live conversations.
 - A blog CMS in the main frontend backed by a dedicated blog-admin API, plus an independent public blog application.
 - Retrieval-augmented answers using the top 5 matching profile-index chunks, Titan Embed Text v2 embeddings, and a configurable Claude Sonnet 4.5 answer model.
+- An authenticated resume-upload view in the admin UI that hands a PDF to a cloud pipeline (S3 upload, GitHub Actions dispatch, Bedrock-driven regeneration of resume/persona data, then a push to `main` that triggers the normal deploy) instead of requiring a local run of `scripts/update-resume.py`.
 
 ## Architecture
 
@@ -44,7 +45,7 @@ Terraform describes supporting API Gateway, DynamoDB, S3, CloudFront, IAM, SES, 
 | `evals/` | Synthetic retrieval/faithfulness suite, unit tests, and generated result snapshots. |
 | `terraform/` | AWS infrastructure and environment configuration. |
 | `scripts/` | Resume/data maintenance plus local deploy and destroy orchestration. |
-| `.github/workflows/` | Main deployment, blog deployment, and infrastructure destruction workflows. |
+| `.github/workflows/` | Main deployment, blog deployment, resume-update pipeline, and infrastructure destruction workflows. |
 
 There is no root package workspace. Run Python, npm, and Terraform commands from the directory that owns their configuration and lockfile.
 
@@ -113,6 +114,7 @@ The main API in `backend/server.py` groups routes by responsibility:
 - Non-streaming chat, SSE chat, and conversation-history routes.
 - Visitor registration and notification routes.
 - Magic-link-protected admin conversation listing, detail, and human-reply routes.
+- An authenticated admin resume-upload route (`POST /admin/resume`) that stores the uploaded PDF in the conversation-memory S3 bucket and fires a `repository_dispatch` event to trigger the resume-update GitHub Actions pipeline. Fire-and-forget: the response confirms submission, not completion.
 - Synthetic and live eval listing/detail routes backed by stored snapshots.
 
 The current main frontend uses non-streaming chat and conversation polling. The SSE endpoint remains a backend interface for clients that can support it, but it should not be described as the current browser data path.
@@ -131,7 +133,7 @@ After changing the retrieval corpus, regenerate its embedding index from `backen
 uv run python build_profile_index.py
 ```
 
-Index generation calls Bedrock Titan Embed Text v2, so it requires AWS credentials, the configured region, and model access. It replaces the tracked index; review that generated artifact before committing it. The broader resume updater at `scripts/update-resume.py` changes multiple source and generated files and has additional Bedrock and AWS requirements.
+Index generation calls Bedrock Titan Embed Text v2, so it requires AWS credentials, the configured region, and model access. It replaces the tracked index; review that generated artifact before committing it. The broader resume updater at `scripts/update-resume.py` changes multiple source and generated files and has additional Bedrock and AWS requirements — it calls Bedrock (via `backend/bedrock_client.py`) for every generation step, not only the embedding rebuild, so it no longer needs an OpenAI key. It can be run locally (`uv run scripts/update-resume.py <pdf>`) or triggered from the admin UI, which runs the same unmodified script inside `.github/workflows/resume-update.yml` and pushes the result to `main`.
 
 ## Verification
 
@@ -203,7 +205,7 @@ Destruction is similarly explicit:
 
 `.github/workflows/deploy.yml` deploys on pushes to `main` and supports manual environment selection. It invokes the local deployment script, obtains Terraform outputs, invalidates the main CloudFront distribution, synchronizes published blog Markdown, conditionally builds and deploys the public blog, and invalidates the blog distribution. It conditionally runs the live synthetic eval when backend or eval files changed, or when change detection cannot safely prove they did not.
 
-`.github/workflows/blog-deploy.yml` can rebuild the public blog independently after synchronizing published Markdown from S3. `.github/workflows/destroy.yml` orchestrates environment destruction.
+`.github/workflows/blog-deploy.yml` can rebuild the public blog independently after synchronizing published Markdown from S3. `.github/workflows/resume-update.yml` downloads an admin-uploaded PDF from S3 (`repository_dispatch`, or manual `workflow_dispatch` with `s3_bucket`/`s3_key` inputs), runs `scripts/update-resume.py`, and pushes the regenerated files to `main` using a dedicated `RESUME_PUSH_PAT` secret — deliberately not the default `GITHUB_TOKEN`, since pushes authenticated with it don't trigger other `on: push` workflows and `deploy.yml` would never fire. `.github/workflows/destroy.yml` orchestrates environment destruction.
 
 These workflows deploy directly; they do not add pre-deployment lint, unit-test, typecheck, or Terraform-validation gates. Their presence does not prove a recent run succeeded or that deployed resources, content, invalidations, synthetic evals, DNS, or certificates are current.
 
@@ -215,7 +217,7 @@ Important configuration surfaces include:
 |---|---|
 | Bedrock | `DEFAULT_AWS_REGION`, `BEDROCK_MODEL_ID`, `EMBED_MODEL_ID`, and `JUDGE_MODEL_ID`. Code defaults are Sonnet 4.5 for answers, Titan Embed Text v2 for retrieval embeddings, and Nova Lite for judging. Model access must be enabled in the target account and region. |
 | Conversation storage | `USE_DYNAMODB`, `DYNAMODB_TABLE`, `USE_S3`, `S3_BUCKET`, and `MEMORY_DIR`. Terraform configures DynamoDB as primary while retaining S3 as a fallback. |
-| Main API | `CORS_ORIGINS`, `EVALS_BUCKET`, `SNS_TOPIC_ARN`, and magic-link/SES settings used by the admin and notification flows. |
+| Main API | `CORS_ORIGINS`, `EVALS_BUCKET`, `SNS_TOPIC_ARN`, magic-link/SES settings used by the admin and notification flows, and `GITHUB_REPO` plus the `/twin/dev/github-pat` SSM parameter used to dispatch the resume-update workflow. Uploaded resume PDFs are stored under the `resume-uploads/` prefix of the same `S3_BUCKET` used for conversation memory. |
 | Main frontend | `NEXT_PUBLIC_API_URL` and optional `NEXT_PUBLIC_AVATAR_VERSION`. |
 | Blog admin | Blog content bucket, hard-coded SSM token/PAT paths, SES identities, magic-link URL, and repository-dispatch configuration. See `backend/blog_server.py` and `terraform/main.tf`. |
 | Public blog | Markdown synchronized from the blog-content bucket's `published/` prefix into **blog-frontend/content/** before building. |
@@ -226,7 +228,7 @@ Do not commit secrets to tfvars or environment files. Verify that SES identities
 
 Environment isolation requires special attention for admin and publishing authentication. These values are currently hard-coded rather than derived from the selected Terraform workspace or `environment` variable:
 
-- Both APIs read the admin token from `/twin/dev/blog-admin-token`; the blog API also reads the GitHub personal access token from `/twin/dev/github-pat`.
+- Both APIs read the admin token from `/twin/dev/blog-admin-token`; both APIs also read the same GitHub personal access token from `/twin/dev/github-pat` (the blog API to dispatch blog rebuilds, the main API to dispatch the resume-update workflow).
 - Both APIs accept only `ahadagal@alumni.iu.edu` as the owner email and send magic links from `akash.hp@icloud.com`.
 - Main-admin magic links target `https://akashpersetti.com/admin`, while blog-admin magic links target `https://akashpersetti.com/blog`.
 - Terraform grants every environment's Lambda roles access to those same `/twin/dev/...` SSM paths.
@@ -243,3 +245,4 @@ Consequently, `test` and `prod` deployments still share the dev-scoped parameter
 - Destroy can be blocked by retained objects in eval and blog buckets. Inspect and preserve data intentionally rather than assuming the script removes every object.
 - Admin authentication, visitor notification, publishing dispatch, custom domains, and HTTPS depend on external SES, SNS, SSM, GitHub, DNS, and certificate setup that cannot be inferred from source alone.
 - Tests and tracked eval snapshots describe only the revision and environment in which they were run. Record actual outcomes rather than assuming green suites or fresh scores.
+- Any workflow that pushes with a PAT other than the default `GITHUB_TOKEN` (e.g. `resume-update.yml`'s `RESUME_PUSH_PAT`) must set `persist-credentials: false` on its `actions/checkout` step. Checkout otherwise leaves a git-config credential override for github.com that silently wins over a later `git remote set-url` with the PAT, and the push fails with a permission error attributed to `github-actions[bot]` rather than a clear PAT-scope error.
