@@ -169,9 +169,12 @@ resource "aws_iam_role_policy" "lambda_ssm" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["ssm:GetParameter"]
-      Resource = "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/twin/dev/blog-admin-token"
+      Effect = "Allow"
+      Action = ["ssm:GetParameter"]
+      Resource = [
+        "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/twin/dev/blog-admin-token",
+        "arn:aws:ssm:*:${data.aws_caller_identity.current.account_id}:parameter/twin/dev/github-pat",
+      ]
     }]
   })
 }
@@ -325,6 +328,7 @@ resource "aws_lambda_function" "api" {
       SNS_TOPIC_ARN     = aws_sns_topic.visitor_notifications.arn
       EVALS_BUCKET      = aws_s3_bucket.evals.id
       MAGIC_TOKEN_TABLE = aws_dynamodb_table.magic_tokens.name
+      GITHUB_REPO       = var.blog_github_repo
     }
   }
 
@@ -453,6 +457,12 @@ resource "aws_apigatewayv2_route" "post_admin_conversation_message" {
 resource "aws_apigatewayv2_route" "post_admin_conversation_return_control" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "POST /admin/conversations/{conversation_id}/return-control"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
+}
+
+resource "aws_apigatewayv2_route" "post_admin_resume" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /admin/resume"
   target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 

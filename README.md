@@ -131,7 +131,7 @@ After changing the retrieval corpus, regenerate its embedding index from `backen
 uv run python build_profile_index.py
 ```
 
-Index generation calls Bedrock Titan Embed Text v2, so it requires AWS credentials, the configured region, and model access. It replaces the tracked index; review that generated artifact before committing it. The broader resume updater at `scripts/update-resume.py` changes multiple source and generated files and has additional OpenAI and AWS requirements.
+Index generation calls Bedrock Titan Embed Text v2, so it requires AWS credentials, the configured region, and model access. It replaces the tracked index; review that generated artifact before committing it. The broader resume updater at `scripts/update-resume.py` changes multiple source and generated files and has additional Bedrock and AWS requirements.
 
 ## Verification
 

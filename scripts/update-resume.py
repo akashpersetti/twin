@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["pypdf>=6.7.0", "openai-agents>=0.0.19", "boto3>=1.34"]
+# dependencies = ["pypdf>=6.7.0", "boto3>=1.34"]
 # ///
 
 """
@@ -24,14 +24,13 @@ import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
-from agents import Agent, OpenAIChatCompletionsModel, Runner
-from openai import AsyncOpenAI
 from pypdf import PdfReader
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(ROOT / "backend"))
 import retrieval  # noqa: E402
+from bedrock_client import bedrock_client, BEDROCK_MODEL_ID  # noqa: E402
 
 FRONTEND_PDF = ROOT / "frontend/public/resume.pdf"
 BACKEND_PDF = ROOT / "backend/data/resume.pdf"
@@ -54,7 +53,17 @@ TOP_LEVEL_KEYS = [
     "communityService",
 ]
 
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = BEDROCK_MODEL_ID
+
+
+def call_bedrock(instructions: str, user_message: str, model: str, max_tokens: int = 8000) -> str:
+    response = bedrock_client.converse(
+        modelId=model,
+        system=[{"text": instructions}],
+        messages=[{"role": "user", "content": [{"text": user_message}]}],
+        inferenceConfig={"maxTokens": max_tokens, "temperature": 0.2},
+    )
+    return response["output"]["message"]["content"][0]["text"].strip()
 
 
 def extract_pdf_text(pdf_path: Path) -> str:
@@ -99,7 +108,7 @@ def validate_ts(ts: str) -> tuple[bool, str]:
     return True, ts.strip()
 
 
-def update_resume_ts(pdf_text: str, current_ts: str, model: str, dry_run: bool, client: AsyncOpenAI) -> bool:
+def update_resume_ts(pdf_text: str, current_ts: str, model: str, dry_run: bool) -> bool:
     truncated = pdf_text[:12000] if len(pdf_text) > 12000 else pdf_text
 
     instructions = (
@@ -117,15 +126,8 @@ def update_resume_ts(pdf_text: str, current_ts: str, model: str, dry_run: bool, 
         "Generate an updated resume.ts using the PDF data, keeping the exact same TypeScript structure."
     )
 
-    agent = Agent(
-        name="ResumeUpdater",
-        instructions=instructions,
-        model=OpenAIChatCompletionsModel(model=model, openai_client=client),
-    )
-
     print("Calling model to generate resume.ts...")
-    result = Runner.run_sync(agent, user_message)
-    raw = result.final_output
+    raw = call_bedrock(instructions, user_message, model)
 
     ok, result_ts = validate_ts(raw)
     if not ok:
@@ -153,7 +155,7 @@ def update_resume_ts(pdf_text: str, current_ts: str, model: str, dry_run: bool, 
     return True
 
 
-def update_facts_json(pdf_text: str, current_facts: str, model: str, dry_run: bool, client: AsyncOpenAI) -> bool:
+def update_facts_json(pdf_text: str, current_facts: str, model: str, dry_run: bool) -> bool:
     truncated = pdf_text[:12000] if len(pdf_text) > 12000 else pdf_text
 
     instructions = (
@@ -169,15 +171,8 @@ def update_facts_json(pdf_text: str, current_facts: str, model: str, dry_run: bo
         "Generate updated facts.json using the PDF data, keeping all existing keys."
     )
 
-    agent = Agent(
-        name="FactsUpdater",
-        instructions=instructions,
-        model=OpenAIChatCompletionsModel(model=model, openai_client=client),
-    )
-
     print("Calling model to generate facts.json...")
-    result = Runner.run_sync(agent, user_message)
-    raw = result.final_output.strip()
+    raw = call_bedrock(instructions, user_message, model)
 
     # Strip markdown fences if present
     if raw.startswith("```"):
@@ -212,7 +207,7 @@ def update_facts_json(pdf_text: str, current_facts: str, model: str, dry_run: bo
     return True
 
 
-def update_summary_txt(pdf_text: str, current_summary: str, model: str, dry_run: bool, client: AsyncOpenAI) -> bool:
+def update_summary_txt(pdf_text: str, current_summary: str, model: str, dry_run: bool) -> bool:
     truncated = pdf_text[:12000] if len(pdf_text) > 12000 else pdf_text
 
     instructions = (
@@ -229,15 +224,8 @@ def update_summary_txt(pdf_text: str, current_summary: str, model: str, dry_run:
         "Generate an updated summary.txt reflecting the new resume content."
     )
 
-    agent = Agent(
-        name="SummaryUpdater",
-        instructions=instructions,
-        model=OpenAIChatCompletionsModel(model=model, openai_client=client),
-    )
-
     print("Calling model to generate summary.txt...")
-    result = Runner.run_sync(agent, user_message)
-    raw = result.final_output.strip()
+    raw = call_bedrock(instructions, user_message, model)
 
     if not raw:
         print("\nsummary.txt validation failed: empty output", file=sys.stderr)
@@ -260,7 +248,7 @@ def update_summary_txt(pdf_text: str, current_summary: str, model: str, dry_run:
     return True
 
 
-def update_profile_txt(pdf_text: str, current_profile: str, model: str, dry_run: bool, client: AsyncOpenAI) -> bool:
+def update_profile_txt(pdf_text: str, current_profile: str, model: str, dry_run: bool) -> bool:
     truncated = pdf_text[:12000] if len(pdf_text) > 12000 else pdf_text
 
     instructions = (
@@ -281,15 +269,8 @@ def update_profile_txt(pdf_text: str, current_profile: str, model: str, dry_run:
         "Generate the updated profile document, keeping the same '# Title' / '## Section' structure."
     )
 
-    agent = Agent(
-        name="ProfileUpdater",
-        instructions=instructions,
-        model=OpenAIChatCompletionsModel(model=model, openai_client=client),
-    )
-
     print("Calling model to generate profile document...")
-    result = Runner.run_sync(agent, user_message)
-    raw = result.final_output.strip()
+    raw = call_bedrock(instructions, user_message, model)
 
     if raw.startswith("```"):
         lines = raw.splitlines()
@@ -359,29 +340,21 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Update resume pipeline from a PDF.")
     parser.add_argument("pdf", type=Path, help="Path to the new resume PDF")
     parser.add_argument("--dry-run", action="store_true", help="Generate but don't write files")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"OpenAI model (default: {DEFAULT_MODEL})")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Bedrock model ID (default: {DEFAULT_MODEL})")
     args = parser.parse_args()
 
-    # 1. Validate API key
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if not api_key:
-        print("Error: OPENAI_API_KEY environment variable is not set.", file=sys.stderr)
-        sys.exit(1)
-
-    if not args.dry_run and not (
+    # 1. Validate AWS credentials — every generation step now calls Bedrock, not just the embedding rebuild
+    if not (
         os.environ.get("AWS_ACCESS_KEY_ID")
         or os.environ.get("AWS_PROFILE")
         or (Path.home() / ".aws/credentials").exists()
     ):
         print(
             "Error: no AWS credentials found (env vars or ~/.aws/credentials). "
-            "Needed to rebuild profile_index.json via Bedrock.",
+            "Needed for Bedrock model calls.",
             file=sys.stderr,
         )
         sys.exit(1)
-
-    # 2. Configure OpenAI client
-    openai_client = AsyncOpenAI(api_key=api_key)
 
     # 3. Validate PDF path
     pdf_path: Path = args.pdf.resolve()
@@ -420,25 +393,25 @@ def main() -> None:
 
     # 6. Update resume.ts
     current_ts = RESUME_TS.read_text(encoding="utf-8")
-    ts_ok = update_resume_ts(pdf_text, current_ts, args.model, args.dry_run, openai_client)
+    ts_ok = update_resume_ts(pdf_text, current_ts, args.model, args.dry_run)
     if not ts_ok:
         sys.exit(1)
 
     # 7. Update facts.json
     current_facts = FACTS_JSON.read_text(encoding="utf-8")
-    facts_ok = update_facts_json(pdf_text, current_facts, args.model, args.dry_run, openai_client)
+    facts_ok = update_facts_json(pdf_text, current_facts, args.model, args.dry_run)
     if not facts_ok:
         sys.exit(1)
 
     # 8. Update summary.txt
     current_summary = SUMMARY_TXT.read_text(encoding="utf-8")
-    summary_ok = update_summary_txt(pdf_text, current_summary, args.model, args.dry_run, openai_client)
+    summary_ok = update_summary_txt(pdf_text, current_summary, args.model, args.dry_run)
     if not summary_ok:
         sys.exit(1)
 
     # 9. Update RAG profile document
     current_profile = PROFILE_TXT.read_text(encoding="utf-8")
-    profile_ok = update_profile_txt(pdf_text, current_profile, args.model, args.dry_run, openai_client)
+    profile_ok = update_profile_txt(pdf_text, current_profile, args.model, args.dry_run)
     if not profile_ok:
         sys.exit(1)
 
