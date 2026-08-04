@@ -23,7 +23,7 @@ export default function SectionHeader({ eyebrow, title, description, note }: Sec
           )}
         </div>
         {note && (
-          <p className="max-w-xs text-sm sm:text-right" style={{ color: '#71717a' }}>
+          <p className="max-w-xs text-sm sm:text-right" style={{ color: 'var(--text-tertiary)' }}>
             {note}
           </p>
         )}
