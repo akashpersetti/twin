@@ -41,7 +41,7 @@ export default function SnapshotDrilldown({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="glass bg-[var(--bg-card)] max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="glass bg-[var(--surface-2)] max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="eyebrow">Snapshot detail</h3>
           <button onClick={onClose} className="text-sm underline">Close</button>
