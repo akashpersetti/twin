@@ -43,7 +43,7 @@ export default function Education() {
                   <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                     <div className="flex items-start gap-3">
                       <div
-                        className="p-2 rounded-lg mt-0.5"
+                        className="p-2 mt-0.5"
                         style={{ background: 'var(--accent-wash)' }}
                       >
                         <GraduationCap size={20} color="var(--accent)" />
@@ -66,7 +66,7 @@ export default function Education() {
 
                     {/* GPA badge */}
                     <span
-                      className="mono px-3 py-1.5 rounded-lg text-sm font-bold tabular-nums"
+                       className="mono px-3 py-1.5 text-sm font-bold tabular-nums"
                       style={{
                         background: 'var(--accent-wash)',
                         color: 'var(--accent-hover)',
@@ -85,8 +85,7 @@ export default function Education() {
                       {edu.coursework.map(course => (
                         <span
                           key={course}
-                          className="text-xs px-2.5 py-1 rounded-full"
-                          style={{ background: 'var(--bg-base)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                         className="tag"
                         >
                           {course}
                         </span>

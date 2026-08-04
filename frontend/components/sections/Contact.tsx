@@ -80,9 +80,9 @@ export default function Contact() {
               <input type="hidden" name="_subject" value="Portfolio contact" />
               <input type="text" name="_honey" className="hidden" tabIndex={-1} autoComplete="off" />
 
-              <div className="border border-white/[0.08] rounded-2xl overflow-hidden divide-y divide-white/[0.08]">
-                <div className="flex items-center gap-4 px-5 py-4 focus-within:bg-white/[0.02] transition-colors">
-                  <label htmlFor="contact-email" className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] w-16" style={{ color: '#52525b' }}>
+              <div className="border overflow-hidden">
+                <div className="flex items-center gap-4 px-5 py-4 focus-within:bg-[var(--surface-1)] transition-colors">
+                  <label htmlFor="contact-email" className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] w-16" style={{ color: 'var(--text-quaternary)' }}>
                     From
                   </label>
                   <input
@@ -91,11 +91,11 @@ export default function Contact() {
                     name="email"
                     required
                     placeholder="your@email.com"
-                    className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-700"
+                    className="flex-1 bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-faint)]"
                   />
                 </div>
-                <div className="flex items-start gap-4 px-5 py-4 focus-within:bg-white/[0.02] transition-colors">
-                  <label htmlFor="contact-message" className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] w-16 pt-0.5" style={{ color: '#52525b' }}>
+                <div className="flex items-start gap-4 px-5 py-4 border-t focus-within:bg-[var(--surface-1)] transition-colors" style={{ borderTopColor: 'var(--border)' }}>
+                  <label htmlFor="contact-message" className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] w-16 pt-0.5" style={{ color: 'var(--text-quaternary)' }}>
                     Message
                   </label>
                   <textarea
@@ -104,14 +104,14 @@ export default function Contact() {
                     required
                     rows={6}
                     placeholder="Tell me what you're building or just say hi…"
-                    className="flex-1 resize-none bg-transparent text-sm text-white outline-none leading-relaxed placeholder:text-zinc-700"
+                    className="flex-1 resize-none bg-transparent text-sm text-[var(--text-primary)] outline-none leading-relaxed placeholder:text-[var(--text-faint)]"
                   />
                 </div>
-                <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.015]">
+                <div className="flex items-center justify-between px-5 py-3.5 border-t bg-[var(--surface-1)]" style={{ borderTopColor: 'var(--border)' }}>
                   <span
                     className="text-[11px] tabular-nums"
                     style={{
-                      color: status === 'sent' ? 'rgba(74,222,128,0.9)' : status === 'error' ? 'rgba(248,113,113,0.9)' : '#71717a',
+                      color: status === 'sent' ? 'rgba(74,222,128,0.9)' : status === 'error' ? 'rgba(248,113,113,0.9)' : 'var(--text-tertiary)',
                     }}
                   >
                     {status === 'sent' ? 'Message delivered' : status === 'error' ? 'Send failed, try again' : status === 'sending' ? 'Sending…' : 'Reply within 1 hour'}
@@ -119,7 +119,8 @@ export default function Contact() {
                   <button
                     type="submit"
                     disabled={status === 'sending'}
-                    className="group inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2 text-xs font-semibold text-white transition-all hover:bg-white/10 hover:border-white/25 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="group inline-flex items-center gap-2 border px-5 py-2 text-xs font-semibold transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ borderColor: 'var(--border)', background: 'var(--surface-2)', color: 'var(--text-primary)' }}
                   >
                     {status === 'sending' ? 'Sending…' : status === 'sent' ? 'Send another' : 'Send message'}
                     <Send className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -139,20 +140,21 @@ export default function Contact() {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center justify-between border-b border-white/[0.06] pb-4 transition-colors hover:border-white/20"
+                     className="group flex items-center justify-between pb-4 border-b transition-colors"
+                     style={{ borderBottomColor: 'var(--border)' }}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className="w-4 h-4 transition-colors group-hover:text-white" style={{ color: '#52525b' }} />
+                       <Icon className="w-4 h-4 transition-colors group-hover:text-[var(--text-primary)]" style={{ color: 'var(--text-quaternary)' }} />
                       <div>
-                        <div className="text-sm font-medium transition-colors group-hover:text-white" style={{ color: '#d4d4d8' }}>{label}</div>
-                        <div className="text-[10px]" style={{ color: '#52525b' }}>{sub}</div>
+                         <div className="link-underline text-sm font-medium transition-colors group-hover:text-[var(--text-primary)]" style={{ color: 'var(--text-muted-strong)' }}>{label}</div>
+                         <div className="text-[10px]" style={{ color: 'var(--text-quaternary)' }}>{sub}</div>
                       </div>
                     </div>
-                    <MoveUpRight className="w-3.5 h-3.5 transition-all group-hover:text-white group-hover:-translate-y-0.5 group-hover:translate-x-0.5" style={{ color: '#3f3f46' }} />
+                     <MoveUpRight className="w-3.5 h-3.5 transition-all group-hover:text-[var(--text-primary)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" style={{ color: 'var(--text-faint)' }} />
                   </a>
                 ))}
               </div>
-              <p className="text-xs" style={{ color: '#3f3f46' }}>
+               <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
                 © {new Date().getFullYear()} {resume.basics.name}
               </p>
             </div>

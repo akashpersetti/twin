@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
-import { Github, ExternalLink } from 'lucide-react';
+import { Github } from 'lucide-react';
+import IconLinkButton from '@/components/ui/IconLinkButton';
 
 function ProjectLinks({ project, active }: { project: typeof resume.projects[number]; active: boolean }) {
   const githubUrl = 'githubUrl' in project ? project.githubUrl : undefined;
@@ -15,34 +16,10 @@ function ProjectLinks({ project, active }: { project: typeof resume.projects[num
   return (
     <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
       {githubUrl && (
-        <a
-          href={githubUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`${project.title} on GitHub`}
-          className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-white/10"
-          style={{
-            border: '1px solid var(--border)',
-            color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-          }}
-        >
-          <Github size={13} />
-        </a>
+        <IconLinkButton href={githubUrl} label={`${project.title} on GitHub`} />
       )}
       {liveUrl && (
-        <a
-          href={liveUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`${project.title} live link`}
-          className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors hover:bg-white/10"
-          style={{
-            border: '1px solid var(--border)',
-            color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-          }}
-        >
-          <ExternalLink size={13} />
-        </a>
+        <IconLinkButton href={liveUrl} label={`${project.title} live link`} />
       )}
     </div>
   );
@@ -51,12 +28,7 @@ function ProjectLinks({ project, active }: { project: typeof resume.projects[num
 function TechPill({ label }: { label: string }) {
   return (
     <span
-      className="mono text-[11px] px-2.5 py-1 rounded-md font-medium"
-      style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid var(--border)',
-        color: '#d4d4d8',
-      }}
+      className="tag font-medium"
     >
       {label}
     </span>
@@ -76,7 +48,7 @@ export default function Projects() {
         />
 
         <SectionReveal>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ borderTop: '1px solid var(--border)' }}>
             {resume.projects.map((project, i) => {
               const on = i === active;
               return (
@@ -84,7 +56,7 @@ export default function Projects() {
                   key={project.title}
                   onClick={() => setActive(on ? -1 : i)}
                   className={`group relative cursor-pointer transition-all ${on ? 'py-7' : 'py-5'}`}
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                   style={{ borderBottom: '1px solid var(--border)' }}
                 >
                   {/* Active accent bar */}
                   <span
@@ -96,7 +68,7 @@ export default function Projects() {
                   <div className="flex items-center gap-4 sm:gap-6 pl-4">
                     <span
                       className="mono w-8 text-[11px] tabular-nums shrink-0 transition-colors"
-                      style={{ color: on ? 'var(--accent)' : '#3f3f46' }}
+                       style={{ color: on ? 'var(--accent)' : 'var(--text-faint)' }}
                     >
                       {String(i + 1).padStart(2, '0')}
                     </span>
@@ -164,11 +136,11 @@ export default function Projects() {
             href="https://github.com/akashpersetti"
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium transition-colors hover:bg-white/10"
-            style={{
-              border: '1px solid rgba(255,255,255,0.15)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#d4d4d8',
+             className="group inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium transition-colors hover:opacity-90"
+             style={{
+               border: '1px solid var(--border)',
+               background: 'var(--surface-2)',
+               color: 'var(--text-muted-strong)',
             }}
           >
             <Github size={16} />

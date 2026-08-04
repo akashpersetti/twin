@@ -27,7 +27,7 @@ export default function TwinPanel() {
         {isMaximized && (
           <motion.div
             className="fixed inset-0 z-50"
-            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'var(--overlay-scrim)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -44,17 +44,18 @@ export default function TwinPanel() {
         transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
         className={
           isMaximized
-            ? 'fixed inset-4 md:inset-x-[10%] md:inset-y-[5%] z-[60] flex min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
-            : 'relative flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl'
+            ? 'fixed inset-4 md:inset-x-[10%] md:inset-y-[5%] z-[60] flex min-h-0 flex-col overflow-hidden border'
+            : 'relative flex h-full min-h-0 flex-col overflow-hidden border'
         }
+        style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}
       >
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/avatar.png" alt="" className="h-9 w-9 rounded-full object-cover ring-1 ring-white/15" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white leading-tight">Akash&apos;s twin</p>
-            <p className="text-[11px]" style={{ color: '#71717a' }}>RAG-backed, judged live</p>
+          <img src="/avatar.png" alt="" className="h-9 w-9 rounded-full object-cover border" style={{ borderColor: 'var(--border-strong)' }} />
+           <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium leading-tight" style={{ color: 'var(--text-primary)' }}>Akash&apos;s twin</p>
+            <p className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>RAG-backed, judged live</p>
           </div>
           <span className="relative flex h-2 w-2 mr-1">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -63,16 +64,16 @@ export default function TwinPanel() {
           <button
             onClick={() => twinRef.current?.clear()}
             aria-label="Reset chat"
-            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10"
-            style={{ color: '#a1a1aa' }}
+             className="flex h-8 w-8 items-center justify-center transition-colors hover:bg-[var(--surface-3)]"
+             style={{ color: 'var(--text-secondary)' }}
           >
             <RotateCcw size={16} />
           </button>
           <button
             onClick={() => setIsMaximized((v) => !v)}
             aria-label={isMaximized ? 'Minimize chat' : 'Maximize chat'}
-            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10"
-            style={{ color: '#a1a1aa' }}
+             className="flex h-8 w-8 items-center justify-center transition-colors hover:bg-[var(--surface-3)]"
+             style={{ color: 'var(--text-secondary)' }}
           >
             {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>

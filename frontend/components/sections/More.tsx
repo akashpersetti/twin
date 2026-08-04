@@ -42,8 +42,8 @@ export default function More() {
                   Faithfulness scores and eval snapshots from this site's own AI twin, tracked live in production.
                 </p>
                 <span
-                  className="mono text-xs px-2 py-1 rounded-full inline-flex items-center gap-1"
-                  style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
+                  className="tag"
+                  style={{ color: 'var(--accent-hover)' }}
                 >
                   <Sparkles size={11} /> for AI engineers &amp; devs
                 </span>

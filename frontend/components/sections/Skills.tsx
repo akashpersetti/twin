@@ -36,7 +36,7 @@ export default function Skills() {
         <SectionReveal>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
             {/* Left rail */}
-            <ul className="lg:col-span-5 border-y border-white/[0.06] divide-y divide-white/[0.06]">
+            <ul className="lg:col-span-5 border-y divide-y" style={{ borderColor: 'var(--border)' }}>
               {SKILL_META.map(({ key, title, icon: Icon }, i) => {
                 const on = i === active;
                 return (
@@ -45,16 +45,17 @@ export default function Skills() {
                       type="button"
                       onClick={() => setActive(i)}
                       onMouseEnter={() => setActive(i)}
-                      className={`w-full flex items-center gap-4 py-4 text-left transition-colors ${on ? 'text-white' : 'hover:text-zinc-300'}`}
-                      style={on ? {} : { color: '#71717a' }}
+                       className="w-full flex items-center gap-4 py-4 text-left transition-colors hover:text-[var(--text-primary)]"
+                       style={{ color: on ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
                     >
-                      <span className="mono text-[11px] tabular-nums w-7 transition-colors" style={{ color: on ? 'var(--accent)' : '#3f3f46' }}>
+                       <span className="mono text-[11px] tabular-nums w-7 transition-colors" style={{ color: on ? 'var(--accent)' : 'var(--text-faint)' }}>
                         {String(i + 1).padStart(2, '0')}
                       </span>
                       <Icon className="h-4 w-4 shrink-0" />
                       <span className="flex-1 text-sm font-medium tracking-tight">{title}</span>
                       <ChevronRight
-                        className={`h-3.5 w-3.5 transition-all ${on ? 'opacity-100 translate-x-0 text-white' : 'opacity-0 -translate-x-2'}`}
+                         className={`h-3.5 w-3.5 transition-all ${on ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'}`}
+                         style={{ color: 'var(--text-primary)' }}
                       />
                     </button>
                   </li>
@@ -64,27 +65,25 @@ export default function Skills() {
 
             {/* Right detail pane */}
             <div className="lg:col-span-7 lg:sticky lg:top-24 lg:self-start">
-              <div key={active} className="skill-detail relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8">
-                <div className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full blur-3xl" style={{ background: 'rgba(251,191,36,0.04)' }} />
+              <div key={active} className="skill-detail relative overflow-hidden border p-8" style={{ borderColor: 'var(--border)', background: 'var(--surface-1)' }}>
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.05] ring-1 ring-white/10">
-                      <ActiveIcon className="h-5 w-5 text-white" />
+                    <div className="flex h-11 w-11 items-center justify-center border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
+                       <ActiveIcon className="h-5 w-5" style={{ color: 'var(--text-primary)' }} />
                     </div>
-                    <span className="mono text-[10px] uppercase tracking-[0.2em]" style={{ color: '#52525b' }}>
+                    <span className="mono text-[10px] uppercase tracking-[0.2em]" style={{ color: 'var(--text-quaternary)' }}>
                       {String(active + 1).padStart(2, '0')} / {String(SKILL_META.length).padStart(2, '0')}
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-medium tracking-tight text-white mb-3">{cur.title}</h3>
-                  <p className="text-sm leading-relaxed mb-7" style={{ color: '#a1a1aa' }}>{cur.blurb}</p>
+                   <h3 className="text-2xl font-medium tracking-tight mb-3" style={{ color: 'var(--text-primary)' }}>{cur.title}</h3>
+                   <p className="text-sm leading-relaxed mb-7" style={{ color: 'var(--text-secondary)' }}>{cur.blurb}</p>
 
                   <div className="flex flex-wrap gap-2">
                     {tags.map(t => (
                       <span
                         key={t}
-                        className="mono inline-flex items-center rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] font-medium"
-                        style={{ color: '#d4d4d8' }}
+                        className="tag font-medium"
                       >
                         {t}
                       </span>

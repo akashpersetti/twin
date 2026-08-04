@@ -53,11 +53,11 @@ export default function Loader({ onComplete }: LoaderProps) {
 
       {/* Progress bar */}
       <div
-        className="w-48 h-0.5 rounded-full overflow-hidden"
+        className="w-48 h-0.5 overflow-hidden"
         style={{ background: 'var(--border)' }}
       >
         <motion.div
-          className="h-full rounded-full"
+          className="h-full"
           style={{ background: 'linear-gradient(90deg, var(--accent), var(--accent-soft))' }}
           initial={{ width: '0%' }}
           animate={{ width: '100%' }}

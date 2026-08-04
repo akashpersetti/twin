@@ -29,7 +29,7 @@ export default function Certifications() {
                       <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{cert.details}</p>
                     </div>
                     <span
-                      className="mono text-xs px-2 py-1 rounded-full flex-shrink-0"
+                       className="tag flex-shrink-0"
                       style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}
                     >
                       {cert.period}
@@ -39,8 +39,7 @@ export default function Certifications() {
                     {cert.topics.map(t => (
                       <span
                         key={t}
-                        className="text-xs px-2 py-0.5 rounded-full"
-                        style={{ background: 'var(--bg-alt)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                         className="tag"
                       >
                         {t}
                       </span>
