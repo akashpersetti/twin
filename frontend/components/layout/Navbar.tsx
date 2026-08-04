@@ -65,7 +65,7 @@ export default function Navbar() {
       <motion.header
         className="fixed top-0 left-0 right-0 z-40 transition-all duration-300"
         style={{
-          background: scrolled ? 'rgba(9,9,11,0.8)' : 'transparent',
+          background: scrolled ? 'var(--header-scrolled-bg)' : 'transparent',
           backdropFilter: scrolled ? 'blur(12px) saturate(180%)' : 'none',
           borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
         }}
@@ -82,7 +82,7 @@ export default function Navbar() {
           >
             <span
               className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold"
-              style={{ background: 'var(--accent)', color: '#09090b' }}
+              style={{ background: 'var(--accent)', color: 'var(--icon-on-accent)' }}
             >
               A
             </span>
@@ -92,10 +92,10 @@ export default function Navbar() {
           {/* Center: location + clock */}
           <div className="hidden md:flex items-center gap-4">
             <div className="flex flex-col items-center text-center">
-              <span className="mono text-[11px] tracking-wide" style={{ color: '#a1a1aa' }}>
+              <span className="mono text-[11px] tracking-wide" style={{ color: 'var(--text-secondary)' }}>
                 {resume.basics.location}
               </span>
-              <span className="mono text-[10px] tabular-nums" style={{ color: '#52525b' }}>
+              <span className="mono text-[10px] tabular-nums" style={{ color: 'var(--text-quaternary)' }}>
                 {time ?? ' '}
               </span>
             </div>
@@ -111,8 +111,8 @@ export default function Navbar() {
               whileTap={{ scale: 0.95 }}
               aria-label="Open menu"
             >
-              <span className="block h-0.5 w-full" style={{ background: '#fafafa' }} />
-              <span className="block h-0.5 w-full" style={{ background: '#fafafa' }} />
+              <span className="block h-0.5 w-full" style={{ background: 'var(--text-primary)' }} />
+              <span className="block h-0.5 w-full" style={{ background: 'var(--text-primary)' }} />
             </motion.button>
           </div>
 
@@ -138,7 +138,7 @@ export default function Navbar() {
         {menuOpen && (
           <motion.div
             className="fixed inset-0 z-50 overflow-hidden"
-            style={{ background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(20px)' }}
+            style={{ background: 'var(--header-overlay-bg)', backdropFilter: 'blur(20px)' }}
             initial={{ y: '-100%' }}
             animate={{ y: 0 }}
             exit={{ y: '-100%' }}
@@ -154,15 +154,15 @@ export default function Navbar() {
               <span className="flex items-center gap-2 font-bold text-lg tracking-tight text-white">
                 <span
                   className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold"
-                  style={{ background: 'var(--accent)', color: '#09090b' }}
+                  style={{ background: 'var(--accent)', color: 'var(--icon-on-accent)' }}
                 >
                   A
                 </span>
                 Akash<span style={{ color: 'var(--accent)' }}>.</span>
               </span>
               <div className="hidden md:flex flex-col items-center text-center">
-                <span className="mono text-[11px]" style={{ color: '#a1a1aa' }}>{resume.basics.location}</span>
-                <span className="mono text-[10px] tabular-nums" style={{ color: '#52525b' }}>{time ?? ' '}</span>
+                <span className="mono text-[11px]" style={{ color: 'var(--text-secondary)' }}>{resume.basics.location}</span>
+                <span className="mono text-[10px] tabular-nums" style={{ color: 'var(--text-quaternary)' }}>{time ?? ' '}</span>
               </div>
               <motion.button
                 onClick={() => setMenuOpen(false)}
@@ -173,14 +173,14 @@ export default function Navbar() {
               >
                 <motion.span
                   className="absolute left-0 top-1/2 block h-0.5 w-full"
-                  style={{ background: '#fafafa' }}
+                  style={{ background: 'var(--text-primary)' }}
                   initial={{ rotate: 0 }}
                   animate={{ rotate: 45 }}
                   transition={{ duration: 0.3 }}
                 />
                 <motion.span
                   className="absolute left-0 top-1/2 block h-0.5 w-full"
-                  style={{ background: '#fafafa' }}
+                  style={{ background: 'var(--text-primary)' }}
                   initial={{ rotate: 0 }}
                   animate={{ rotate: -45 }}
                   transition={{ duration: 0.3 }}
@@ -203,9 +203,9 @@ export default function Navbar() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5, delay: 0.15 + i * 0.07, ease: 'easeOut' }}
                       className="group flex items-center gap-4 text-left font-display text-3xl sm:text-4xl md:text-5xl transition-all duration-300 hover:translate-x-3"
-                      style={{ color: on ? '#fafafa' : '#52525b' }}
+                      style={{ color: on ? 'var(--text-primary)' : 'var(--text-quaternary)' }}
                     >
-                      <span className="mono text-[11px] w-7 shrink-0" style={{ color: on ? 'var(--accent)' : '#3f3f46' }}>
+                      <span className="mono text-[11px] w-7 shrink-0" style={{ color: on ? 'var(--accent)' : 'var(--text-faint)' }}>
                         {String(i + 1).padStart(2, '0')}
                       </span>
                       <span className="transition-colors duration-300 group-hover:text-white">{item.label}</span>
@@ -230,10 +230,10 @@ export default function Navbar() {
                       transition={{ duration: 0.25 }}
                       className="text-center"
                     >
-                      <div className="font-display text-[10rem] leading-none" style={{ color: 'rgba(251,191,36,0.12)' }}>
+                      <div className="font-display text-[10rem] leading-none" style={{ color: 'var(--accent-wash)' }}>
                         {String(preview + 1).padStart(2, '0')}
                       </div>
-                      <p className="font-display text-2xl mt-4" style={{ color: '#a1a1aa' }}>
+                      <p className="font-display text-2xl mt-4" style={{ color: 'var(--text-secondary)' }}>
                         {NAV_ITEMS[preview].tagline}
                       </p>
                     </motion.div>
