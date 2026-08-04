@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { useScrollSpy } from '@/hooks/useScrollSpy';
 import { resume } from '@/data/resume';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const NAV_ITEMS = [
   { id: 'about', label: 'About', tagline: 'git log, but readable' },
@@ -102,6 +103,7 @@ export default function Navbar() {
 
           {/* Hamburger */}
           <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
             <motion.button
               onClick={() => setMenuOpen(true)}
               className="relative flex h-8 w-9 flex-col items-center justify-center gap-2"
@@ -115,16 +117,19 @@ export default function Navbar() {
           </div>
 
           {/* Desktop hamburger */}
-          <motion.button
-            onClick={() => setMenuOpen(true)}
-            className="relative hidden md:flex h-8 w-9 flex-col items-center justify-center gap-2"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label="Open menu"
-          >
-            <span className="block h-0.5 w-full" style={{ background: '#fafafa' }} />
-            <span className="block h-0.5 w-full" style={{ background: '#fafafa' }} />
-          </motion.button>
+          <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
+            <motion.button
+              onClick={() => setMenuOpen(true)}
+              className="relative flex h-8 w-9 flex-col items-center justify-center gap-2"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Open menu"
+            >
+              <span className="block h-0.5 w-full" style={{ background: 'var(--text-primary)' }} />
+              <span className="block h-0.5 w-full" style={{ background: 'var(--text-primary)' }} />
+            </motion.button>
+          </div>
         </div>
       </motion.header>
 
