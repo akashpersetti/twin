@@ -50,7 +50,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
                 />
               </div>
               <h3
-                className="hidden md:block font-display text-3xl lg:text-5xl md:pl-16"
+                className="hidden md:block font-display text-xl lg:text-2xl md:pl-16"
                 style={{ color: 'var(--text-quaternary)' }}
               >
                 {item.title}
@@ -59,7 +59,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
 
             {/* Entry content */}
             <div className="relative pl-16 pr-0 md:pl-4 w-full">
-              <h3 className="md:hidden block mb-4 text-left font-display text-3xl" style={{ color: 'var(--text-quaternary)' }}>
+              <h3 className="md:hidden block mb-4 text-left font-display text-xl" style={{ color: 'var(--text-quaternary)' }}>
                 {item.title}
               </h3>
               {item.content}
