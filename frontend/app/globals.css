@@ -41,8 +41,8 @@ html[data-theme="dark"] {
   --text-faint:        #3f3f46;
   --text-muted-strong: #d4d4d8;
 
-  --border:        rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.16);
+  --border:        rgba(255,255,255,0.8);
+  --border-strong: rgba(255,255,255,0.95);
 
   --border-glass:  var(--border);
   --glow-primary:  rgba(251,191,36,0.15);
@@ -57,17 +57,17 @@ html[data-theme="dark"] {
 
 :root,
 html[data-theme="light"] {
-  --bg-base:        #f2ede2;
-  --bg-alt:         #e9e1d1;
-  --bg-elevated-2:  #e2dac8;
+  --bg-base:        #ffffff;
+  --bg-alt:         #f5f5f4;
+  --bg-elevated-2:  #ececea;
 
   --surface-1:      rgba(28,25,23,0.03);
   --surface-2:      rgba(28,25,23,0.045);
   --surface-3:      rgba(28,25,23,0.07);
 
   --overlay-scrim:      rgba(28,25,23,0.45);
-  --header-scrolled-bg: rgba(242,237,226,0.88);
-  --header-overlay-bg:  rgba(242,237,226,0.98);
+  --header-scrolled-bg: rgba(255,255,255,0.88);
+  --header-overlay-bg:  rgba(255,255,255,0.98);
 
   --accent:         #fbbf24;
   --accent-hover:   #fcd34d;
@@ -83,8 +83,8 @@ html[data-theme="light"] {
   --text-faint:        #d6d0c4;
   --text-muted-strong: #3a352e;
 
-  --border:        rgba(28,25,23,0.14);
-  --border-strong: rgba(28,25,23,0.28);
+  --border:        rgba(0,0,0,0.8);
+  --border-strong: rgba(0,0,0,0.95);
 
   --border-glass:  var(--border);
   --glow-primary:  rgba(251,191,36,0.15);
@@ -127,28 +127,36 @@ h3, h4 {
 
 /* ─── Card surfaces (dark glass) ─────────────────── */
 .glass {
-  background:    var(--surface-2);
   border:           1px solid var(--border);
   border-radius: var(--radius);
   box-shadow:    none;
 }
 
 .glass-hover {
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 .glass-hover:hover {
   border-color: var(--border-strong);
-  transform: translateY(-2px);
+}
+html[data-theme="light"] .glass-hover:hover {
+  background: var(--hover-tint) !important;
 }
 
 /* List-row treatment — replaces .glass for section entries that are
    fundamentally a list item, not a card (Experience, Education,
-   Certifications). Bottom-rule only, no side borders, no fill. */
+   Certifications). Bottom-rule only, no side borders, no fill.
+   No :last-child exception — each .row is usually the sole child of its
+   own SectionReveal wrapper, which made ":last-child" match every row
+   instead of just the true last one and silently drop all their borders. */
 .row {
   border-bottom: 1px solid var(--border);
-  padding: 1.5rem 0;
+  padding: 1.5rem 1rem;
+  margin: 0 -1rem;
+  transition: background 0.15s ease;
 }
-.row:last-child { border-bottom: none; }
+html[data-theme="light"] .row:hover {
+  background: var(--hover-tint) !important;
+}
 
 /* Small uppercase eyebrow label above section titles */
 .eyebrow {
@@ -193,9 +201,55 @@ h3, h4 {
   flex-shrink: 0;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.icon-link-btn:hover {
+/* Dark theme: circular icon-link buttons and standalone CTA buttons fill
+   solid accent amber on hover (original behavior, unchanged). */
+html[data-theme="dark"] .icon-link-btn:hover {
   background: var(--accent);
   color: var(--icon-on-accent);
+}
+
+/* Light theme: same buttons instead fill with the current section's own
+   pastel --hover-tint (set per-section, see each section component's root
+   element) rather than the accent color. */
+html[data-theme="light"] .icon-link-btn:hover {
+  background: var(--hover-tint, var(--accent));
+  color: var(--text-primary);
+}
+
+/* Standalone buttons/CTAs that aren't circular icon links (resting styles
+   vary per button, so this overrides via !important — it's meant to win
+   over each button's own inline background/color on hover, not to set a
+   resting look). */
+.hover-accent {
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+html[data-theme="dark"] .hover-accent:hover:not(:disabled) {
+  background: var(--accent) !important;
+  color: var(--icon-on-accent) !important;
+  border-color: var(--accent) !important;
+}
+html[data-theme="light"] .hover-accent:hover:not(:disabled) {
+  background: var(--hover-tint, var(--accent)) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--hover-tint, var(--accent)) !important;
+}
+
+/* Generic light-mode pastel hover tint for elements that aren't buttons,
+   cards (.glass-hover), or rows (.row) but should still pick up their
+   section's --hover-tint on hover — e.g. the Skills left-rail list items. */
+.hover-tint {
+  transition: background 0.15s ease;
+}
+html[data-theme="light"] .hover-tint:hover {
+  background: var(--hover-tint) !important;
+}
+
+/* Some brand-logo SVGs (StatsAndStack marquee) are pure white fill/stroke
+   with no background shape of their own — invisible against the light-mode
+   white page. Invert them to black in light mode only; dark mode is
+   unaffected since they were already visible there. */
+html[data-theme="light"] .invert-in-light {
+  filter: invert(1);
 }
 
 /* Underline-draw hover for inline text links */
@@ -218,7 +272,7 @@ h3, h4 {
 }
 
 /* Thin section separators (replaces alternating bg) */
-.section-border { border-top: 1px solid var(--border); }
+.section-border { border-top: 1px solid var(--border); padding-top: 2rem; }
 
 /* ─── Hero background (flat, grain texture only) ──── */
 .hero-bg { background: var(--bg-base); }
