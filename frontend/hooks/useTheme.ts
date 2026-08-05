@@ -6,7 +6,7 @@ type Theme = 'dark' | 'light';
 const STORAGE_KEY = 'theme';
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>('light');
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
