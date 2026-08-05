@@ -13,8 +13,7 @@
   --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
-/* ─── Design Tokens (dark default, beige alt via [data-theme]) ─── */
-:root,
+/* ─── Design Tokens (light default, dark alt via [data-theme]) ─── */
 html[data-theme="dark"] {
   --bg-base:        #09090b;
   --bg-alt:         #0c0c0f;
@@ -56,6 +55,7 @@ html[data-theme="dark"] {
   --radius-pill: 9999px;
 }
 
+:root,
 html[data-theme="light"] {
   --bg-base:        #f2ede2;
   --bg-alt:         #e9e1d1;
@@ -140,6 +140,15 @@ h3, h4 {
   border-color: var(--border-strong);
   transform: translateY(-2px);
 }
+
+/* List-row treatment — replaces .glass for section entries that are
+   fundamentally a list item, not a card (Experience, Education,
+   Certifications). Bottom-rule only, no side borders, no fill. */
+.row {
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 0;
+}
+.row:last-child { border-bottom: none; }
 
 /* Small uppercase eyebrow label above section titles */
 .eyebrow {
