@@ -156,8 +156,19 @@ export default function AdminPage() {
         setView('inbox');
     };
 
+    // This page has no Navbar/theme toggle, so it always renders light —
+    // force it regardless of a dark preference saved from the main site,
+    // and restore whatever that was on the way out.
+    useEffect(() => {
+        const previous = document.documentElement.dataset.theme;
+        document.documentElement.dataset.theme = 'light';
+        return () => {
+            if (previous) document.documentElement.dataset.theme = previous;
+        };
+    }, []);
+
     return (
-        <main className="py-24 px-6">
+        <main className="py-24 px-6" style={{ '--hover-tint': '#e0f2fe' } as React.CSSProperties}>
             <div className="max-w-2xl mx-auto">
                 {view === 'login' && <AdminLogin apiUrl={API_URL} onLoggedIn={handleLoggedIn} />}
                 {view === 'inbox' && (

@@ -16,13 +16,13 @@ const TYPE_COLOR: Record<string, string> = {
   feat:     'var(--term-green)',
   refactor: 'var(--term-sky)',
   fix:      'var(--term-amber)',
-  init:     '#71717a',
+  init:     'var(--text-tertiary)',
 };
 
 export default function About() {
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-4xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#ffedd5' } as React.CSSProperties}>
+      <div className="max-w-4xl mx-auto section-border">
         <SectionReveal>
           <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -39,26 +39,26 @@ export default function About() {
 
         <SectionReveal delay={0.1}>
           <div
-            className="mono rounded-2xl overflow-hidden"
-            style={{ border: '1px solid var(--border)', background: 'rgba(9,9,11,0.8)' }}
+            className="hover-tint mono overflow-hidden"
+            style={{ border: '1px solid var(--border)' }}
           >
             {/* Window chrome */}
             <div
               className="flex items-center gap-2 px-4 py-3"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}
+              style={{ borderBottom: '1px solid var(--border)' }}
             >
-              <span className="h-3 w-3 rounded-full" style={{ background: '#3f3f46' }} />
-              <span className="h-3 w-3 rounded-full" style={{ background: '#3f3f46' }} />
-              <span className="h-3 w-3 rounded-full" style={{ background: '#3f3f46' }} />
-              <span className="ml-4 text-[11px]" style={{ color: '#52525b' }}>~/akash - zsh</span>
+              <span className="h-3 w-3 rounded-full" style={{ background: 'var(--text-faint)' }} />
+              <span className="h-3 w-3 rounded-full" style={{ background: 'var(--text-faint)' }} />
+              <span className="h-3 w-3 rounded-full" style={{ background: 'var(--text-faint)' }} />
+              <span className="ml-4 text-[11px]" style={{ color: 'var(--text-quaternary)' }}>~/akash - zsh</span>
             </div>
 
             {/* Prompt line */}
-            <div className="px-5 pt-4 pb-2 text-[12px]" style={{ color: '#71717a' }}>
+            <div className="px-5 pt-4 pb-2 text-[12px]" style={{ color: 'var(--text-tertiary)' }}>
               <span style={{ color: 'var(--term-green)' }}>akash</span>
-              <span style={{ color: '#52525b' }}>@</span>
+              <span style={{ color: 'var(--text-quaternary)' }}>@</span>
               <span style={{ color: 'var(--term-sky)' }}>twin</span>
-              <span style={{ color: '#52525b' }}> % </span>
+              <span style={{ color: 'var(--text-quaternary)' }}> % </span>
               <span style={{ color: 'var(--text-primary)' }}>git log --oneline --author=&quot;Akash&quot;</span>
             </div>
 
@@ -72,20 +72,20 @@ export default function About() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: 0.15 * i, ease: 'easeOut' }}
                   className="flex items-baseline gap-3 py-1.5 group"
-                  style={{ borderBottom: i === COMMITS.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.03)' }}
+                  style={{ borderBottom: i === COMMITS.length - 1 ? 'none' : '1px solid var(--border)' }}
                 >
-                  <span className="shrink-0 w-16 text-[11px] font-medium" style={{ color: 'rgba(251,191,36,0.7)' }}>
+                  <span className="shrink-0 w-16 text-[11px] font-medium" style={{ color: 'var(--accent-ink)' }}>
                     {hash}
                   </span>
                   <span
                     className="shrink-0 w-16 text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ color: TYPE_COLOR[type] ?? '#71717a' }}
+                    style={{ color: TYPE_COLOR[type] ?? 'var(--text-tertiary)' }}
                   >
                     {type}
                   </span>
                   <span
-                    className="text-[13px] leading-snug transition-colors group-hover:text-white"
-                    style={{ color: '#d4d4d8' }}
+                    className="text-[13px] leading-snug transition-colors group-hover:text-[var(--text-primary)]"
+                    style={{ color: 'var(--text-muted-strong)' }}
                   >
                     {msg}
                     {i === 0 && (
@@ -101,9 +101,9 @@ export default function About() {
             {/* Trailing prompt with blinking cursor */}
             <div className="px-5 pb-4 pt-1 text-[12px]">
               <span style={{ color: 'var(--term-green)' }}>akash</span>
-              <span style={{ color: '#52525b' }}>@</span>
+              <span style={{ color: 'var(--text-quaternary)' }}>@</span>
               <span style={{ color: 'var(--term-sky)' }}>twin</span>
-              <span className="cursor-blink" style={{ color: '#52525b' }}> % </span>
+              <span className="cursor-blink" style={{ color: 'var(--text-quaternary)' }}> % </span>
             </div>
           </div>
         </SectionReveal>

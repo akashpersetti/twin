@@ -13,35 +13,85 @@
   --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
-/* ─── Design Tokens (pitch black, single theme) ──── */
-:root {
-  /* Surfaces */
+/* ─── Design Tokens (light default, dark alt via [data-theme]) ─── */
+html[data-theme="dark"] {
   --bg-base:        #09090b;
-  --bg-alt:         #0c0c0f;   /* slightly lifted section background */
-  --bg-card:        rgba(255,255,255,0.02);
-  --surface-tint:   rgba(255,255,255,0.08);
+  --bg-alt:         #0c0c0f;
+  --bg-elevated-2:  #18181b;
 
-  /* Accent (amber, dark-tuned) */
+  --surface-1:      rgba(255,255,255,0.03);
+  --surface-2:      rgba(255,255,255,0.045);
+  --surface-3:      rgba(255,255,255,0.07);
+
+  --overlay-scrim:      rgba(0,0,0,0.65);
+  --header-scrolled-bg: rgba(9,9,11,0.85);
+  --header-overlay-bg:  rgba(9,9,11,0.98);
+
   --accent:         #fbbf24;
   --accent-hover:   #fcd34d;
   --accent-soft:    rgba(251,191,36,0.35);
   --accent-wash:    rgba(251,191,36,0.08);
+  --accent-ink:     rgba(251,191,36,0.85);
+  --icon-on-accent: #09090b;
 
-  /* Text */
-  --text-primary:   #fafafa;
-  --text-secondary: #a1a1aa;
+  --text-primary:      #fafafa;
+  --text-secondary:    #a1a1aa;
+  --text-tertiary:     #71717a;
+  --text-quaternary:   #52525b;
+  --text-faint:        #3f3f46;
+  --text-muted-strong: #d4d4d8;
 
-  /* Lines */
-  --border:         rgba(255,255,255,0.08);
+  --border:        rgba(255,255,255,0.8);
+  --border-strong: rgba(255,255,255,0.95);
 
-  /* Legacy aliases kept so existing var() references resolve */
-  --border-glass:   var(--border);
-  --glow-primary:   rgba(251,191,36,0.15);
+  --border-glass:  var(--border);
+  --glow-primary:  rgba(251,191,36,0.15);
 
-  /* Terminal syntax (About section) */
-  --term-green:     #34d399;
-  --term-sky:       #38bdf8;
-  --term-amber:     #fbbf24;
+  --term-green: #34d399;
+  --term-sky:   #38bdf8;
+  --term-amber: #fbbf24;
+
+  --radius:      0px;
+  --radius-pill: 9999px;
+}
+
+:root,
+html[data-theme="light"] {
+  --bg-base:        #ffffff;
+  --bg-alt:         #f5f5f4;
+  --bg-elevated-2:  #ececea;
+
+  --surface-1:      rgba(28,25,23,0.03);
+  --surface-2:      rgba(28,25,23,0.045);
+  --surface-3:      rgba(28,25,23,0.07);
+
+  --overlay-scrim:      rgba(28,25,23,0.45);
+  --header-scrolled-bg: rgba(255,255,255,0.88);
+  --header-overlay-bg:  rgba(255,255,255,0.98);
+
+  --accent:         #fbbf24;
+  --accent-hover:   #fcd34d;
+  --accent-soft:    rgba(251,191,36,0.35);
+  --accent-wash:    rgba(251,191,36,0.10);
+  --accent-ink:     #92650a;
+  --icon-on-accent: #09090b;
+
+  --text-primary:      #1c1917;
+  --text-secondary:    #57534e;
+  --text-tertiary:     #78716c;
+  --text-quaternary:   #a8a29e;
+  --text-faint:        #d6d0c4;
+  --text-muted-strong: #3a352e;
+
+  --border:        rgba(0,0,0,0.8);
+  --border-strong: rgba(0,0,0,0.95);
+
+  --border-glass:  var(--border);
+  --glow-primary:  rgba(251,191,36,0.15);
+
+  --term-green: #059669;
+  --term-sky:   #0284c7;
+  --term-amber: #92650a;
 }
 
 /* ─── Base typography ───────────────────────────── */
@@ -52,6 +102,7 @@ html, body {
   color: var(--text-primary);
   background: var(--bg-base);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 h1, h2 {
@@ -76,19 +127,35 @@ h3, h4 {
 
 /* ─── Card surfaces (dark glass) ─────────────────── */
 .glass {
-  background:       var(--bg-card);
   border:           1px solid var(--border);
-  border-radius:    16px;
-  box-shadow:       0 1px 2px rgba(0,0,0,0.4);
+  border-radius: var(--radius);
+  box-shadow:    none;
 }
 
 .glass-hover {
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 .glass-hover:hover {
-  border-color: rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.04);
-  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+html[data-theme="light"] .glass-hover:hover {
+  background: var(--hover-tint) !important;
+}
+
+/* List-row treatment — replaces .glass for section entries that are
+   fundamentally a list item, not a card (Experience, Education,
+   Certifications). Bottom-rule only, no side borders, no fill.
+   No :last-child exception — each .row is usually the sole child of its
+   own SectionReveal wrapper, which made ":last-child" match every row
+   instead of just the true last one and silently drop all their borders. */
+.row {
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+  margin: 0 -1rem;
+  transition: background 0.15s ease;
+}
+html[data-theme="light"] .row:hover {
+  background: var(--hover-tint) !important;
 }
 
 /* Small uppercase eyebrow label above section titles */
@@ -106,32 +173,111 @@ h3, h4 {
   font-family: var(--font-mono), ui-monospace, monospace;
 }
 
+/* Sharp bordered tag/chip — replaces rounded-full pill badges */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  border: 1px solid var(--border);
+  padding: 0.2em 0.6em;
+  border-radius: var(--radius);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+}
+
+/* Circular icon-button for outbound links (reference-site pattern) */
+.icon-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--text-primary);
+  color: var(--bg-base);
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+/* Dark theme: circular icon-link buttons and standalone CTA buttons fill
+   solid accent amber on hover (original behavior, unchanged). */
+html[data-theme="dark"] .icon-link-btn:hover {
+  background: var(--accent);
+  color: var(--icon-on-accent);
+}
+
+/* Light theme: same buttons instead fill with the current section's own
+   pastel --hover-tint (set per-section, see each section component's root
+   element) rather than the accent color. */
+html[data-theme="light"] .icon-link-btn:hover {
+  background: var(--hover-tint, var(--accent));
+  color: var(--text-primary);
+}
+
+/* Standalone buttons/CTAs that aren't circular icon links (resting styles
+   vary per button, so this overrides via !important — it's meant to win
+   over each button's own inline background/color on hover, not to set a
+   resting look). */
+.hover-accent {
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+html[data-theme="dark"] .hover-accent:hover:not(:disabled) {
+  background: var(--accent) !important;
+  color: var(--icon-on-accent) !important;
+  border-color: var(--accent) !important;
+}
+html[data-theme="light"] .hover-accent:hover:not(:disabled) {
+  background: var(--hover-tint, var(--accent)) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--hover-tint, var(--accent)) !important;
+}
+
+/* Generic light-mode pastel hover tint for elements that aren't buttons,
+   cards (.glass-hover), or rows (.row) but should still pick up their
+   section's --hover-tint on hover — e.g. the Skills left-rail list items. */
+.hover-tint {
+  transition: background 0.15s ease;
+}
+html[data-theme="light"] .hover-tint:hover {
+  background: var(--hover-tint) !important;
+}
+
+/* Some brand-logo SVGs (StatsAndStack marquee) are pure white fill/stroke
+   with no background shape of their own — invisible against the light-mode
+   white page. Invert them to black in light mode only; dark mode is
+   unaffected since they were already visible there. */
+html[data-theme="light"] .invert-in-light {
+  filter: invert(1);
+}
+
+/* Underline-draw hover for inline text links */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition: background-size 0.2s ease;
+}
+.link-underline:hover {
+  background-size: 100% 1px;
+}
+
+/* Double-rule under major section headers */
+.double-rule {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  height: 3px;
+}
+
 /* Thin section separators (replaces alternating bg) */
-.section-border { border-top: 1px solid rgba(255,255,255,0.06); }
+.section-border { border-top: 1px solid var(--border); padding-top: 2rem; }
 
-/* ─── Hero background layers ─────────────────────── */
-.hero-bg { background: radial-gradient(ellipse at 70% 20%, #131316 0%, #09090b 65%); }
-
-@keyframes auroraDrift {
-  0%, 100% { transform: translate3d(0,0,0) scale(1); }
-  50%      { transform: translate3d(-3%, 2%, 0) scale(1.08); }
-}
-.hero-aurora {
-  background:
-    radial-gradient(40% 50% at 25% 30%, rgba(251,191,36,0.07), transparent 70%),
-    radial-gradient(45% 45% at 80% 65%, rgba(56,189,248,0.06), transparent 70%),
-    radial-gradient(35% 40% at 50% 50%, rgba(168,85,247,0.05), transparent 70%);
-  animation: auroraDrift 18s ease-in-out infinite;
-  filter: blur(40px);
-}
-.hero-glow {
-  background:
-    radial-gradient(circle at 75% 25%, rgba(251,191,36,0.10), transparent 45%),
-    radial-gradient(circle at 20% 80%, rgba(56,189,248,0.07), transparent 50%);
-  filter: blur(2px);
-}
+/* ─── Hero background (flat, grain texture only) ──── */
+.hero-bg { background: var(--bg-base); }
 .hero-grain {
-  opacity: 0.06;
+  opacity: 0.04;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -149,7 +295,7 @@ h3, h4 {
   100% { background-position: -200% 50%; }
 }
 .shimmer-text {
-  background: linear-gradient(90deg, #52525b 40%, #d4d4d8 50%, #52525b 60%);
+  background: linear-gradient(90deg, var(--text-quaternary) 40%, var(--text-muted-strong) 50%, var(--text-quaternary) 60%);
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;

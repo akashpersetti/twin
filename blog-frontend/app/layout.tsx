@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import "highlight.js/styles/github-dark.css";
+import "highlight.js/styles/github.css";
 
 const cooper = localFont({
   src: "./fonts/cooper-bt-light.otf",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#09090b",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -61,9 +61,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   justifyContent: "center",
                   width: "1.75rem",
                   height: "1.75rem",
-                  borderRadius: "0.5rem",
                   background: "var(--accent)",
-                  color: "#09090b",
+                  color: "var(--icon-on-accent)",
                   fontSize: "0.8125rem",
                   fontWeight: 700,
                 }}
@@ -72,7 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </span>
               Akash<span style={{ color: "var(--accent)" }}>.</span>
             </a>
-            <a href="/" className="mono" style={{ fontWeight: 500, color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.8125rem", letterSpacing: "0.05em", textTransform: "uppercase" }}>
+            <a href="/" className="mono hover-accent" style={{ fontWeight: 500, color: "var(--text-secondary)", textDecoration: "none", fontSize: "0.8125rem", letterSpacing: "0.05em", textTransform: "uppercase", padding: "0.25rem 0.5rem" }}>
               Blog
             </a>
           </div>

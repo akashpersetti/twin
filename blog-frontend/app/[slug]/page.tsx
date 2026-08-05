@@ -20,7 +20,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <main style={{ maxWidth: "680px", margin: "0 auto", padding: "3rem 1.5rem" }}>
-      <a href="/" style={{ fontSize: "0.875rem", color: "var(--accent)", textDecoration: "none", display: "inline-block", marginBottom: "2rem" }}>
+      <a href="/" className="hover-accent" style={{ fontSize: "0.875rem", color: "var(--accent-ink)", textDecoration: "none", display: "inline-block", marginBottom: "2rem", padding: "0.25rem 0.5rem" }}>
         ← All posts
       </a>
       <article>
@@ -31,7 +31,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               {post.date}{post.updated !== post.date ? ` · updated ${post.updated}` : ""}
             </time>
             {(post.tags ?? []).map((tag) => (
-              <span key={tag} style={{ fontSize: "0.75rem", padding: "0.2rem 0.6rem", border: "1px solid var(--accent-soft)", borderRadius: "999px", color: "var(--accent)", fontWeight: 500 }}>
+              <span key={tag} className="tag" style={{ color: "var(--accent-ink)" }}>
                 {tag}
               </span>
             ))}

@@ -25,7 +25,7 @@ export default function DateRangeFilter({ onChange }: { onChange: (range: DateRa
           type="date"
           value={since}
           onChange={(e) => apply(e.target.value, until)}
-          className="glass px-2 py-1 rounded"
+          className="glass hover-tint px-2 py-1"
         />
       </label>
       <label className="flex items-center gap-2">
@@ -34,7 +34,7 @@ export default function DateRangeFilter({ onChange }: { onChange: (range: DateRa
           type="date"
           value={until}
           onChange={(e) => apply(since, e.target.value)}
-          className="glass px-2 py-1 rounded"
+          className="glass hover-tint px-2 py-1"
         />
       </label>
       {(since || until) && (

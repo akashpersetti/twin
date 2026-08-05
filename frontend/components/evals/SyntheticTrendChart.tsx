@@ -52,7 +52,7 @@ export default function SyntheticTrendChart({
         <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={12} />
         <YAxis domain={[0, 1]} stroke="var(--text-secondary)" fontSize={12} />
         <Tooltip
-          contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }}
+          contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 0 }}
           formatter={(value: any) => value?.toFixed?.(2) ?? 'n/a'}
         />
         <Line type="monotone" dataKey="recall_at_5" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3 }} name="Recall@5" />

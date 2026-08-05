@@ -4,8 +4,8 @@ import SectionReveal from '@/components/ui/SectionReveal';
 
 export default function Quote() {
   return (
-    <section className="py-20 px-6 section-border">
-      <div className="max-w-3xl mx-auto text-center">
+    <section className="py-20 px-6" style={{ '--hover-tint': '#cffafe' } as React.CSSProperties}>
+      <div className="max-w-3xl mx-auto text-center section-border">
         <SectionReveal>
           <p
             className="font-display text-2xl md:text-4xl font-normal tracking-tight leading-[1.15]"

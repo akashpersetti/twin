@@ -9,22 +9,35 @@
   --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
-/* ─── Design Tokens (pitch black, single theme — matches home page) ─── */
+/* ─── Design Tokens (light only — no toggle here, matches the main
+   site's light-mode palette; dark isn't offered since this page has
+   no header control to switch it and no shared origin/localStorage
+   with the main site to inherit a preference from) ─── */
 :root {
-  --bg-base:        #09090b;
-  --bg-alt:         #0c0c0f;
-  --bg-card:        rgba(255,255,255,0.02);
-  --surface-tint:   rgba(255,255,255,0.08);
+  --bg-base:        #ffffff;
+  --bg-alt:         #f5f5f4;
+  --surface-1:      rgba(28,25,23,0.03);
+  --surface-2:      rgba(28,25,23,0.045);
+  --surface-3:      rgba(28,25,23,0.07);
 
   --accent:         #fbbf24;
   --accent-hover:   #fcd34d;
   --accent-soft:    rgba(251,191,36,0.35);
-  --accent-wash:    rgba(251,191,36,0.08);
+  --accent-wash:    rgba(251,191,36,0.10);
+  --accent-ink:     #92650a;
+  --icon-on-accent: #09090b;
 
-  --text-primary:   #fafafa;
-  --text-secondary: #a1a1aa;
+  --text-primary:      #1c1917;
+  --text-secondary:    #57534e;
+  --text-tertiary:     #78716c;
+  --text-faint:        #d6d0c4;
 
-  --border:         rgba(255,255,255,0.08);
+  --border:         rgba(0,0,0,0.8);
+  --border-strong:  rgba(0,0,0,0.95);
+
+  --radius: 0px;
+
+  --hover-tint: #e0f2fe;
 }
 
 html { scroll-behavior: smooth; }
@@ -52,24 +65,46 @@ h3, h4 {
 
 ::selection {
   background: rgba(251,191,36,0.30);
-  color: #fafafa;
+  color: #1c1917;
 }
 
-/* ─── Card surfaces (dark glass) ─────────────────── */
+/* ─── Flat bordered surfaces (no fill, sharp corners) ────── */
 .glass {
-  background:       var(--bg-card);
-  border:           1px solid var(--border);
-  border-radius:    16px;
-  box-shadow:       0 1px 2px rgba(0,0,0,0.4);
+  border:        1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .glass-hover {
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 .glass-hover:hover {
-  border-color: rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.04);
-  transform: translateY(-2px);
+  border-color: var(--border-strong);
+  background: var(--hover-tint);
+}
+
+/* List-row treatment — bottom-rule only, full-bleed, for anything that's
+   a list item rather than a standalone card (matches the main site). */
+.row {
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+  margin: 0 -1rem;
+  transition: background 0.15s ease;
+}
+.row:hover {
+  background: var(--hover-tint);
+}
+
+/* Sharp bordered tag/chip — no rounded-full pills */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  padding: 0.2em 0.6em;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  background: var(--surface-1);
 }
 
 .eyebrow {
@@ -85,23 +120,31 @@ h3, h4 {
   font-family: var(--font-mono), ui-monospace, monospace;
 }
 
-/* ─── Post body prose (dark) ─────────────────────── */
+/* Accent-fill hover for standalone buttons/links, mirroring the main site */
+.hover-accent {
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.hover-accent:hover {
+  background: var(--hover-tint) !important;
+}
+
+/* ─── Post body prose ─────────────────────────────── */
 .prose h1 { font-family: var(--font-display), Georgia, serif; font-size: 1.875rem; font-weight: 300; margin: 2rem 0 1rem; color: var(--text-primary); }
 .prose h2 { font-family: var(--font-display), Georgia, serif; font-size: 1.5rem;   font-weight: 300; margin: 1.75rem 0 0.75rem; color: var(--text-primary); }
 .prose h3 { font-size: 1.25rem;  font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--text-primary); }
 .prose p  { margin: 1rem 0; line-height: 1.75; color: var(--text-primary); }
 .prose ul, .prose ol { margin: 1rem 0; padding-left: 1.5rem; }
 .prose li { margin: 0.375rem 0; line-height: 1.7; color: var(--text-primary); }
-.prose a  { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.prose a  { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
 .prose a:hover { color: var(--accent-hover); }
 .prose blockquote { border-left: 3px solid var(--accent-soft); padding-left: 1rem; color: var(--text-secondary); margin: 1.25rem 0; font-style: italic; }
-.prose code:not(pre code) { background: var(--surface-tint); color: var(--accent); padding: 0.125rem 0.375rem; border-radius: 4px; font-family: var(--font-mono), monospace; font-size: 0.875em; }
-.prose pre { background: var(--bg-alt); border: 1px solid var(--border); color: #e2e8f0; padding: 1.25rem; border-radius: 10px; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; line-height: 1.6; }
+.prose code:not(pre code) { background: var(--surface-1); color: var(--accent-ink); padding: 0.125rem 0.375rem; font-family: var(--font-mono), monospace; font-size: 0.875em; }
+.prose pre { background: var(--bg-alt); border: 1px solid var(--border); color: var(--text-primary); padding: 1.25rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; line-height: 1.6; }
 .prose pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
 .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9375rem; }
 .prose th { background: var(--bg-alt); border: 1px solid var(--border); padding: 0.625rem 0.875rem; text-align: left; font-weight: 600; color: var(--text-primary); }
 .prose td { border: 1px solid var(--border); padding: 0.625rem 0.875rem; color: var(--text-primary); }
-.prose img { max-width: 100%; border-radius: 8px; margin: 1.5rem 0; }
+.prose img { max-width: 100%; margin: 1.5rem 0; }
 
 /* ─── Reduced Motion ────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

@@ -15,6 +15,17 @@ export default function EvalsPage() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // This page has no Navbar/theme toggle, so it always renders light —
+  // force it regardless of a dark preference saved from the main site,
+  // and restore whatever that was on the way out.
+  useEffect(() => {
+    const previous = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = 'light';
+    return () => {
+      if (previous) document.documentElement.dataset.theme = previous;
+    };
+  }, []);
+
   useEffect(() => {
     Promise.all([
       fetch(`${API_URL}/evals/synthetic`).then((r) => r.json()),
@@ -48,7 +59,7 @@ export default function EvalsPage() {
   );
 
   return (
-    <main className="py-24 px-6">
+    <main className="py-24 px-6" style={{ '--hover-tint': '#e0f2fe' } as React.CSSProperties}>
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <p className="eyebrow mb-2">Observability</p>

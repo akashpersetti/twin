@@ -43,24 +43,24 @@ export default function ConversationInbox({ conversations, onSelect }: Conversat
                             <div className="flex flex-col items-end gap-1 shrink-0">
                                 {c.controlled_by === 'human' && (
                                     <span
-                                        className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
-                                        style={{ background: 'rgba(251,191,36,0.12)', color: 'var(--accent)' }}
+                                        className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 border"
+                                        style={{ background: 'var(--accent-wash)', color: 'var(--accent-ink)', borderColor: 'var(--border)' }}
                                     >
                                         Human controlling
                                     </span>
                                 )}
                                 {c.needs_attention && (
                                     <span
-                                        className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
-                                        style={{ background: 'var(--accent-wash)', color: 'var(--accent)' }}
+                                        className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 border"
+                                        style={{ background: 'var(--accent-wash)', color: 'var(--accent-ink)', borderColor: 'var(--border)' }}
                                     >
                                         Needs attention
                                     </span>
                                 )}
                                 {c.unread_count > 0 && (
                                     <span
-                                        className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                                        style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--text-primary)' }}
+                                        className="text-[10px] font-semibold px-2 py-0.5 border"
+                                        style={{ background: 'var(--surface-3)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}
                                     >
                                         {c.unread_count} unread
                                     </span>

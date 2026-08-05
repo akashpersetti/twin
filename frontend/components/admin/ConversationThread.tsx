@@ -53,12 +53,12 @@ export default function ConversationThread({ messages, controlledBy, onBack, onS
                     <button
                         onClick={handleReturnControl}
                         disabled={returning}
-                        className="text-sm"
+                        className="hover-accent text-sm"
                         style={{
                             color: 'var(--accent)',
                             background: 'none',
                             border: '1px solid var(--border)',
-                            borderRadius: '999px',
+                            borderRadius: '0',
                             cursor: returning ? 'not-allowed' : 'pointer',
                             padding: '4px 12px',
                             opacity: returning ? 0.5 : 1,
@@ -75,8 +75,8 @@ export default function ConversationThread({ messages, controlledBy, onBack, onS
                         return (
                             <div key={idx} className="flex justify-end">
                                 <div
-                                    className="max-w-[85%] rounded-2xl rounded-br-md px-3.5 py-2.5 text-[13px] leading-relaxed"
-                                    style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.18)', color: '#fafafa' }}
+                                    className="max-w-[85%] text-[13px] leading-relaxed"
+                                    style={{ color: 'var(--text-primary)' }}
                                 >
                                     {m.content}
                                 </div>
@@ -87,14 +87,10 @@ export default function ConversationThread({ messages, controlledBy, onBack, onS
                         return (
                             <div key={idx} className="flex justify-start">
                                 <div
-                                    className="max-w-[85%] rounded-2xl rounded-bl-md px-3.5 py-2.5 text-[13px] leading-relaxed"
+                                    className="max-w-[85%] pl-3 text-[13px] leading-relaxed"
                                     style={{
-                                        background: 'rgba(255,255,255,0.04)',
-                                        borderTop: '1px solid rgba(251,191,36,0.18)',
-                                        borderRight: '1px solid rgba(251,191,36,0.18)',
-                                        borderBottom: '1px solid rgba(251,191,36,0.18)',
                                         borderLeft: '2px solid var(--accent)',
-                                        color: '#d4d4d8',
+                                        color: 'var(--text-primary)',
                                     }}
                                 >
                                     <p style={{ color: 'var(--accent)', fontSize: '0.7em', fontWeight: 600, marginBottom: '0.25em', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -109,8 +105,8 @@ export default function ConversationThread({ messages, controlledBy, onBack, onS
                         return (
                             <div key={idx} className="flex justify-center">
                                 <span
-                                    className="text-[11px] px-3 py-1 rounded-full"
-                                    style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                                    className="text-[11px] px-3 py-1 border"
+                                    style={{ color: 'var(--text-secondary)', borderColor: 'var(--border)' }}
                                 >
                                     {m.content}
                                 </span>
@@ -120,8 +116,8 @@ export default function ConversationThread({ messages, controlledBy, onBack, onS
                     return (
                         <div key={idx} className="flex justify-start">
                             <div
-                                className="max-w-[85%] rounded-2xl rounded-bl-md px-3.5 py-2.5 text-[13px] leading-relaxed"
-                                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#d4d4d8' }}
+                                className="max-w-[85%] text-[13px] leading-relaxed"
+                                style={{ color: 'var(--text-primary)' }}
                             >
                                 {m.content}
                             </div>
@@ -130,7 +126,7 @@ export default function ConversationThread({ messages, controlledBy, onBack, onS
                 })}
             </div>
 
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+            <div className="flex items-center gap-2 border px-4 py-2" style={{ borderColor: 'var(--border)' }}>
                 <input
                     type="text"
                     value={reply}
@@ -138,20 +134,21 @@ export default function ConversationThread({ messages, controlledBy, onBack, onS
                     onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
                     placeholder="Reply as Akash..."
                     disabled={sending}
-                    className="flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-zinc-600"
+                    className="hover-tint flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-[var(--text-faint)]"
                     style={{ color: 'var(--text-primary)' }}
                 />
                 <button
                     onClick={handleSend}
                     disabled={sending || !reply.trim()}
+                    className="hover-accent"
                     style={{
-                        background: reply.trim() && !sending ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
+                        background: reply.trim() && !sending ? 'var(--accent)' : 'var(--surface-3)',
                         border: 'none',
-                        borderRadius: '999px',
+                        borderRadius: '0',
                         padding: '6px 16px',
                         fontSize: '0.8rem',
                         fontWeight: 600,
-                        color: reply.trim() && !sending ? '#09090b' : 'rgba(255,255,255,0.3)',
+                        color: reply.trim() && !sending ? 'var(--icon-on-accent)' : 'var(--text-faint)',
                         cursor: reply.trim() && !sending ? 'pointer' : 'not-allowed',
                     }}
                 >
