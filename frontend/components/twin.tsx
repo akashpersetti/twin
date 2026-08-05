@@ -582,7 +582,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
             )}
 
             {/* Glass pill input row */}
-            <div className="m-3 flex items-center gap-2 px-4 py-2">
+            <div className="m-3 flex items-center gap-2 px-4 py-2 border-t" style={{ borderColor: 'var(--border)', paddingTop: '0.75rem' }}>
                 <input
                     ref={hiddenInputRef}
                     type="text"
