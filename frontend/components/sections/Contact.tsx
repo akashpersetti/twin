@@ -59,7 +59,7 @@ export default function Contact() {
           <SectionReveal className="lg:col-span-3">
             <form onSubmit={handleSubmit} className="space-y-3">
               {status === 'sent' && (
-                <div role="status" className="flex items-start gap-3 rounded-xl border border-green-500/25 bg-green-500/10 px-4 py-3.5">
+                <div role="status" className="flex items-start gap-3 border border-green-500/25 bg-green-500/10 px-4 py-3.5">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-400" />
                   <div>
                     <p className="text-sm font-medium text-green-100">Message sent!</p>
@@ -68,7 +68,7 @@ export default function Contact() {
                 </div>
               )}
               {status === 'error' && (
-                <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3.5">
+                <div role="alert" className="flex items-start gap-3 border border-red-500/25 bg-red-500/10 px-4 py-3.5">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
                   <div>
                     <p className="text-sm font-medium text-red-100">Couldn&apos;t send your message</p>
@@ -82,7 +82,7 @@ export default function Contact() {
 
               <div className="border overflow-hidden">
                 <div className="flex items-center gap-4 px-5 py-4 focus-within:bg-[var(--surface-1)] transition-colors">
-                  <label htmlFor="contact-email" className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] w-16" style={{ color: 'var(--text-quaternary)' }}>
+                  <label htmlFor="contact-email" className="mono shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] w-16" style={{ color: 'var(--text-quaternary)' }}>
                     From
                   </label>
                   <input
@@ -95,7 +95,7 @@ export default function Contact() {
                   />
                 </div>
                 <div className="flex items-start gap-4 px-5 py-4 border-t focus-within:bg-[var(--surface-1)] transition-colors" style={{ borderTopColor: 'var(--border)' }}>
-                  <label htmlFor="contact-message" className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] w-16 pt-0.5" style={{ color: 'var(--text-quaternary)' }}>
+                  <label htmlFor="contact-message" className="mono shrink-0 text-[10px] font-semibold uppercase tracking-[0.16em] w-16 pt-0.5" style={{ color: 'var(--text-quaternary)' }}>
                     Message
                   </label>
                   <textarea
