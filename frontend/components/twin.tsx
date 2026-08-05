@@ -468,8 +468,8 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                             <div className="w-7 shrink-0" />
                                         )}
                                         <div
-                                            className="rounded-2xl rounded-bl-md px-3.5 py-2.5 text-[13px] leading-relaxed"
-                                            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#d4d4d8' }}
+                                            className="text-[13px] leading-relaxed"
+                                            style={{ color: 'var(--text-primary)' }}
                                         >
                                             {message.role === 'assistant' ? (
                                                 <ReactMarkdown components={mdComponents}>{message.content}</ReactMarkdown>
@@ -483,8 +483,8 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                 {message.role === 'user' && (
                                     <div className="flex justify-end">
                                         <div
-                                            className="max-w-[85%] rounded-2xl rounded-br-md px-3.5 py-2.5 text-[13px] leading-relaxed"
-                                            style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.18)', color: '#fafafa' }}
+                                            className="max-w-[85%] text-[13px] leading-relaxed"
+                                            style={{ color: 'var(--text-primary)' }}
                                         >
                                             <span>{message.content}</span>
                                         </div>
@@ -501,14 +501,10 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                             <div className="w-7 shrink-0" />
                                         )}
                                         <div
-                                            className="rounded-2xl rounded-bl-md px-3.5 py-2.5 text-[13px] leading-relaxed"
+                                            className="pl-3 text-[13px] leading-relaxed"
                                             style={{
-                                                background: 'rgba(255,255,255,0.04)',
-                                                borderTop: '1px solid rgba(251,191,36,0.18)',
-                                                borderRight: '1px solid rgba(251,191,36,0.18)',
-                                                borderBottom: '1px solid rgba(251,191,36,0.18)',
                                                 borderLeft: '2px solid var(--accent)',
-                                                color: '#d4d4d8',
+                                                color: 'var(--text-primary)',
                                             }}
                                         >
                                             <p style={{ color: 'var(--accent)', fontSize: '0.7em', fontWeight: 600, marginBottom: '0.25em', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -555,6 +551,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
             {onboardingStep !== 'done' && (
                 <div style={{
                     borderTop: '1px solid var(--border-glass)',
+                    borderBottom: '1px solid var(--border-glass)',
                     padding: '8px 16px',
                     background: 'var(--bg-base)',
                     display: 'flex',
@@ -567,12 +564,13 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                     </span>
                     <button
                         onClick={handleOnboardingSkip}
+                        className="hover-accent"
                         style={{
                             background: 'transparent',
                             border: '1px solid var(--border)',
                             color: 'var(--text-primary)',
                             padding: '5px 18px',
-                            borderRadius: '999px',
+                            borderRadius: '0',
                             fontSize: '0.8rem',
                             fontWeight: 600,
                             cursor: 'pointer',
@@ -584,7 +582,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
             )}
 
             {/* Glass pill input row */}
-            <div className="m-3 flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+            <div className="m-3 flex items-center gap-2 px-4 py-2">
                 <input
                     ref={hiddenInputRef}
                     type="text"
@@ -599,7 +597,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                             ? 'Type your email or phone...'
                             : 'Ask something...'
                     }
-                    className="flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-zinc-600"
+                    className="hover-tint flex-1 min-w-0 bg-transparent text-sm outline-none placeholder:text-zinc-600"
                     style={{ color: busy ? 'var(--text-secondary)' : 'var(--text-primary)' }}
                     aria-label="Chat input"
                 />
