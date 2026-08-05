@@ -55,55 +55,51 @@ function MarqueeRow({ items }: { items: { name: string; logoSrc: string }[] }) {
 
 export default function StatsAndStack() {
   return (
-    <div className="relative z-10 mx-auto max-w-7xl w-full px-6 py-16 lg:px-12">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Stats card */}
-        <div className="relative overflow-hidden border p-8" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
-          <div className="relative z-10 space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
-                  <Brain className="h-5 w-5" style={{ color: 'var(--text-primary)' }} />
-                </div>
-                <div>
-                  <div className="text-[10px] uppercase tracking-[0.18em]" style={{ color: 'var(--text-tertiary)' }}>Currently</div>
-                  <div className="text-sm" style={{ color: 'var(--text-primary)' }}>Building &amp; evaluating AI systems</div>
-                </div>
+    <div className="relative z-10 mx-auto max-w-7xl w-full px-6 py-16 lg:px-12 section-border">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
+        {/* Stats */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center" style={{ background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
+                <Brain className="h-5 w-5" style={{ color: 'var(--text-primary)' }} />
               </div>
-              <span className="mono text-[10px]" style={{ color: 'var(--text-quaternary)' }}>v26.07</span>
+              <div>
+                <div className="mono text-[10px] uppercase tracking-[0.18em]" style={{ color: 'var(--text-tertiary)' }}>Currently</div>
+                <div className="text-sm" style={{ color: 'var(--text-primary)' }}>Building &amp; evaluating AI systems</div>
+              </div>
             </div>
+            <span className="mono text-[10px]" style={{ color: 'var(--text-quaternary)' }}>v26.07</span>
+          </div>
 
-            <div className="h-px w-full" style={{ background: 'var(--border)' }} />
+          <div>
+            {FOCUS_ROWS.map(({ label, detail }) => (
+              <div key={label} className="flex items-center justify-between py-2.5 border-t" style={{ borderColor: 'var(--border)' }}>
+                <span className="mono text-[11px] uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+                <span className="mono text-[11px]" style={{ color: 'var(--text-muted-strong)' }}>{detail}</span>
+              </div>
+            ))}
+          </div>
 
-            <div className="space-y-2">
-              {FOCUS_ROWS.map(({ label, detail }) => (
-                <div key={label} className="flex items-center justify-between px-3.5 py-2.5 border" style={{ background: 'var(--surface-1)', borderColor: 'var(--border)' }}>
-                  <span className="text-[11px] uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>{label}</span>
-                  <span className="mono text-[11px]" style={{ color: 'var(--text-muted-strong)' }}>{detail}</span>
-                </div>
-              ))}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <div className="tag tracking-wide" style={{ color: 'var(--text-muted-strong)' }}>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+              </span>
+              ACTIVE
             </div>
-
-            <div className="flex flex-wrap gap-2 pt-1">
-              <div className="tag tracking-wide" style={{ color: 'var(--text-muted-strong)' }}>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                </span>
-                ACTIVE
-              </div>
-              <div className="tag tracking-wide" style={{ color: 'var(--text-muted-strong)' }}>
-                <Star className="w-3 h-3" style={{ color: 'var(--accent)', fill: 'var(--accent)' }} />
-                OPEN TO WORK
-              </div>
+            <div className="tag tracking-wide" style={{ color: 'var(--text-muted-strong)' }}>
+              <Star className="w-3 h-3" style={{ color: 'var(--accent)', fill: 'var(--accent)' }} />
+              OPEN TO WORK
             </div>
           </div>
         </div>
 
-        {/* Marquee card */}
-        <div className="relative flex h-full flex-col overflow-hidden border py-8" style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}>
-          <h3 className="px-8 text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Stack &amp; tools I use</h3>
-          <div className="flex flex-1 flex-col justify-evenly">
+        {/* Stack marquee */}
+        <div className="flex flex-col justify-center border-t pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-16" style={{ borderColor: 'var(--border)' }}>
+          <h3 className="mb-4 text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>Stack &amp; tools I use</h3>
+          <div className="flex flex-col justify-evenly gap-4">
             <MarqueeRow items={STACK_ROW_1} />
             <MarqueeRow items={STACK_ROW_2} />
           </div>
