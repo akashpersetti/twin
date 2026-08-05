@@ -49,6 +49,7 @@ export default function Contact() {
     <section className="py-24 px-6 section-border">
       <div className="max-w-5xl mx-auto">
         <SectionHeader
+          icon={Mail}
           eyebrow="Contact"
           title="Let's ship something real"
           note="Open to AI Engineer & SWE roles, collabs, and hard problems."

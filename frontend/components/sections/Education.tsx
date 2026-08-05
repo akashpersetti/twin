@@ -9,7 +9,7 @@ export default function Education() {
   return (
     <section className="py-24 px-6 section-border">
       <div className="max-w-4xl mx-auto">
-        <SectionHeader eyebrow="Education" title="Formal pretraining" note="The degrees behind the demos." />
+        <SectionHeader icon={GraduationCap} eyebrow="Education" title="Formal pretraining" note="The degrees behind the demos." />
 
         <div>
           {resume.education.map((edu, i) => (

@@ -28,6 +28,7 @@ export default function Skills() {
     <section className="py-24 px-6 section-border">
       <div className="max-w-5xl mx-auto">
         <SectionHeader
+          icon={Layers}
           eyebrow="Skill-Set"
           title="What I reach for"
           note="Agents first, evals always, then the stack to ship them."

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { resume } from '@/data/resume';
 import SectionReveal from '@/components/ui/SectionReveal';
 import SectionHeader from '@/components/ui/SectionHeader';
-import { Github } from 'lucide-react';
+import { Github, FolderGit2 } from 'lucide-react';
 import IconLinkButton from '@/components/ui/IconLinkButton';
 
 type Project = typeof resume.projects[number];
@@ -111,6 +111,7 @@ export default function Projects() {
     <section className="py-24 px-6 section-border">
       <div className="max-w-5xl mx-auto">
         <SectionHeader
+          icon={FolderGit2}
           eyebrow="Selected work"
           title="Built, shipped, measured"
           note="Agentic systems and LLM products, most serverless on AWS."
