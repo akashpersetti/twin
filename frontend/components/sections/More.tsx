@@ -7,8 +7,8 @@ const ACCENT = 'var(--accent)';
 
 export default function More() {
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-4xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#ffedd5' } as React.CSSProperties}>
+      <div className="max-w-4xl mx-auto section-border">
         <SectionHeader eyebrow="Beyond code" title="Beyond the repo" note="Leadership, community, and the rest." />
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -23,7 +23,7 @@ export default function More() {
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   Writing on engineering, AI systems, and things I'm learning.
                 </p>
-                <p className="mono text-xs mt-3" style={{ color: 'var(--accent)' }}>
+                <p className="mono text-xs mt-3" style={{ color: 'var(--accent-ink)' }}>
                   blog.akashpersetti.com
                 </p>
               </GlassCard>
@@ -43,7 +43,7 @@ export default function More() {
                 </p>
                 <span
                   className="tag"
-                  style={{ color: 'var(--accent-hover)' }}
+                  style={{ color: 'var(--accent-ink)' }}
                 >
                   <Sparkles size={11} /> for AI engineers &amp; devs
                 </span>

@@ -1,12 +1,13 @@
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, LucideIcon } from 'lucide-react';
 
 interface IconLinkButtonProps {
   href: string;
   label: string;
   external?: boolean;
+  icon?: LucideIcon;
 }
 
-export default function IconLinkButton({ href, label, external = true }: IconLinkButtonProps) {
+export default function IconLinkButton({ href, label, external = true, icon: Icon = ArrowUpRight }: IconLinkButtonProps) {
   return (
     <a
       href={href}
@@ -14,7 +15,7 @@ export default function IconLinkButton({ href, label, external = true }: IconLin
       className="icon-link-btn"
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
-      <ArrowUpRight className="w-3.5 h-3.5" />
+      <Icon className="w-3.5 h-3.5" />
     </a>
   );
 }

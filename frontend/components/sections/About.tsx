@@ -21,8 +21,8 @@ const TYPE_COLOR: Record<string, string> = {
 
 export default function About() {
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-4xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#ffedd5' } as React.CSSProperties}>
+      <div className="max-w-4xl mx-auto section-border">
         <SectionReveal>
           <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -39,13 +39,13 @@ export default function About() {
 
         <SectionReveal delay={0.1}>
           <div
-            className="mono overflow-hidden"
-            style={{ border: '1px solid var(--border)', background: 'var(--surface-2)' }}
+            className="hover-tint mono overflow-hidden"
+            style={{ border: '1px solid var(--border)' }}
           >
             {/* Window chrome */}
             <div
               className="flex items-center gap-2 px-4 py-3"
-              style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface-1)' }}
+              style={{ borderBottom: '1px solid var(--border)' }}
             >
               <span className="h-3 w-3 rounded-full" style={{ background: 'var(--text-faint)' }} />
               <span className="h-3 w-3 rounded-full" style={{ background: 'var(--text-faint)' }} />

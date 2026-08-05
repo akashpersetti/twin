@@ -25,8 +25,8 @@ const TAGS = [
 
 export default function Objective() {
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-5xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#d1fae5' } as React.CSSProperties}>
+      <div className="max-w-5xl mx-auto section-border">
         <SectionHeader
           eyebrow="Career Objective"
           title="What I'm building toward"
@@ -36,7 +36,7 @@ export default function Objective() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Config Block (left) */}
           <SectionReveal>
-            <div className="overflow-hidden border p-6" style={{ borderColor: 'var(--border)', background: 'var(--surface-1)' }}>
+            <div className="hover-tint overflow-hidden border p-6" style={{ borderColor: 'var(--border)' }}>
               <pre className="relative z-10 font-mono text-xs leading-relaxed overflow-x-auto" style={{ color: 'var(--text-muted-strong)' }}>
                 <code>
                   {CONFIG.split('\n').map((line, i) => {

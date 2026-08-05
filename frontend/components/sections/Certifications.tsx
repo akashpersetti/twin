@@ -7,8 +7,8 @@ const ACCENT = 'var(--accent)';
 
 export default function Certifications() {
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-4xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#d1fae5' } as React.CSSProperties}>
+      <div className="max-w-4xl mx-auto section-border">
         <SectionHeader icon={Trophy} eyebrow="Credentials" title="Proof of work" note="Verified, not vibes." />
 
         <div>
@@ -27,7 +27,7 @@ export default function Certifications() {
                       <p className="text-sm" style={{ color: 'var(--accent)' }}>{cert.issuer}</p>
                       <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{cert.details}</p>
                     </div>
-                    <span className="tag flex-shrink-0" style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}>
+                    <span className="tag flex-shrink-0" style={{ background: 'var(--accent-wash)', color: 'var(--accent-ink)' }}>
                       {cert.period}
                     </span>
                   </div>

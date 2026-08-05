@@ -46,8 +46,8 @@ export default function Contact() {
   }
 
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-5xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#e0f2fe' } as React.CSSProperties}>
+      <div className="max-w-5xl mx-auto section-border">
         <SectionHeader
           icon={Mail}
           eyebrow="Contact"
@@ -92,7 +92,7 @@ export default function Contact() {
                     name="email"
                     required
                     placeholder="your@email.com"
-                    className="flex-1 bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-faint)]"
+                    className="hover-tint flex-1 bg-transparent text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-faint)]"
                   />
                 </div>
                 <div className="flex items-start gap-4 px-5 py-4 border-t focus-within:bg-[var(--surface-1)] transition-colors" style={{ borderTopColor: 'var(--border)' }}>
@@ -105,7 +105,7 @@ export default function Contact() {
                     required
                     rows={6}
                     placeholder="Tell me what you're building or just say hi…"
-                    className="flex-1 resize-none bg-transparent text-sm text-[var(--text-primary)] outline-none leading-relaxed placeholder:text-[var(--text-faint)]"
+                    className="hover-tint flex-1 resize-none bg-transparent text-sm text-[var(--text-primary)] outline-none leading-relaxed placeholder:text-[var(--text-faint)]"
                   />
                 </div>
                 <div className="flex items-center justify-between px-5 py-3.5 border-t bg-[var(--surface-1)]" style={{ borderTopColor: 'var(--border)' }}>
@@ -120,7 +120,7 @@ export default function Contact() {
                   <button
                     type="submit"
                     disabled={status === 'sending'}
-                    className="group inline-flex items-center gap-2 border px-5 py-2 text-xs font-semibold transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="hover-accent group inline-flex items-center gap-2 border px-5 py-2 text-xs font-semibold transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ borderColor: 'var(--border)', background: 'var(--surface-2)', color: 'var(--text-primary)' }}
                   >
                     {status === 'sending' ? 'Sending…' : status === 'sent' ? 'Send another' : 'Send message'}
@@ -133,34 +133,33 @@ export default function Contact() {
 
           {/* Socials: right 2 cols */}
           <SectionReveal delay={0.1} className="lg:col-span-2">
-            <div className="flex flex-col justify-between gap-10 h-full">
-              <div className="space-y-4">
-                {SOCIALS.map(({ href, label, sub, Icon }) => (
-                  <a
-                    key={label}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                     className="group flex items-center justify-between pb-4 border-b transition-colors"
-                     style={{ borderBottomColor: 'var(--border)' }}
-                  >
-                    <div className="flex items-center gap-3">
-                       <Icon className="w-4 h-4 transition-colors group-hover:text-[var(--text-primary)]" style={{ color: 'var(--text-quaternary)' }} />
-                      <div>
-                         <div className="link-underline text-sm font-medium transition-colors group-hover:text-[var(--text-primary)]" style={{ color: 'var(--text-muted-strong)' }}>{label}</div>
-                         <div className="text-[10px]" style={{ color: 'var(--text-quaternary)' }}>{sub}</div>
-                      </div>
+            <div className="space-y-4">
+              {SOCIALS.map(({ href, label, sub, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                   className="group flex items-center justify-between pb-4 border-b transition-colors"
+                   style={{ borderBottomColor: 'var(--border)' }}
+                >
+                  <div className="flex items-center gap-3">
+                     <Icon className="w-4 h-4 transition-colors group-hover:text-[var(--text-primary)]" style={{ color: 'var(--text-quaternary)' }} />
+                    <div>
+                       <div className="link-underline text-sm font-medium transition-colors group-hover:text-[var(--text-primary)]" style={{ color: 'var(--text-muted-strong)' }}>{label}</div>
+                       <div className="text-[10px]" style={{ color: 'var(--text-quaternary)' }}>{sub}</div>
                     </div>
-                     <MoveUpRight className="w-3.5 h-3.5 transition-all group-hover:text-[var(--text-primary)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" style={{ color: 'var(--text-faint)' }} />
-                  </a>
-                ))}
-              </div>
-               <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-                © {new Date().getFullYear()} {resume.basics.name}
-              </p>
+                  </div>
+                   <MoveUpRight className="w-3.5 h-3.5 transition-all group-hover:text-[var(--text-primary)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" style={{ color: 'var(--text-faint)' }} />
+                </a>
+              ))}
             </div>
           </SectionReveal>
         </div>
+
+        <p className="mt-16 text-center text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          © {new Date().getFullYear()} {resume.basics.name}
+        </p>
       </div>
     </section>
   );

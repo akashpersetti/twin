@@ -7,8 +7,8 @@ import SectionHeader from '@/components/ui/SectionHeader';
 
 export default function Education() {
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-4xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#ede9fe' } as React.CSSProperties}>
+      <div className="max-w-4xl mx-auto section-border">
         <SectionHeader icon={GraduationCap} eyebrow="Education" title="Formal pretraining" note="The degrees behind the demos." />
 
         <div>
@@ -44,7 +44,7 @@ export default function Education() {
 
                 <span
                   className="mono px-3 py-1.5 text-sm font-bold tabular-nums"
-                  style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)', border: '1px solid var(--border)' }}
+                  style={{ background: 'var(--accent-wash)', color: 'var(--accent-ink)', border: '1px solid var(--border)' }}
                 >
                   GPA {edu.gpa}
                 </span>

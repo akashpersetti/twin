@@ -18,7 +18,7 @@ export default function Experience() {
             {/* Header row */}
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-8">
               <div className="flex items-start gap-4">
-                <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
+                <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center border" style={{ borderColor: 'var(--border)' }}>
                   <Briefcase className="h-5 w-5" style={{ color: 'var(--text-primary)' }} />
                 </div>
                 <div>
@@ -74,8 +74,8 @@ export default function Experience() {
   });
 
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-5xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#ffe4e6' } as React.CSSProperties}>
+      <div className="max-w-5xl mx-auto section-border">
         <SectionHeader
           icon={Briefcase}
           eyebrow="Experience"

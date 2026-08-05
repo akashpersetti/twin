@@ -25,8 +25,8 @@ export default function Skills() {
   const tags = resume.skills[cur.key];
 
   return (
-    <section className="py-24 px-6 section-border">
-      <div className="max-w-5xl mx-auto">
+    <section className="py-24 px-6" style={{ '--hover-tint': '#fce7f3' } as React.CSSProperties}>
+      <div className="max-w-5xl mx-auto section-border">
         <SectionHeader
           icon={Layers}
           eyebrow="Skill-Set"
@@ -37,7 +37,7 @@ export default function Skills() {
         <SectionReveal>
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
             {/* Left rail */}
-            <ul className="lg:col-span-5 border-y divide-y" style={{ borderColor: 'var(--border)' }}>
+            <ul className="lg:col-span-5 border-y divide-y divide-[var(--border)]" style={{ borderColor: 'var(--border)' }}>
               {SKILL_META.map(({ key, title, icon: Icon }, i) => {
                 const on = i === active;
                 return (
@@ -46,7 +46,7 @@ export default function Skills() {
                       type="button"
                       onClick={() => setActive(i)}
                       onMouseEnter={() => setActive(i)}
-                       className="w-full flex items-center gap-4 py-4 text-left transition-colors hover:text-[var(--text-primary)]"
+                       className="hover-tint w-full flex items-center gap-4 py-4 px-2 -mx-2 text-left transition-colors hover:text-[var(--text-primary)]"
                        style={{ color: on ? 'var(--text-primary)' : 'var(--text-tertiary)' }}
                     >
                        <span className="mono text-[11px] tabular-nums w-7 transition-colors" style={{ color: on ? 'var(--accent)' : 'var(--text-faint)' }}>
@@ -69,7 +69,7 @@ export default function Skills() {
               <div key={active} className="skill-detail relative overflow-hidden pt-6" style={{ borderTop: '1px solid var(--border)' }}>
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="flex h-11 w-11 items-center justify-center border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
+                    <div className="flex h-11 w-11 items-center justify-center border" style={{ borderColor: 'var(--border)' }}>
                        <ActiveIcon className="h-5 w-5" style={{ color: 'var(--text-primary)' }} />
                     </div>
                     <span className="mono text-[10px] uppercase tracking-[0.2em]" style={{ color: 'var(--text-quaternary)' }}>

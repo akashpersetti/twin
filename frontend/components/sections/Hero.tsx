@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Download, ArrowRight } from 'lucide-react';
+import { Download, ArrowRight, Github, Linkedin, PenLine, Mail } from 'lucide-react';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { resume } from '@/data/resume';
 import TwinPanel from '@/components/widgets/TwinPanel';
@@ -10,10 +10,10 @@ import IconLinkButton from '@/components/ui/IconLinkButton';
 const downloadFilename = `${resume.basics.name.replace(/\s+/g, '_')}_Resume.pdf`;
 
 const SOCIALS = [
-  { href: resume.basics.githubUrl, label: 'GitHub' },
-  { href: resume.basics.linkedinUrl, label: 'LinkedIn' },
-  { href: resume.basics.devToUrl, label: 'dev.to' },
-  { href: 'mailto:akash.hp@icloud.com', label: 'Email' },
+  { href: resume.basics.githubUrl, label: 'GitHub', icon: Github },
+  { href: resume.basics.linkedinUrl, label: 'LinkedIn', icon: Linkedin },
+  { href: resume.basics.devToUrl, label: 'dev.to', icon: PenLine },
+  { href: 'mailto:akash.hp@icloud.com', label: 'Email', icon: Mail },
 ];
 
 export default function Hero() {
@@ -25,13 +25,13 @@ export default function Hero() {
   });
 
   return (
-    <div className="relative w-full overflow-hidden">
+    <div className="relative w-full overflow-hidden" style={{ '--hover-tint': '#e0f2fe' } as React.CSSProperties}>
       {/* Flat background with grain texture */}
       <div className="absolute inset-0 hero-bg" aria-hidden>
         <div className="absolute inset-0 hero-grain" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl w-full px-6 py-20 lg:px-12">
+      <div className="relative z-10 mx-auto max-w-6xl w-full px-6 py-20">
         <div className="grid grid-cols-1 border lg:grid-cols-12" style={{ borderColor: 'var(--border)' }}>
           {/* Left: Twin panel — big cell, spans the full row height */}
           <motion.div
@@ -78,7 +78,7 @@ export default function Hero() {
                 <a
                   href="/resume.pdf"
                   download={downloadFilename}
-                  className="group inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold transition-colors"
+                  className="hover-accent group inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold transition-colors"
                   style={{ background: 'var(--text-primary)', color: 'var(--bg-base)' }}
                 >
                   <Download className="w-4 h-4" />
@@ -86,7 +86,7 @@ export default function Hero() {
                 </a>
                 <a
                   href="#projects"
-                  className="group inline-flex items-center justify-center gap-2 border px-6 py-3 text-sm font-semibold transition-colors"
+                  className="hover-accent group inline-flex items-center justify-center gap-2 border px-6 py-3 text-sm font-semibold transition-colors"
                   style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                 >
                   View projects
@@ -97,8 +97,8 @@ export default function Hero() {
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <span className="mono text-xs uppercase tracking-widest" style={{ color: 'var(--text-tertiary)' }}>Find me on</span>
                 <div className="h-px flex-1 max-w-[40px]" style={{ background: 'var(--border)' }} />
-                {SOCIALS.map(({ href, label }) => (
-                  <IconLinkButton key={label} href={href} label={label} />
+                {SOCIALS.map(({ href, label, icon }) => (
+                  <IconLinkButton key={label} href={href} label={label} icon={icon} />
                 ))}
               </div>
             </motion.div>

@@ -47,7 +47,7 @@ export default function TwinPanel() {
             ? 'fixed inset-4 md:inset-x-[10%] md:inset-y-[5%] z-[60] flex min-h-0 flex-col overflow-hidden border'
             : 'relative flex h-full min-h-0 flex-col overflow-hidden border'
         }
-        style={{ borderColor: 'var(--border)', background: 'var(--surface-2)' }}
+        style={{ borderColor: 'var(--border)' }}
       >
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -64,7 +64,7 @@ export default function TwinPanel() {
           <button
             onClick={() => twinRef.current?.clear()}
             aria-label="Reset chat"
-             className="flex h-8 w-8 items-center justify-center transition-colors hover:bg-[var(--surface-3)]"
+             className="hover-accent flex h-8 w-8 items-center justify-center transition-colors"
              style={{ color: 'var(--text-secondary)' }}
           >
             <RotateCcw size={16} />
@@ -72,7 +72,7 @@ export default function TwinPanel() {
           <button
             onClick={() => setIsMaximized((v) => !v)}
             aria-label={isMaximized ? 'Minimize chat' : 'Maximize chat'}
-             className="flex h-8 w-8 items-center justify-center transition-colors hover:bg-[var(--surface-3)]"
+             className="hover-accent flex h-8 w-8 items-center justify-center transition-colors"
              style={{ color: 'var(--text-secondary)' }}
           >
             {isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}

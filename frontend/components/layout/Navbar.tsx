@@ -34,7 +34,7 @@ export default function Navbar() {
   /* Clock renders only after mount (avoids SSR hydration mismatch) */
   useEffect(() => {
     const tick = () =>
-      setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }));
+      setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'America/New_York' }));
     tick();
     const id = setInterval(tick, 30_000);
     return () => clearInterval(id);
@@ -107,7 +107,6 @@ export default function Navbar() {
             <motion.button
               onClick={() => setMenuOpen(true)}
               className="relative flex h-8 w-9 flex-col items-center justify-center gap-2"
-              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Open menu"
             >
@@ -122,7 +121,6 @@ export default function Navbar() {
             <motion.button
               onClick={() => setMenuOpen(true)}
               className="relative flex h-8 w-9 flex-col items-center justify-center gap-2"
-              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Open menu"
             >
@@ -167,8 +165,7 @@ export default function Navbar() {
               <motion.button
                 onClick={() => setMenuOpen(false)}
                 className="relative h-8 w-9"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.95 }}
                 aria-label="Close menu"
               >
                 <motion.span
