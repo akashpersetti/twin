@@ -50,7 +50,7 @@ export default function TwinPanel() {
         style={{ borderColor: 'var(--border)' }}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-base)' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/avatar.png" alt="" className="h-9 w-9 rounded-full object-cover border" style={{ borderColor: 'var(--border-strong)' }} />
            <div className="flex-1 min-w-0">

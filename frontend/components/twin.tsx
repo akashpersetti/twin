@@ -45,11 +45,11 @@ const mdComponents: Components = {
     code: ({ children, className }) => {
         const isBlock = className?.includes('language-');
         return isBlock ? (
-            <code style={{ display: 'block', fontFamily: MONO, fontSize: '0.78em', lineHeight: 1.6, overflowX: 'auto', padding: '0.55em 0.75em', margin: '0.35em 0', borderRadius: 6, background: 'var(--bg-alt)', color: 'var(--accent-hover)', border: '1px solid var(--border)' }}>
+            <code style={{ display: 'block', fontFamily: MONO, fontSize: '0.78em', lineHeight: 1.6, overflowX: 'auto', padding: '0.55em 0.75em', margin: '0.35em 0', borderRadius: 0, background: 'var(--bg-alt)', color: 'var(--accent-hover)', border: '1px solid var(--border)' }}>
                 {children}
             </code>
         ) : (
-            <code style={{ fontFamily: MONO, fontSize: '0.82em', padding: '0.1em 0.3em', borderRadius: 4, background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}>
+            <code style={{ fontFamily: MONO, fontSize: '0.82em', padding: '0.1em 0.3em', borderRadius: 0, background: 'var(--accent-wash)', color: 'var(--accent-hover)' }}>
                 {children}
             </code>
         );
@@ -519,8 +519,8 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                 {message.role === 'system' && (
                                     <div className="flex justify-center">
                                         <span
-                                            className="text-[11px] px-3 py-1 rounded-full"
-                                            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+                                            className="text-[11px] px-3 py-1"
+                                            style={{ color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
                                         >
                                             {message.content}
                                         </span>

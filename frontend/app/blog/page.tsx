@@ -57,6 +57,17 @@ export default function BlogManager() {
   const [msg, setMsg] = useState('');
   const authInitialized = useRef(false);
 
+  // This page has no Navbar/theme toggle, so it always renders light —
+  // force it regardless of a dark preference saved from the main site,
+  // and restore whatever that was on the way out.
+  useEffect(() => {
+    const previous = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = 'light';
+    return () => {
+      if (previous) document.documentElement.dataset.theme = previous;
+    };
+  }, []);
+
   const loadPosts = useCallback(async (tok: string) => {
     setLoading(true);
     const res = await fetch(`${API_BASE}/api/posts`, { headers: authHeader(tok) });
@@ -232,9 +243,9 @@ export default function BlogManager() {
                 autoComplete="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                style={{ padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.875rem', outline: 'none' }}
+                style={{ padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '0', fontSize: '0.875rem', outline: 'none' }}
               />
-              <button type="submit" disabled={sendingLink} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '8px', padding: '0.625rem', fontWeight: 600, cursor: sendingLink ? 'default' : 'pointer', opacity: sendingLink ? 0.7 : 1 }}>
+              <button type="submit" disabled={sendingLink} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '0', padding: '0.625rem', fontWeight: 600, cursor: sendingLink ? 'default' : 'pointer', opacity: sendingLink ? 0.7 : 1 }}>
                 {sendingLink ? 'Sending…' : 'Send magic link'}
               </button>
             </form>
@@ -256,12 +267,12 @@ export default function BlogManager() {
               <button onClick={handleSignOut} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', padding: '0.25rem', fontSize: '0.8125rem', cursor: 'pointer', textDecoration: 'underline' }}>
                 Sign out
               </button>
-              <button onClick={startCreate} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '8px', padding: '0.5rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={startCreate} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '0', padding: '0.5rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
                 + New Post
               </button>
             </div>
           </div>
-          {msg && <p style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '8px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-primary)' }}>{msg}</p>}
+          {msg && <p style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: '0', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.875rem', color: 'var(--text-primary)' }}>{msg}</p>}
           {loading && <p style={{ color: 'var(--text-secondary)' }}>Loading…</p>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {posts.map(post => (
@@ -270,7 +281,7 @@ export default function BlogManager() {
                   <p style={{ fontWeight: 600, margin: 0 }}>{post.title}</p>
                   <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: '0.25rem 0 0', fontFamily: 'var(--font-mono)' }}>{post.slug}</p>
                 </div>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.625rem', borderRadius: '999px', background: post.status === 'published' ? 'rgba(52,211,153,0.15)' : 'var(--surface-tint)', color: post.status === 'published' ? '#34d399' : 'var(--accent)' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.25rem 0.625rem', borderRadius: '0', background: post.status === 'published' ? 'rgba(52,211,153,0.15)' : 'var(--surface-2)', color: post.status === 'published' ? '#34d399' : 'var(--accent)' }}>
                   {post.status}
                 </span>
                 <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>{post.date}</span>
@@ -322,13 +333,13 @@ export default function BlogManager() {
             />
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button onClick={() => handleSave(false)} disabled={loading} style={{ ...btnStyle(), padding: '0.625rem 1rem' }}>Save Draft</button>
-              <button onClick={() => handleSave(true)} disabled={loading} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '8px', padding: '0.625rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
+              <button onClick={() => handleSave(true)} disabled={loading} style={{ background: 'var(--accent)', color: '#09090b', border: 'none', borderRadius: '0', padding: '0.625rem 1rem', fontWeight: 600, cursor: 'pointer' }}>
                 Save & Publish
               </button>
             </div>
           </div>
           {/* Right: live preview */}
-          <div style={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: '14px', padding: '1.5rem', overflowY: 'auto', maxHeight: '80vh' }}>
+          <div style={{ background: 'var(--bg-alt)', border: '1px solid var(--border)', borderRadius: '0', padding: '1.5rem', overflowY: 'auto', maxHeight: '80vh' }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', marginBottom: '1rem' }}>PREVIEW</p>
             <div style={{ fontSize: '0.9375rem', lineHeight: 1.7, color: 'var(--text-primary)' }}>
               <ReactMarkdown>{form.body || '_Start typing to preview…_'}</ReactMarkdown>
@@ -341,9 +352,9 @@ export default function BlogManager() {
 }
 
 function btnStyle(bg = 'rgba(255,255,255,0.08)', color = 'var(--text-primary)'): React.CSSProperties {
-  return { background: bg, color, border: '1px solid var(--border)', borderRadius: '8px', padding: '0.375rem 0.75rem', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer' };
+  return { background: bg, color, border: '1px solid var(--border)', borderRadius: '0', padding: '0.375rem 0.75rem', fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer' };
 }
 
 function inputStyle(): React.CSSProperties {
-  return { padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.875rem', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' };
+  return { padding: '0.625rem 0.75rem', border: '1px solid var(--border)', borderRadius: '0', fontSize: '0.875rem', background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)', outline: 'none', width: '100%', boxSizing: 'border-box' };
 }

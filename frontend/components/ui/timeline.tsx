@@ -75,10 +75,10 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
           <div className="absolute inset-0 w-[2px]" style={{ background: 'var(--border)' }} />
           <motion.div
             style={{ height: heightTransform, opacity: opacityTransform }}
-            className="absolute inset-x-0 top-0 w-[2px] rounded-full"
+            className="absolute inset-x-0 top-0 w-[2px]"
           >
             <div
-              className="h-full w-full rounded-full"
+              className="h-full w-full"
               style={{ background: 'linear-gradient(to bottom, var(--accent), var(--text-tertiary), transparent)' }}
             />
           </motion.div>

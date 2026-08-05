@@ -51,8 +51,17 @@ export default function ResumeUpload({ adminFetch, onBack }: ResumeUploadProps) 
                         type="file"
                         accept="application/pdf"
                         onChange={e => setFile(e.target.files?.[0] ?? null)}
-                        className="block mb-4 text-sm"
+                        className="block mb-4 text-sm file:mr-3 file:px-3 file:py-1.5 file:border file:text-sm file:font-semibold file:cursor-pointer"
+                        style={{ color: 'var(--accent-ink)' }}
                     />
+                    <style jsx>{`
+                        input[type='file']::file-selector-button {
+                            background: var(--surface-2);
+                            border-color: var(--border);
+                            color: var(--accent-ink);
+                            border-radius: 0;
+                        }
+                    `}</style>
                     {status === 'error' && (
                         <p className="text-sm mb-3" style={{ color: '#f87171' }}>{errorMessage}</p>
                     )}

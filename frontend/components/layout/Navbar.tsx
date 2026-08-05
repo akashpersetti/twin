@@ -81,7 +81,7 @@ export default function Navbar() {
             style={{ color: 'var(--text-primary)' }}
           >
             <span
-              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold"
+              className="inline-flex items-center justify-center w-8 h-8 text-sm font-bold"
               style={{ background: 'var(--accent)', color: 'var(--icon-on-accent)' }}
             >
               A
@@ -151,7 +151,7 @@ export default function Navbar() {
             >
               <span className="flex items-center gap-2 font-bold text-lg tracking-tight text-white">
                 <span
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-bold"
+                  className="inline-flex items-center justify-center w-8 h-8 text-sm font-bold"
                   style={{ background: 'var(--accent)', color: 'var(--icon-on-accent)' }}
                 >
                   A
