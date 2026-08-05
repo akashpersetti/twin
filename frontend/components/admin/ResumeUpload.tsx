@@ -59,14 +59,15 @@ export default function ResumeUpload({ adminFetch, onBack }: ResumeUploadProps) 
                     <button
                         onClick={upload}
                         disabled={!file || status === 'uploading'}
+                        className="hover-accent"
                         style={{
                             background: 'var(--accent)',
                             border: 'none',
-                            borderRadius: '999px',
+                            borderRadius: '0',
                             padding: '8px 20px',
                             fontSize: '0.85rem',
                             fontWeight: 600,
-                            color: '#09090b',
+                            color: 'var(--icon-on-accent)',
                             cursor: 'pointer',
                             opacity: !file || status === 'uploading' ? 0.5 : 1,
                         }}

@@ -40,8 +40,8 @@ export default function SnapshotDrilldown({
   if (!snapshotKey) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="glass bg-[var(--surface-2)] max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--overlay-scrim)' }} onClick={onClose}>
+      <div className="glass max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6" style={{ background: 'var(--bg-base)' }} onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="eyebrow">Snapshot detail</h3>
           <button onClick={onClose} className="text-sm underline">Close</button>

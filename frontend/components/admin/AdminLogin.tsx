@@ -65,19 +65,20 @@ export default function AdminLogin({ apiUrl, onLoggedIn }: AdminLoginProps) {
                         onChange={e => setEmail(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') requestLink(); }}
                         placeholder="you@example.com"
-                        className="flex-1 min-w-0 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm outline-none placeholder:text-zinc-600"
-                        style={{ color: 'var(--text-primary)' }}
+                        className="hover-tint flex-1 min-w-0 border px-4 py-2 text-sm outline-none placeholder:text-[var(--text-faint)]"
+                        style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                     />
                     <button
                         onClick={requestLink}
+                        className="hover-accent"
                         style={{
                             background: 'var(--accent)',
                             border: 'none',
-                            borderRadius: '999px',
+                            borderRadius: '0',
                             padding: '8px 20px',
                             fontSize: '0.85rem',
                             fontWeight: 600,
-                            color: '#09090b',
+                            color: 'var(--icon-on-accent)',
                             cursor: 'pointer',
                         }}
                     >
