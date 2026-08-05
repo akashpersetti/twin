@@ -65,7 +65,7 @@ export default function Skills() {
 
             {/* Right detail pane */}
             <div className="lg:col-span-7 lg:sticky lg:top-24 lg:self-start">
-              <div key={active} className="skill-detail relative overflow-hidden border p-8" style={{ borderColor: 'var(--border)', background: 'var(--surface-1)' }}>
+              <div key={active} className="skill-detail relative overflow-hidden pt-6" style={{ borderTop: '1px solid var(--border)' }}>
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex h-11 w-11 items-center justify-center border" style={{ background: 'var(--surface-2)', borderColor: 'var(--border)' }}>
