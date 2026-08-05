@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { GraduationCap } from 'lucide-react';
 import { resume } from '@/data/resume';
 import SectionHeader from '@/components/ui/SectionHeader';
-import GlassCard from '@/components/ui/GlassCard';
 
 export default function Education() {
   return (
@@ -12,90 +11,57 @@ export default function Education() {
       <div className="max-w-4xl mx-auto">
         <SectionHeader eyebrow="Education" title="Formal pretraining" note="The degrees behind the demos." />
 
-        <div className="relative">
-          {/* Timeline line */}
-          <div
-            className="absolute left-4 top-0 bottom-0 w-px hidden md:block"
-            style={{ background: 'var(--border)' }}
-          />
-
-          <div className="flex flex-col gap-6">
-            {resume.education.map((edu, i) => (
-              <motion.div
-                key={edu.institution}
-                className="md:pl-12 relative"
-                initial={{ opacity: 0, x: i === 0 ? -60 : 60 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.6, ease: 'easeOut', delay: i * 0.1 }}
-              >
-                {/* Timeline dot */}
-                <div
-                  className="absolute left-2.5 top-6 w-3 h-3 rounded-full border-2 hidden md:block"
-                  style={{
-                    background: 'var(--accent)',
-                    borderColor: 'var(--accent)',
-                    transform: 'translateX(-50%)',
-                  }}
-                />
-
-                <GlassCard>
-                  <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className="p-2 mt-0.5"
-                        style={{ background: 'var(--accent-wash)' }}
-                      >
-                        <GraduationCap size={20} color="var(--accent)" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg leading-tight" style={{ color: 'var(--text-primary)' }}>
-                          {edu.degree}
-                        </h3>
-                        <p className="font-semibold mt-0.5" style={{ color: 'var(--accent)' }}>
-                          {edu.institution}
-                        </p>
-                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                          {edu.school}
-                        </p>
-                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                          {edu.location} · {edu.period}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* GPA badge */}
-                    <span
-                       className="mono px-3 py-1.5 text-sm font-bold tabular-nums"
-                      style={{
-                        background: 'var(--accent-wash)',
-                        color: 'var(--accent-hover)',
-                        border: '1px solid var(--surface-tint)',
-                      }}
-                    >
-                      GPA {edu.gpa}
-                    </span>
+        <div>
+          {resume.education.map((edu, i) => (
+            <motion.div
+              key={edu.institution}
+              className="row"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 0.6, ease: 'easeOut', delay: i * 0.1 }}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 mt-0.5" style={{ background: 'var(--accent-wash)' }}>
+                    <GraduationCap size={20} color="var(--accent)" />
                   </div>
-
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-secondary)' }}>
-                      Coursework
+                    <h3 className="font-bold text-lg leading-tight" style={{ color: 'var(--text-primary)' }}>
+                      {edu.degree}
+                    </h3>
+                    <p className="font-semibold mt-0.5" style={{ color: 'var(--accent)' }}>
+                      {edu.institution}
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {edu.coursework.map(course => (
-                        <span
-                          key={course}
-                         className="tag"
-                        >
-                          {course}
-                        </span>
-                      ))}
-                    </div>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      {edu.school}
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      {edu.location} · {edu.period}
+                    </p>
                   </div>
-                </GlassCard>
-              </motion.div>
-            ))}
-          </div>
+                </div>
+
+                <span
+                  className="mono px-3 py-1.5 text-sm font-bold tabular-nums"
+                  style={{ background: 'var(--accent-wash)', color: 'var(--accent-hover)', border: '1px solid var(--border)' }}
+                >
+                  GPA {edu.gpa}
+                </span>
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  Coursework
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {edu.coursework.map(course => (
+                    <span key={course} className="tag">{course}</span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
