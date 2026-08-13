@@ -664,6 +664,10 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str,
     except ClientError as e:
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
         return
+    except Exception as e:
+        print(f"Unexpected error in stream_bedrock: {e}")
+        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        return
 
     # Add nudge notice if threshold reached
     if len(conversation) >= SESSION_NUDGE_THRESHOLD and not already_nudged(conversation):
@@ -679,6 +683,16 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str,
     conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
     conversation.append({"role": "assistant", "content": full_response, "timestamp": datetime.now().isoformat(), "needs_attention": escalated, "read": False})
     save_conversation(session_id, conversation)
+
+    if escalated and SNS_TOPIC_ARN:
+        try:
+            sns_client.publish(
+                TopicArn=SNS_TOPIC_ARN,
+                Subject="Digital twin: visitor needs your help",
+                Message="A visitor's conversation was escalated - they confirmed they'd like you to step in personally. Check the admin panel for the conversation.",
+            )
+        except ClientError as e:
+            print(f"SNS escalation notification error: {e}")
 
     yield f"data: {json.dumps({'done': True, 'escalated': escalated})}\n\n"
 

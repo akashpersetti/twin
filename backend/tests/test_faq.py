@@ -347,3 +347,22 @@ def test_chat_stream_answers_qn_shortcut_without_calling_bedrock():
     assert len(chunks) == 1
     assert chunks[0].startswith("**Q1:**")
     assert any(e.get("done") for e in events)
+
+
+def test_stream_bedrock_escalate_publishes_sns():
+    from server import stream_bedrock
+
+    first_response = {"stream": _tool_use_stream_events("escalate_to_human_tool", {"reason": "wants a call"}, None)}
+    second_response = {"stream": iter([
+        {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"text": "I've let Akash know."}}},
+        {"messageStop": {"stopReason": "end_turn"}},
+    ])}
+
+    with patch("server.bedrock_client.converse_stream", side_effect=[first_response, second_response]), \
+         patch("server.save_conversation"), \
+         patch("server.retrieval.retrieve", return_value=[]), \
+         patch("server.sns_client.publish") as mock_publish, \
+         patch("server.SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789012:test"):
+        list(stream_bedrock([], "Can you get Akash?", "sess-sns"))
+
+    mock_publish.assert_called_once()
