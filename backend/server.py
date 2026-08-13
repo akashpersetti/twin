@@ -428,6 +428,30 @@ TOOL_CONFIG = {
 }
 
 
+def execute_tool_use(tool_use: Dict) -> Tuple[str, bool]:
+    """Execute a tool (faq_tool or escalate_to_human_tool) and return the result text + escalated flag.
+
+    Shared by both call_bedrock() and stream_bedrock() to ensure identical tool handling.
+    """
+    tool_name = tool_use.get("name")
+    tool_input = tool_use.get("input", {})
+
+    if tool_name == "faq_tool":
+        faq_number = tool_input.get("faq_number")
+        faq_entry = get_faq(faq_number)
+        if faq_entry:
+            result = f"Q: {faq_entry['question']}\nA: {faq_entry['answer']}"
+        else:
+            result = "No FAQ found with that number. Answer from general context instead."
+        return result, False
+
+    elif tool_name == "escalate_to_human_tool":
+        return "Escalation recorded. Briefly acknowledge to the visitor, naturally, that you've notified the human owner and that they typically respond within about 2 minutes.", True
+
+    else:
+        return "Unknown tool.", False
+
+
 def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> Tuple[str, bool]:
     """Call AWS Bedrock with conversation history"""
     messages = build_bedrock_messages(conversation, user_message, user_name=user_name)
@@ -447,23 +471,12 @@ def call_bedrock(conversation: List[Dict], user_message: str, user_name: Optiona
             for block in output_message["content"]:
                 if "toolUse" in block:
                     tool_use = block["toolUse"]
-                    if tool_use["name"] == "faq_tool":
-                        faq_entry = get_faq(tool_use["input"].get("faq_number"))
-                        result_text = (
-                            f"Q: {faq_entry['question']}\nA: {faq_entry['answer']}"
-                            if faq_entry
-                            else "No FAQ found with that number. Answer from general context instead."
-                        )
-                    elif tool_use["name"] == "escalate_to_human_tool":
-                        escalated = True
-                        result_text = "Escalation recorded. Briefly acknowledge to the visitor, naturally, that you've notified the human owner and that they typically respond within about 2 minutes."
-                    else:
-                        result_text = "Unknown tool."
+                    tool_result, escalated = execute_tool_use(tool_use)
                     tool_result_content.append(
                         {
                             "toolResult": {
                                 "toolUseId": tool_use["toolUseId"],
-                                "content": [{"text": result_text}],
+                                "content": [{"text": tool_result}],
                             }
                         }
                     )
@@ -540,26 +553,67 @@ def stream_human_controlled(session_id: str, conversation: List[Dict], user_mess
 
 
 def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str, user_name: Optional[str] = None) -> Generator[str, None, None]:
-    """Stream response from AWS Bedrock and save conversation when done."""
+    """Stream response from AWS Bedrock with tool-use support and save conversation when done."""
     messages = build_bedrock_messages(conversation, user_message, user_name)
     full_response = ""
+    escalated = False
 
     try:
-        response = bedrock_client.converse_stream(
-            modelId=BEDROCK_MODEL_ID,
-            messages=messages,
-            inferenceConfig={"maxTokens": 2000, "temperature": 0.7}
-        )
-
         # Send session_id first so the client can persist it
         yield f"data: {json.dumps({'session_id': session_id})}\n\n"
 
+        # First turn: stream response and collect tool use if present
+        tool_used = False
+        tool_use_block = None
+
+        response = bedrock_client.converse_stream(
+            modelId=BEDROCK_MODEL_ID,
+            messages=messages,
+            inferenceConfig={"maxTokens": 2000, "temperature": 0.7},
+            toolConfig=TOOL_CONFIG,
+        )
+
         for event in response["stream"]:
-            if "contentBlockDelta" in event:
-                delta = event["contentBlockDelta"]["delta"].get("text", "")
-                if delta:
-                    full_response += delta
-                    yield f"data: {json.dumps({'chunk': delta})}\n\n"
+            if "contentBlockStart" in event:
+                block_type = event["contentBlockStart"]["start"].get("toolUse")
+                if block_type:
+                    tool_used = True
+                    tool_use_block = {"id": block_type["toolUseId"], "name": block_type["name"], "input": ""}
+
+            elif "contentBlockDelta" in event:
+                delta = event["contentBlockDelta"]["delta"]
+                if "text" in delta:
+                    text = delta["text"]
+                    full_response += text
+                    yield f"data: {json.dumps({'chunk': text})}\n\n"
+                elif "toolUse" in delta and tool_use_block:
+                    tool_use_block["input"] += delta["toolUse"].get("input", "")
+
+        # If tool was used, execute it and make follow-up call
+        if tool_used and tool_use_block:
+            tool_input_dict = json.loads(tool_use_block["input"])
+            tool_result, escalated = execute_tool_use({"name": tool_use_block["name"], "input": tool_input_dict})
+
+            # Follow-up call with tool result
+            follow_up_messages = messages + [
+                {"role": "assistant", "content": [{"type": "toolUse", "toolUseId": tool_use_block["id"], "name": tool_use_block["name"], "input": tool_input_dict}]},
+                {"role": "user", "content": [{"type": "toolResult", "toolUseId": tool_use_block["id"], "content": tool_result}]},
+            ]
+
+            response = bedrock_client.converse_stream(
+                modelId=BEDROCK_MODEL_ID,
+                messages=follow_up_messages,
+                inferenceConfig={"maxTokens": 2000, "temperature": 0.7},
+                toolConfig=TOOL_CONFIG,
+            )
+
+            for event in response["stream"]:
+                if "contentBlockDelta" in event:
+                    delta = event["contentBlockDelta"]["delta"]
+                    if "text" in delta:
+                        text = delta["text"]
+                        full_response += text
+                        yield f"data: {json.dumps({'chunk': text})}\n\n"
 
     except ClientError as e:
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -572,10 +626,10 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str,
 
     # Save completed conversation
     conversation.append({"role": "user", "content": user_message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
-    conversation.append({"role": "assistant", "content": full_response, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False})
+    conversation.append({"role": "assistant", "content": full_response, "timestamp": datetime.now().isoformat(), "needs_attention": escalated, "read": False})
     save_conversation(session_id, conversation)
 
-    yield f"data: {json.dumps({'done': True})}\n\n"
+    yield f"data: {json.dumps({'done': True, 'escalated': escalated})}\n\n"
 
 
 @app.get("/")
