@@ -1157,8 +1157,16 @@ resource "aws_lambda_function" "api_stream" {
   memory_size      = 1024
   tags             = local.common_tags
 
+  layers = [
+    "arn:aws:lambda:${data.aws_region.current.region}:753240598075:layer:LambdaAdapterLayerX86:28",
+  ]
+
   environment {
     variables = {
+      AWS_LAMBDA_EXEC_WRAPPER = "/opt/bootstrap"
+      AWS_LWA_INVOKE_MODE     = "response_stream"
+      PORT                    = "8000"
+
       CORS_ORIGINS      = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
       USE_DYNAMODB      = "true"
       DYNAMODB_TABLE    = aws_dynamodb_table.conversations.name
