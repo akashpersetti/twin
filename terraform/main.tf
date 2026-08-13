@@ -73,9 +73,15 @@ resource "aws_dynamodb_table" "conversations" {
   }
 
   global_secondary_index {
-    name            = "by-recency"
-    hash_key        = "gsi_pk"
-    range_key       = "last_activity"
+    name = "by-recency"
+    key_schema {
+      attribute_name = "gsi_pk"
+      key_type       = "HASH"
+    }
+    key_schema {
+      attribute_name = "last_activity"
+      key_type       = "RANGE"
+    }
     projection_type = "ALL"
     read_capacity   = 5
     write_capacity  = 5
@@ -1227,6 +1233,7 @@ resource "aws_api_gateway_integration" "stream_chat_stream_options" {
 }
 
 resource "aws_api_gateway_integration_response" "stream_chat_stream_options" {
+  depends_on  = [aws_api_gateway_integration.stream_chat_stream_options]
   rest_api_id = aws_api_gateway_rest_api.stream.id
   resource_id = aws_api_gateway_resource.stream_chat_stream.id
   http_method = aws_api_gateway_method.stream_chat_stream_options.http_method
@@ -1281,6 +1288,7 @@ resource "aws_api_gateway_method_response" "stream_chat_stream_post" {
 }
 
 resource "aws_api_gateway_integration_response" "stream_chat_stream_post" {
+  depends_on  = [aws_api_gateway_integration.stream_chat_stream_post]
   rest_api_id = aws_api_gateway_rest_api.stream.id
   resource_id = aws_api_gateway_resource.stream_chat_stream.id
   http_method = aws_api_gateway_method.stream_chat_stream_post.http_method
