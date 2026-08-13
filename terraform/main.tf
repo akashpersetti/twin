@@ -23,6 +23,11 @@ locals {
   telegram_notifications_enabled = (
     var.telegram_chat_id != "" && var.telegram_bot_token_parameter_name != ""
   )
+
+  # Every real browser origin the site is served from. Both chat Lambdas need
+  # this, not just local.aliases's raw list — falls back to the CloudFront
+  # domain when no custom domain is configured at all.
+  cors_origins = length(local.aliases) > 0 ? join(",", [for a in local.aliases : "https://${a}"]) : "https://${aws_cloudfront_distribution.main.domain_name}"
 }
 
 # S3 bucket for conversation memory
@@ -325,7 +330,7 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      CORS_ORIGINS      = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      CORS_ORIGINS      = local.cors_origins
       USE_DYNAMODB      = "true"
       DYNAMODB_TABLE    = aws_dynamodb_table.conversations.name
       S3_BUCKET         = aws_s3_bucket.memory.id
@@ -1173,7 +1178,7 @@ resource "aws_lambda_function" "api_stream" {
       AWS_LWA_INVOKE_MODE     = "response_stream"
       PORT                    = "8000"
 
-      CORS_ORIGINS      = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      CORS_ORIGINS      = local.cors_origins
       USE_DYNAMODB      = "true"
       DYNAMODB_TABLE    = aws_dynamodb_table.conversations.name
       S3_BUCKET         = aws_s3_bucket.memory.id
