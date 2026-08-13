@@ -1139,3 +1139,171 @@ resource "aws_route53_record" "blog" {
   ttl     = 300
   records = [aws_cloudfront_distribution.blog[0].domain_name]
 }
+
+# ============================================================================
+# Streaming API: dedicated REST API with response streaming enabled
+# ============================================================================
+
+# Streaming Lambda function — uses Lambda Web Adapter via run.sh
+resource "aws_lambda_function" "api_stream" {
+  filename         = "${path.module}/../backend/lambda-deployment.zip"
+  function_name    = "${local.name_prefix}-api-stream"
+  role             = aws_iam_role.lambda_role.arn
+  handler          = "run.sh"
+  source_code_hash = filebase64sha256("${path.module}/../backend/lambda-deployment.zip")
+  runtime          = "python3.12"
+  architectures    = ["x86_64"]
+  timeout          = var.lambda_timeout
+  memory_size      = 1024
+  tags             = local.common_tags
+
+  environment {
+    variables = {
+      CORS_ORIGINS      = var.use_custom_domain ? "https://${var.root_domain},https://www.${var.root_domain}" : "https://${aws_cloudfront_distribution.main.domain_name}"
+      USE_DYNAMODB      = "true"
+      DYNAMODB_TABLE    = aws_dynamodb_table.conversations.name
+      S3_BUCKET         = aws_s3_bucket.memory.id
+      USE_S3            = "true"
+      BEDROCK_MODEL_ID  = var.bedrock_model_id
+      SNS_TOPIC_ARN     = aws_sns_topic.visitor_notifications.arn
+      EVALS_BUCKET      = aws_s3_bucket.evals.id
+      MAGIC_TOKEN_TABLE = aws_dynamodb_table.magic_tokens.name
+      GITHUB_REPO       = var.blog_github_repo
+    }
+  }
+
+  depends_on = [aws_cloudfront_distribution.main]
+}
+
+# API Gateway REST API for streaming
+resource "aws_api_gateway_rest_api" "stream" {
+  name        = "${local.name_prefix}-api-stream"
+  description = "Streaming API for Twin — response-streaming-enabled /chat/stream endpoint"
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+
+  tags = local.common_tags
+}
+
+# POST /chat/stream resource
+resource "aws_api_gateway_resource" "stream_chat" {
+  rest_api_id = aws_api_gateway_rest_api.stream.id
+  parent_id   = aws_api_gateway_rest_api.stream.root_resource_id
+  path_part   = "chat"
+}
+
+resource "aws_api_gateway_resource" "stream_chat_stream" {
+  rest_api_id = aws_api_gateway_rest_api.stream.id
+  parent_id   = aws_api_gateway_resource.stream_chat.id
+  path_part   = "stream"
+}
+
+# OPTIONS /chat/stream for CORS
+resource "aws_api_gateway_method" "stream_chat_stream_options" {
+  rest_api_id   = aws_api_gateway_rest_api.stream.id
+  resource_id   = aws_api_gateway_resource.stream_chat_stream.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "stream_chat_stream_options" {
+  rest_api_id = aws_api_gateway_rest_api.stream.id
+  resource_id = aws_api_gateway_resource.stream_chat_stream.id
+  http_method = aws_api_gateway_method.stream_chat_stream_options.http_method
+  type        = "MOCK"
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_integration_response" "stream_chat_stream_options" {
+  rest_api_id = aws_api_gateway_rest_api.stream.id
+  resource_id = aws_api_gateway_resource.stream_chat_stream.id
+  http_method = aws_api_gateway_method.stream_chat_stream_options.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
+resource "aws_api_gateway_method_response" "stream_chat_stream_options" {
+  rest_api_id = aws_api_gateway_rest_api.stream.id
+  resource_id = aws_api_gateway_resource.stream_chat_stream.id
+  http_method = aws_api_gateway_method.stream_chat_stream_options.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+# POST /chat/stream with response streaming
+resource "aws_api_gateway_method" "stream_chat_stream_post" {
+  rest_api_id   = aws_api_gateway_rest_api.stream.id
+  resource_id   = aws_api_gateway_resource.stream_chat_stream.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "stream_chat_stream_post" {
+  rest_api_id             = aws_api_gateway_rest_api.stream.id
+  resource_id             = aws_api_gateway_resource.stream_chat_stream.id
+  http_method             = aws_api_gateway_method.stream_chat_stream_post.http_method
+  type                    = "AWS_PROXY"
+  integration_http_method = "POST"
+  uri                     = aws_lambda_function.api_stream.invoke_arn
+
+  # CRITICAL: Enable response streaming
+  response_transfer_mode = "STREAM"
+}
+
+resource "aws_api_gateway_method_response" "stream_chat_stream_post" {
+  rest_api_id = aws_api_gateway_rest_api.stream.id
+  resource_id = aws_api_gateway_resource.stream_chat_stream.id
+  http_method = aws_api_gateway_method.stream_chat_stream_post.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin" = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "stream_chat_stream_post" {
+  rest_api_id = aws_api_gateway_rest_api.stream.id
+  resource_id = aws_api_gateway_resource.stream_chat_stream.id
+  http_method = aws_api_gateway_method.stream_chat_stream_post.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Origin" = "'*'"
+  }
+}
+
+# API Gateway deployment
+resource "aws_api_gateway_deployment" "stream" {
+  depends_on = [
+    aws_api_gateway_integration.stream_chat_stream_options,
+    aws_api_gateway_integration.stream_chat_stream_post,
+  ]
+  rest_api_id = aws_api_gateway_rest_api.stream.id
+}
+
+# API Gateway stage
+resource "aws_api_gateway_stage" "stream" {
+  deployment_id = aws_api_gateway_deployment.stream.id
+  rest_api_id   = aws_api_gateway_rest_api.stream.id
+  stage_name    = var.environment
+  tags          = local.common_tags
+}
+
+# Lambda permission for API Gateway to invoke streaming Lambda
+resource "aws_lambda_permission" "stream_api_gw" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api_stream.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.stream.execution_arn}/*/*"
+}
