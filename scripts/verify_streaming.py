@@ -17,18 +17,16 @@ import requests
 from typing import Generator, Optional, Tuple
 
 def parse_sse_chunk(chunk: str) -> dict:
-    """Parse a single SSE event chunk into a dict."""
-    event = {}
+    """Parse a single SSE event chunk into a dict. This backend sends bare
+    `data: {...}` frames with no `event:` line — the payload IS the event."""
     for line in chunk.split('\n'):
-        if line.startswith('event:'):
-            event['type'] = line[6:].strip()
-        elif line.startswith('data:'):
+        if line.startswith('data:'):
             data_str = line[5:].strip()
             try:
-                event['data'] = json.loads(data_str)
+                return json.loads(data_str)
             except json.JSONDecodeError:
-                event['data'] = data_str
-    return event if event else None
+                return {"raw": data_str}
+    return None
 
 def stream_chat(url: str, message: str, session_id: str = "test-verify", timeout: int = 30) -> Generator[dict, None, None]:
     """
@@ -103,10 +101,10 @@ def verify_streaming(url: str) -> Tuple[bool, str]:
 
             event_count += 1
 
-            if event.get('type') == 'chunk' and 'chunk' in event.get('data', {}):
-                full_response += event['data']['chunk']
+            if 'chunk' in event:
+                full_response += event['chunk']
 
-            if event.get('type') == 'done' or event.get('done'):
+            if event.get('done'):
                 done_time = time.time() - start_time
                 has_done_event = True
                 print(f"✓ Done event received in {done_time:.2f}s")
