@@ -267,10 +267,8 @@ def test_stream_bedrock_faq_tool_round_trip():
     # Verify the second call included the tool result
     second_call_args = mock_converse.call_args_list[1]
     messages_arg = second_call_args[1]["messages"]
-    assert any(
-        m["role"] == "user" and m["content"][0].get("type") == "toolResult"
-        for m in messages_arg
-    )
+    tool_result_message = next(m for m in messages_arg if m["role"] == "user" and "toolResult" in m["content"][0])
+    assert tool_result_message["content"][0]["toolResult"]["toolUseId"] == "t1"
 
     # Verify final text output includes the follow-up answer
     # Chunks are SSE strings like "data: {json}\n\n", so parse them

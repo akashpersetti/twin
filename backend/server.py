@@ -631,10 +631,19 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str,
             tool_input_dict = json.loads(tool_use_block["input"])
             tool_result, escalated = execute_tool_use({"name": tool_use_block["name"], "input": tool_input_dict})
 
-            # Follow-up call with tool result
             follow_up_messages = messages + [
-                {"role": "assistant", "content": [{"type": "toolUse", "toolUseId": tool_use_block["id"], "name": tool_use_block["name"], "input": tool_input_dict}]},
-                {"role": "user", "content": [{"type": "toolResult", "toolUseId": tool_use_block["id"], "content": tool_result}]},
+                {
+                    "role": "assistant",
+                    "content": [
+                        {"toolUse": {"toolUseId": tool_use_block["id"], "name": tool_use_block["name"], "input": tool_input_dict}}
+                    ],
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"toolResult": {"toolUseId": tool_use_block["id"], "content": [{"text": tool_result}]}}
+                    ],
+                },
             ]
 
             response = bedrock_client.converse_stream(
