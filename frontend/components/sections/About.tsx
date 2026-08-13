@@ -32,7 +32,7 @@ export default function About() {
               </h2>
             </div>
             <p className="text-sm max-w-xs sm:text-right" style={{ color: 'var(--text-secondary)' }}>
-              Commit history of what matters. Newest first.
+              The commits that changed the branch. 
             </p>
           </div>
         </SectionReveal>
@@ -96,6 +96,21 @@ export default function About() {
                   </span>
                 </motion.div>
               ))}
+            </div>
+
+            {/* Working tree status */}
+            <div className="px-5 py-2 text-[12px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+              <div>akash@twin % git status</div>
+              <div className="mt-2">On branch main</div>
+              <div>Your branch is up to date with 'origin/main'.</div>
+              <div className="mt-2">Current focus:</div>
+              <div className="pl-4">modified: llm-evaluation</div>
+              <div className="pl-4">modified: agentic-systems</div>
+              <div className="pl-4">modified: production-ai</div>
+              <div className="mt-2">Untracked:</div>
+              <div className="pl-4">new-ideas/</div>
+              <div className="pl-4">things-i-haven&apos;t-built-yet/</div>
+              <div className="mt-2">nothing finished, plenty to build.</div>
             </div>
 
             {/* Trailing prompt with blinking cursor */}
