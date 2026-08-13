@@ -41,7 +41,6 @@ export default function Objective() {
                 <code>
                   {CONFIG.split('\n').map((line, i) => {
                     const isBrace = line.includes('{') || line.includes('}');
-                    const isKey = line.match(/^\s*\w+:/);
                     const isBracket = line.includes('[') || line.includes(']');
 
                     return (

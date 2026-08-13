@@ -406,6 +406,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 {messages.length === 0 && onboardingStep === 'done' && !isLoading && !isStreaming && (
                     <div className="flex flex-col items-center justify-center h-full gap-4 select-none">
                         {!avatarError ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                                 src={avatarSrc}
                                 alt="Akash"

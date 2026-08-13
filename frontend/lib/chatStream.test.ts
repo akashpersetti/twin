@@ -89,7 +89,7 @@ describe('streamChat', () => {
         ));
 
         await expect(async () => {
-            for await (const _ of streamChat('http://x/chat/stream', {})) { /* noop */ }
+            for await (const _event of streamChat('http://x/chat/stream', {})) { void _event; }
         }).rejects.toThrow('slow down');
     });
 

@@ -21,7 +21,7 @@ export default function More() {
                   <ArrowUpRight size={16} style={{ color: 'var(--text-secondary)' }} className="ml-auto" />
                 </div>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  Writing on engineering, AI systems, and things I'm learning.
+                  Writing on engineering, AI systems, and things I&apos;m learning.
                 </p>
                 <p className="mono text-xs mt-3" style={{ color: 'var(--accent-ink)' }}>
                   blog.akashpersetti.com
@@ -39,7 +39,7 @@ export default function More() {
                   <ArrowUpRight size={16} style={{ color: 'var(--text-secondary)' }} className="ml-auto" />
                 </div>
                 <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
-                  Faithfulness scores and eval snapshots from this site's own AI twin, tracked live in production.
+                  Faithfulness scores and eval snapshots from this site&apos;s own AI twin, tracked live in production.
                 </p>
                 <span
                   className="tag"

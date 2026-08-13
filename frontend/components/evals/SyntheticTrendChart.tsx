@@ -47,13 +47,19 @@ export default function SyntheticTrendChart({
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <LineChart data={data} onClick={(e: any) => e?.activePayload?.[0] && onPointClick(e.activePayload[0].payload.key)}>
+      <LineChart
+        data={data}
+        onClick={(e: unknown) => {
+          const point = (e as { activePayload?: Array<{ payload: { key: string } }> } | null)?.activePayload?.[0];
+          if (point) onPointClick(point.payload.key);
+        }}
+      >
         <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
         <XAxis dataKey="date" stroke="var(--text-secondary)" fontSize={12} />
         <YAxis domain={[0, 1]} stroke="var(--text-secondary)" fontSize={12} />
         <Tooltip
           contentStyle={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 0 }}
-          formatter={(value: any) => value?.toFixed?.(2) ?? 'n/a'}
+          formatter={(value: unknown) => (typeof value === 'number' ? value.toFixed(2) : 'n/a')}
         />
         <Line type="monotone" dataKey="recall_at_5" stroke="var(--accent)" strokeWidth={2} dot={{ r: 3 }} name="Recall@5" />
         <Line type="monotone" dataKey="ndcg_at_5" stroke="var(--accent-soft)" strokeWidth={2} dot={{ r: 3 }} name="nDCG@5" />
