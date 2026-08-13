@@ -619,6 +619,11 @@ def stream_bedrock(conversation: List[Dict], user_message: str, session_id: str,
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
         return
 
+    # Add nudge notice if threshold reached
+    if len(conversation) >= SESSION_NUDGE_THRESHOLD and not already_nudged(conversation):
+        full_response += SESSION_NUDGE_NOTICE
+        yield f"data: {json.dumps({'chunk': SESSION_NUDGE_NOTICE})}\n\n"
+
     # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
     if user_message != "__greet__":
         retrieved_chunks = retrieval.retrieve(user_message, k=5)
