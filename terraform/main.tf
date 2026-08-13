@@ -1261,10 +1261,10 @@ resource "aws_api_gateway_method" "stream_chat_stream_post" {
 resource "aws_api_gateway_integration" "stream_chat_stream_post" {
   rest_api_id             = aws_api_gateway_rest_api.stream.id
   resource_id             = aws_api_gateway_resource.stream_chat_stream.id
-  http_method             = aws_api_gateway_method.stream_chat_stream_post.http_method
-  type                    = "AWS_PROXY"
-  integration_http_method = "POST"
-  uri                     = aws_lambda_function.api_stream.invoke_arn
+  http_method              = aws_api_gateway_method.stream_chat_stream_post.http_method
+  type                     = "AWS_PROXY"
+  integration_http_method  = "POST"
+  uri                      = "arn:aws:apigateway:${data.aws_region.current.region}:lambda:path/2021-11-15/functions/${aws_lambda_function.api_stream.arn}/response-streaming-invocations"
 
   # CRITICAL: Enable response streaming
   response_transfer_mode = "STREAM"
