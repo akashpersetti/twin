@@ -1300,11 +1300,29 @@ resource "aws_api_gateway_integration_response" "stream_chat_stream_post" {
 
 # API Gateway deployment
 resource "aws_api_gateway_deployment" "stream" {
-  depends_on = [
-    aws_api_gateway_integration.stream_chat_stream_options,
-    aws_api_gateway_integration.stream_chat_stream_post,
-  ]
   rest_api_id = aws_api_gateway_rest_api.stream.id
+
+  # Without this, Terraform only creates this deployment once and never
+  # snapshots a new one when methods/integrations/responses change underneath
+  # it — the stage keeps serving whatever was live at creation time.
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.stream_chat.id,
+      aws_api_gateway_resource.stream_chat_stream.id,
+      aws_api_gateway_method.stream_chat_stream_options.id,
+      aws_api_gateway_integration.stream_chat_stream_options.id,
+      aws_api_gateway_method_response.stream_chat_stream_options.id,
+      aws_api_gateway_integration_response.stream_chat_stream_options.id,
+      aws_api_gateway_method.stream_chat_stream_post.id,
+      aws_api_gateway_integration.stream_chat_stream_post.id,
+      aws_api_gateway_method_response.stream_chat_stream_post.id,
+      aws_api_gateway_integration_response.stream_chat_stream_post.id,
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # API Gateway stage
