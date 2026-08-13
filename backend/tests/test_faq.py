@@ -324,3 +324,28 @@ def test_stream_bedrock_escalate_tool_sets_needs_attention():
             except json.JSONDecodeError:
                 pass
     assert escalation_found
+
+
+def test_chat_stream_answers_qn_shortcut_without_calling_bedrock():
+    def _read_sse_events(response):
+        """Parse SSE events from a streaming response."""
+        events = []
+        for line in response.iter_lines():
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
+            if line.startswith('data: '):
+                try:
+                    events.append(json.loads(line[6:]))
+                except json.JSONDecodeError:
+                    pass
+        return events
+
+    with patch("server.bedrock_client.converse_stream") as mock_converse_stream:
+        response = client.post("/chat/stream", json={"message": "Q1"})
+        events = _read_sse_events(response)
+
+    mock_converse_stream.assert_not_called()
+    chunks = [e["chunk"] for e in events if "chunk" in e]
+    assert len(chunks) == 1
+    assert chunks[0].startswith("**Q1:**")
+    assert any(e.get("done") for e in events)

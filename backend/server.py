@@ -354,6 +354,43 @@ def match_faq_shortcut(message: str) -> Optional[Dict]:
         return None
 
 
+from dataclasses import dataclass
+
+
+@dataclass
+class GuardDecision:
+    """Outcome of the pre-Bedrock guard chain, shared identically by /chat and /chat/stream."""
+    outcome: str  # "human_controlled" | "fixed_reply" | "generate"
+    conversation: List[Dict]
+    reply_text: Optional[str] = None
+
+
+def resolve_chat_guards(session_id: str, message: str) -> GuardDecision:
+    """Run every guard that can short-circuit a reply before Bedrock is ever called.
+
+    Order matches the pre-refactor /chat handler exactly: human-controlled check,
+    then FAQ shortcut, then (after loading history) session cap, then scope check.
+    """
+    if get_controlled_by(session_id) == "human":
+        return GuardDecision("human_controlled", list(load_conversation(session_id)))
+
+    faq_match = match_faq_shortcut(message)
+    if faq_match:
+        text = f"**Q{faq_match['faq']}:** {faq_match['question']}\n\n{faq_match['answer']}"
+        return GuardDecision("fixed_reply", list(load_conversation(session_id)), text)
+
+    conversation = load_conversation(session_id)
+
+    cap_message = check_session_cap(conversation)
+    if cap_message is not None:
+        return GuardDecision("fixed_reply", conversation, cap_message)
+
+    if not check_scope(conversation, message):
+        return GuardDecision("fixed_reply", conversation, SCOPE_DEFLECTION)
+
+    return GuardDecision("generate", conversation)
+
+
 def build_bedrock_messages(conversation: List[Dict], user_message: str, user_name: Optional[str] = None) -> List[Dict]:
     """Build the messages list for Bedrock in the correct format."""
     if user_message == "__greet__":
@@ -835,49 +872,30 @@ async def chat(request: ChatRequest):
         check_rate_limit(session_id)
         message = clamp_message(request.message)
 
-        if get_controlled_by(session_id) == "human":
-            conversation = list(load_conversation(session_id))
+        decision = resolve_chat_guards(session_id, message)
+
+        if decision.outcome == "human_controlled":
+            conversation = decision.conversation
             conversation.append(
                 {"role": "user", "content": message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
             )
             save_conversation(session_id, conversation, "human")
             return ChatResponse(response=None, session_id=session_id, human_controlled=True)
 
-        faq_match = match_faq_shortcut(message)
-        if faq_match:
-            assistant_response = f"**Q{faq_match['faq']}:** {faq_match['question']}\n\n{faq_match['answer']}"
-            conversation = load_conversation(session_id)
-            conversation.append(
-                {"role": "user", "content": message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
-            )
-            conversation.append(
-                {"role": "assistant", "content": assistant_response, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
-            )
-            save_conversation(session_id, conversation)
-            return ChatResponse(response=assistant_response, session_id=session_id)
+        conversation = decision.conversation
 
-        # Load conversation history
-        conversation = load_conversation(session_id)
-
-        cap_message = check_session_cap(conversation)
-        if cap_message is not None:
-            assistant_response, escalated = cap_message, False
-        elif not check_scope(conversation, message):
-            assistant_response, escalated = SCOPE_DEFLECTION, False
+        if decision.outcome == "fixed_reply":
+            assistant_response, escalated = decision.reply_text, False
         else:
             assistant_response, escalated = call_bedrock(conversation, message, user_name=request.user_name)
             if len(conversation) >= SESSION_NUDGE_THRESHOLD and not already_nudged(conversation):
                 assistant_response += SESSION_NUDGE_NOTICE
 
-            # Capture for async live faithfulness judging (skip synthetic __greet__ pings)
             if message != "__greet__":
                 retrieved_chunks = retrieval.retrieve(message, k=5)
                 capture_live_eval(message, retrieved_chunks, assistant_response)
 
-        # Do not mutate the list returned by storage while extending the history.
         conversation = list(conversation)
-
-        # Update conversation history
         conversation.append(
             {"role": "user", "content": message, "timestamp": datetime.now().isoformat(), "needs_attention": False, "read": False}
         )
@@ -890,8 +908,6 @@ async def chat(request: ChatRequest):
                 "read": False,
             }
         )
-
-        # Save conversation
         save_conversation(session_id, conversation)
 
         if escalated and SNS_TOPIC_ARN:
@@ -919,31 +935,25 @@ async def chat_stream(request: ChatRequest):
         session_id = request.session_id or str(uuid.uuid4())
         check_rate_limit(session_id)
         message = clamp_message(request.message)
-        if get_controlled_by(session_id) == "human":
-            conversation = load_conversation(session_id)
-            return StreamingResponse(
-                stream_human_controlled(session_id, conversation, message),
-                media_type="text/event-stream",
-                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-            )
-        conversation = load_conversation(session_id)
 
-        cap_message = check_session_cap(conversation)
-        if cap_message is not None:
+        decision = resolve_chat_guards(session_id, message)
+
+        if decision.outcome == "human_controlled":
             return StreamingResponse(
-                stream_fixed_reply(cap_message, session_id, conversation, message),
+                stream_human_controlled(session_id, decision.conversation, message),
                 media_type="text/event-stream",
                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
             )
-        if not check_scope(conversation, message):
+
+        if decision.outcome == "fixed_reply":
             return StreamingResponse(
-                stream_fixed_reply(SCOPE_DEFLECTION, session_id, conversation, message),
+                stream_fixed_reply(decision.reply_text, session_id, decision.conversation, message),
                 media_type="text/event-stream",
                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
             )
 
         return StreamingResponse(
-            stream_bedrock(conversation, message, session_id, user_name=request.user_name),
+            stream_bedrock(decision.conversation, message, session_id, user_name=request.user_name),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
