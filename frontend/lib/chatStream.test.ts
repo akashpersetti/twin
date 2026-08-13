@@ -1,186 +1,104 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { parseSSEChunk, streamChat } from './chatStream';
 
 describe('parseSSEChunk', () => {
-  it('parses single-line SSE event', () => {
-    const chunk = 'event: message\ndata: {"chunk":"hello"}';
-    const parsed = parseSSEChunk(chunk);
-    expect(parsed?.type).toBe('message');
-    expect(parsed?.data).toEqual({ chunk: 'hello' });
-  });
+    it('parses a complete single event', () => {
+        const { events, remainder } = parseSSEChunk('data: {"chunk":"hi"}\n\n');
+        expect(events).toEqual([{ chunk: 'hi' }]);
+        expect(remainder).toBe('');
+    });
 
-  it('handles fragmented JSON in data field', () => {
-    const chunk = 'event: update\ndata: {"text":"incomplete JSON"}';
-    const parsed = parseSSEChunk(chunk);
-    expect(parsed?.data.text).toBe('incomplete JSON');
-  });
+    it('holds back an incomplete trailing event', () => {
+        const { events, remainder } = parseSSEChunk('data: {"chunk":"hi"}\n\ndata: {"chu');
+        expect(events).toEqual([{ chunk: 'hi' }]);
+        expect(remainder).toBe('data: {"chu');
+    });
 
-  it('returns null for empty chunk', () => {
-    const parsed = parseSSEChunk('');
-    expect(parsed).toBeNull();
-  });
+    it('parses multiple events delivered in one buffer', () => {
+        const { events } = parseSSEChunk('data: {"chunk":"a"}\n\ndata: {"chunk":"b"}\n\n');
+        expect(events).toEqual([{ chunk: 'a' }, { chunk: 'b' }]);
+    });
 
-  it('handles JSON parse errors gracefully', () => {
-    const chunk = 'event: error\ndata: not-json-at-all';
-    const parsed = parseSSEChunk(chunk);
-    expect(parsed?.data).toBe('not-json-at-all');
-  });
-
-  it('handles multi-event chunks', () => {
-    const chunk1 = 'event: chunk\ndata: {"chunk":"line 1"}';
-    const chunk2 = 'event: chunk\ndata: {"chunk":"line 2"}';
-    const p1 = parseSSEChunk(chunk1);
-    const p2 = parseSSEChunk(chunk2);
-    expect(p1?.data.chunk).toBe('line 1');
-    expect(p2?.data.chunk).toBe('line 2');
-  });
+    it('skips a malformed event without throwing', () => {
+        const { events } = parseSSEChunk('data: {not json}\n\ndata: {"chunk":"ok"}\n\n');
+        expect(events).toEqual([{ chunk: 'ok' }]);
+    });
 });
 
+function fakeStreamResponse(chunks: string[], ok = true, status = 200, jsonBody: unknown = {}) {
+    const encoder = new TextEncoder();
+    let i = 0;
+    const body = new ReadableStream<Uint8Array>({
+        pull(controller) {
+            if (i < chunks.length) {
+                controller.enqueue(encoder.encode(chunks[i]));
+                i++;
+            } else {
+                controller.close();
+            }
+        },
+    });
+    return { ok, status, body, json: async () => jsonBody } as unknown as Response;
+}
+
 describe('streamChat', () => {
-  it('handles successful streaming response', async () => {
-    // Mock fetch to return a readable stream with SSE events
-    const mockResponse = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
-          new TextEncoder().encode('event: chunk\ndata: {"chunk":"Hello "}\n\n')
-        );
-        controller.enqueue(
-          new TextEncoder().encode('event: chunk\ndata: {"chunk":"world"}\n\n')
-        );
-        controller.enqueue(
-          new TextEncoder().encode('event: done\ndata: {"done":true}\n\n')
-        );
-        controller.close();
-      },
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('reassembles one SSE event split across many network reads', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fakeStreamResponse([
+            'data: {"chu',
+            'nk":"Hello"}\n\nda',
+            'ta: {"chunk":" world"}\n\n',
+            'data: {"done":true}\n\n',
+        ])));
+
+        const events = [];
+        for await (const event of streamChat('http://x/chat/stream', { message: 'hi' })) events.push(event);
+
+        expect(events).toEqual([{ chunk: 'Hello' }, { chunk: ' world' }, { done: true }]);
     });
 
-    const originalFetch = global.fetch;
-    global.fetch = async () => ({
-      ok: true,
-      body: mockResponse,
-      status: 200,
-      statusText: 'OK',
-    } as any);
+    it('parses multiple SSE events delivered in a single network chunk', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fakeStreamResponse([
+            'data: {"session_id":"s1"}\n\ndata: {"chunk":"hi"}\n\ndata: {"done":true}\n\n',
+        ])));
 
-    const events = [];
-    for await (const event of streamChat('session-1', 'test', 'http://localhost:8000/chat/stream')) {
-      events.push(event);
-    }
+        const events = [];
+        for await (const event of streamChat('http://x/chat/stream', {})) events.push(event);
 
-    global.fetch = originalFetch;
-
-    expect(events.length).toBe(3);
-    expect(events[0].chunk).toBe('Hello ');
-    expect(events[1].chunk).toBe('world');
-    expect(events[2].done).toBe(true);
-  });
-
-  it('throws on non-200 response', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = async () => ({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      body: null,
-    } as any);
-
-    let threw = false;
-    try {
-      for await (const _ of streamChat('session-1', 'test', 'http://localhost:8000/chat/stream')) {
-        // noop
-      }
-    } catch (e) {
-      threw = true;
-      expect(String(e)).toContain('Streaming request failed: 500');
-    }
-
-    global.fetch = originalFetch;
-    expect(threw).toBe(true);
-  });
-
-  it('throws if no response body', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = async () => ({
-      ok: true,
-      body: null,
-      status: 200,
-      statusText: 'OK',
-    } as any);
-
-    let threw = false;
-    try {
-      for await (const _ of streamChat('session-1', 'test', 'http://localhost:8000/chat/stream')) {
-        // noop
-      }
-    } catch (e) {
-      threw = true;
-      expect(String(e)).toContain('No response body');
-    }
-
-    global.fetch = originalFetch;
-    expect(threw).toBe(true);
-  });
-
-  it('handles human-controlled outcome', async () => {
-    const mockResponse = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
-          new TextEncoder().encode('event: human_controlled\ndata: {"human_controlled":true}\n\n')
-        );
-        controller.enqueue(
-          new TextEncoder().encode('event: done\ndata: {"done":true}\n\n')
-        );
-        controller.close();
-      },
+        expect(events).toEqual([{ session_id: 's1' }, { chunk: 'hi' }, { done: true }]);
     });
 
-    const originalFetch = global.fetch;
-    global.fetch = async () => ({
-      ok: true,
-      body: mockResponse,
-      status: 200,
-      statusText: 'OK',
-    } as any);
+    it('surfaces human_controlled and error events', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fakeStreamResponse([
+            'data: {"human_controlled":true}\n\ndata: {"done":true}\n\n',
+        ])));
 
-    const events = [];
-    for await (const event of streamChat('session-1', 'test', 'http://localhost:8000/chat/stream')) {
-      events.push(event);
-    }
+        const events = [];
+        for await (const event of streamChat('http://x/chat/stream', {})) events.push(event);
 
-    global.fetch = originalFetch;
-
-    expect(events.some(e => e.human_controlled)).toBe(true);
-  });
-
-  it('handles escalation flag', async () => {
-    const mockResponse = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
-          new TextEncoder().encode('event: chunk\ndata: {"chunk":"Escalating..."}\n\n')
-        );
-        controller.enqueue(
-          new TextEncoder().encode('event: done\ndata: {"done":true,"escalated":true}\n\n')
-        );
-        controller.close();
-      },
+        expect(events.some(e => e.human_controlled)).toBe(true);
+        expect(events.some(e => e.done)).toBe(true);
     });
 
-    const originalFetch = global.fetch;
-    global.fetch = async () => ({
-      ok: true,
-      body: mockResponse,
-      status: 200,
-      statusText: 'OK',
-    } as any);
+    it('throws before streaming on a non-ok HTTP response, using the 429 detail when present', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+            fakeStreamResponse([], false, 429, { detail: 'slow down' })
+        ));
 
-    const events = [];
-    for await (const event of streamChat('session-1', 'test', 'http://localhost:8000/chat/stream')) {
-      events.push(event);
-    }
+        await expect(async () => {
+            for await (const _ of streamChat('http://x/chat/stream', {})) { /* noop */ }
+        }).rejects.toThrow('slow down');
+    });
 
-    global.fetch = originalFetch;
+    it('passes the abort signal through to fetch', async () => {
+        const fetchMock = vi.fn().mockResolvedValue(fakeStreamResponse(['data: {"done":true}\n\n']));
+        vi.stubGlobal('fetch', fetchMock);
+        const controller = new AbortController();
 
-    const doneEvent = events.find(e => e.done);
-    expect(doneEvent?.escalated).toBe(true);
-  });
+        const events = [];
+        for await (const event of streamChat('http://x/chat/stream', {}, controller.signal)) events.push(event);
+
+        expect(fetchMock.mock.calls[0][1].signal).toBe(controller.signal);
+    });
 });
