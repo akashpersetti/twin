@@ -59,6 +59,6 @@ output "blog_cloudfront_distribution_id" {
 }
 
 output "stream_api_gateway_url" {
-  description = "URL of the streaming API Gateway with response streaming enabled"
-  value       = "${aws_api_gateway_stage.stream.invoke_url}/chat/stream"
+  description = "Invoke URL of the dedicated REST API used for real Bedrock token streaming on /chat/stream"
+  value       = aws_api_gateway_stage.stream.invoke_url
 }

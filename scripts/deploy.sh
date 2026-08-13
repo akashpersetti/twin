@@ -42,7 +42,7 @@ echo "🎯 Applying Terraform..."
 "${TF_APPLY_CMD[@]}"
 
 API_URL=$(terraform output -raw api_gateway_url)
-STREAM_API_URL=$(terraform output -raw stream_api_gateway_url 2>/dev/null || echo "http://localhost:8000/chat/stream")
+STREAM_API_URL=$(terraform output -raw stream_api_gateway_url 2>/dev/null || echo "http://localhost:8000")
 FRONTEND_BUCKET=$(terraform output -raw s3_frontend_bucket)
 CUSTOM_URL=$(terraform output -raw custom_domain_url 2>/dev/null || true)
 
