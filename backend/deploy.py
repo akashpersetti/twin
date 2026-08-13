@@ -2,6 +2,7 @@ import os
 import shutil
 import zipfile
 import subprocess
+import stat
 
 
 def main():
@@ -45,7 +46,15 @@ def main():
     for file in ["server.py", "auth.py", "lambda_handler.py", "telegram_handler.py", "context.py", "resources.py", "retrieval.py", "bedrock_client.py"]:
         if os.path.exists(file):
             shutil.copy2(file, "lambda-package/")
-    
+
+    # Copy run.sh bootstrap script for Lambda Web Adapter
+    if os.path.exists("run.sh"):
+        dest_run_sh = os.path.join("lambda-package", "run.sh")
+        shutil.copy2("run.sh", dest_run_sh)
+        # Make it executable (755 permissions)
+        st = os.stat(dest_run_sh)
+        os.chmod(dest_run_sh, st.st_mode | stat.S_IEXEC | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
     # Copy data directory
     if os.path.exists("data"):
         shutil.copytree("data", "lambda-package/data")
@@ -57,7 +66,14 @@ def main():
             for file in files:
                 file_path = os.path.join(root, file)
                 arcname = os.path.relpath(file_path, "lambda-package")
-                zipf.write(file_path, arcname)
+                # Preserve executable permissions for run.sh
+                if file == "run.sh":
+                    zinfo = zipfile.ZipInfo(arcname)
+                    zinfo.external_attr = os.stat(file_path).st_mode << 16
+                    with open(file_path, "rb") as f:
+                        zipf.writestr(zinfo, f.read())
+                else:
+                    zipf.write(file_path, arcname)
 
     # Show package size
     size_mb = os.path.getsize("lambda-deployment.zip") / (1024 * 1024)
