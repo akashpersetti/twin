@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
 import { Send } from 'lucide-react';
 
@@ -468,11 +469,11 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                             <div className="w-7 shrink-0" />
                                         )}
                                         <div
-                                            className="text-[13px] leading-relaxed"
-                                            style={{ color: 'var(--text-primary)' }}
+                                            className="text-[13px] leading-relaxed px-3 py-2"
+                                            style={{ color: 'var(--text-primary)', background: 'var(--bubble-assistant-bg)' }}
                                         >
                                             {message.role === 'assistant' ? (
-                                                <ReactMarkdown components={mdComponents}>{message.content}</ReactMarkdown>
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{message.content}</ReactMarkdown>
                                             ) : null}
                                             {isLastAssistant && <span className="sr-only">Typing</span>}
                                         </div>
@@ -483,8 +484,8 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                 {message.role === 'user' && (
                                     <div className="flex justify-end">
                                         <div
-                                            className="max-w-[85%] text-[13px] leading-relaxed"
-                                            style={{ color: 'var(--text-primary)' }}
+                                            className="max-w-[85%] text-[13px] leading-relaxed px-3 py-2"
+                                            style={{ color: 'var(--text-primary)', background: 'var(--bubble-user-bg)' }}
                                         >
                                             <span>{message.content}</span>
                                         </div>
@@ -501,10 +502,10 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                                             <div className="w-7 shrink-0" />
                                         )}
                                         <div
-                                            className="pl-3 text-[13px] leading-relaxed"
+                                            className="text-[13px] leading-relaxed px-3 py-2"
                                             style={{
-                                                borderLeft: '2px solid var(--accent)',
                                                 color: 'var(--text-primary)',
+                                                background: 'var(--bubble-human-bg)',
                                             }}
                                         >
                                             <p style={{ color: 'var(--accent)', fontSize: '0.7em', fontWeight: 600, marginBottom: '0.25em', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
