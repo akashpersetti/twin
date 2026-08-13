@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
 import { Send } from 'lucide-react';
+import { streamChat } from '@/lib/chatStream';
 
 const MONO = 'var(--font-mono), "JetBrains Mono", "Fira Code", monospace';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -66,6 +67,89 @@ const mdComponents: Components = {
 
 export interface TwinHandle {
     clear: () => void;
+}
+
+/**
+ * Attempt to stream chat response from /chat/stream endpoint.
+ * Falls back to non-streaming /chat if streaming unavailable.
+ */
+async function runChatStream(
+  sessionId: string,
+  message: string,
+  streamApiUrl: string | undefined,
+  onChunk: (text: string) => void,
+  onDone: (escalated: boolean) => void,
+  onError: (error: string) => void
+): Promise<void> {
+  if (!streamApiUrl) {
+    // No streaming URL available, fall back to non-streaming
+    await runChatNonStreaming(sessionId, message, onChunk, onDone, onError);
+    return;
+  }
+
+  try {
+    let escalated = false;
+
+    for await (const event of streamChat(sessionId, message, streamApiUrl)) {
+      if (event.chunk) {
+        onChunk(event.chunk);
+      }
+      if (event.done) {
+        escalated = event.escalated || false;
+        onDone(escalated);
+        break;
+      }
+      if (event.human_controlled) {
+        onDone(false);
+        break;
+      }
+    }
+  } catch (err) {
+    // Streaming failed; fall back to non-streaming
+    console.warn('Streaming failed, falling back to non-streaming:', err);
+    await runChatNonStreaming(sessionId, message, onChunk, onDone, onError);
+  }
+}
+
+/**
+ * Non-streaming fallback: POST to /chat and reveal response with typewriter effect.
+ * Keep existing logic here; this is the fallback when streaming is unavailable.
+ */
+async function runChatNonStreaming(
+  sessionId: string,
+  message: string,
+  onChunk: (text: string) => void,
+  onDone: (escalated: boolean) => void,
+  onError: (error: string) => void
+): Promise<void> {
+  try {
+    const response = await fetch(`${API_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: sessionId,
+        message: message,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const fullText = data.response || '';
+    const escalated = data.needs_attention || false;
+
+    // Typewriter effect: reveal text character by character
+    for (let i = 0; i < fullText.length; i++) {
+      onChunk(fullText[i]);
+      await new Promise(resolve => setTimeout(resolve, 20)); // 20ms per character
+    }
+
+    onDone(escalated);
+  } catch (err) {
+    onError(err instanceof Error ? err.message : 'Unknown error');
+  }
 }
 
 const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
@@ -254,42 +338,60 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         let placeholderAdded = false;
 
         try {
-            const response = await fetch(`${API_URL}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMessage.content, session_id: sessionId || undefined }),
-            });
+            // Try to determine streaming endpoint
+            const streamApiUrl = process.env.NEXT_PUBLIC_STREAM_API_URL
+                ? `${process.env.NEXT_PUBLIC_STREAM_API_URL}/chat/stream`
+                : undefined;
 
-            if (!response.ok) {
-                const errorBody = await response.json().catch(() => null);
-                throw new Error(response.status === 429 && errorBody?.detail ? errorBody.detail : 'Request failed');
-            }
-
-            const data = await response.json();
-            if (data.session_id && !sessionId) setSessionId(data.session_id);
-
-            if (data.human_controlled) {
-                setIsLoading(false);
-                return;
-            }
-
-            // Add placeholder and begin typewriter animation
+            // Add placeholder message before attempting to get response
             setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', timestamp: new Date() }]);
             placeholderAdded = true;
             setIsLoading(false);
             setIsStreaming(true);
 
-            const text: string = data.response;
-            await new Promise<void>(resolve => {
-                let pos = 0;
-                const tick = setInterval(() => {
-                    pos = Math.min(pos + 5, text.length);
+            // Use real streaming if available, falls back to non-streaming
+            await runChatStream(
+                sessionId || '',
+                userMessage.content,
+                streamApiUrl,
+                (chunk) => {
+                    // Append chunk to current message
                     setMessages(prev => prev.map(m =>
-                        m.id === assistantId ? { ...m, content: text.slice(0, pos) } : m
+                        m.id === assistantId ? { ...m, content: m.content + chunk } : m
                     ));
-                    if (pos >= text.length) { clearInterval(tick); resolve(); }
-                }, 16);
-            });
+                },
+                () => {
+                    // Response complete - escalation flag handled by polling mechanism if needed
+                },
+                (error) => {
+                    // Error occurred after streaming started
+                    console.error('Chat error:', error);
+                    setMessages(prev => prev.map(m =>
+                        m.id === assistantId ? { ...m, content: `Error: ${error}` } : m
+                    ));
+                }
+            );
+
+            // Also try to set session ID and check for human_controlled from non-streaming endpoint
+            // This is for legacy flow compatibility
+            try {
+                const legacyResponse = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMessage.content, session_id: sessionId || undefined }),
+                });
+
+                if (legacyResponse.ok) {
+                    const data = await legacyResponse.json();
+                    if (data.session_id && !sessionId) setSessionId(data.session_id);
+                    if (data.human_controlled) {
+                        // Replace streaming response with human control notice
+                        setMessages(prev => prev.filter(m => m.id !== assistantId));
+                    }
+                }
+            } catch {
+                // Ignore legacy endpoint errors
+            }
 
         } catch (error) {
             console.error('Chat error:', error);
