@@ -315,3 +315,102 @@ def test_chat_stream_skips_bedrock_when_human_controlled():
     assert len(saved_conversation) == 1
     assert saved_conversation[0]["role"] == "user"
     assert mock_save.call_args.args[2] == "human"
+
+
+def test_chat_stream_sends_nudge_at_session_threshold(monkeypatch):
+    """Verify /chat/stream sends SESSION_NUDGE_NOTICE when conversation reaches SESSION_NUDGE_THRESHOLD."""
+    server._request_log.clear()
+    # Set a low threshold so we can trigger it quickly
+    monkeypatch.setattr("server.SESSION_NUDGE_THRESHOLD", 2)
+
+    session_id = "test_nudge_session"
+
+    # Pre-populate conversation to just below threshold
+    conversation = [
+        {"role": "user", "content": "Turn 1", "timestamp": "2025-01-01T00:00:00", "needs_attention": False, "read": False},
+        {"role": "assistant", "content": "Response 1", "timestamp": "2025-01-01T00:01:00", "needs_attention": False, "read": False},
+    ]
+
+    # Mock stream response
+    with patch.object(server, "load_conversation", return_value=conversation), \
+         patch.object(server.bedrock_client, "converse_stream") as mock_converse, \
+         patch.object(server, "save_conversation"):
+        mock_converse.return_value = {
+            "stream": iter([
+                {"contentBlockStart": {"contentBlockIndex": 0, "start": {"text": {}}}},
+                {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"text": "Response 2"}}},
+                {"messageStop": {"stopReason": "end_turn"}},
+            ])
+        }
+        response = client.post("/chat/stream", json={"message": "Turn 2", "session_id": session_id})
+        events = _read_sse_events(response)
+
+    # Verify nudge notice was sent in the stream
+    chunks = [e["chunk"] for e in events if "chunk" in e]
+    full_response = "".join(chunks)
+    assert server.SESSION_NUDGE_NOTICE in full_response, "Nudge notice not found in streaming response"
+
+
+def test_chat_stream_escalation_persists_needs_attention():
+    """Verify /chat/stream marks escalated messages with needs_attention: True in stored conversation."""
+    server._request_log.clear()
+    session_id = "test_escalation_session"
+
+    # Mock escalation tool use
+    with patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server, "execute_tool_use", return_value=("Tool executed", True)), \
+         patch.object(server.bedrock_client, "converse_stream") as mock_stream, \
+         patch.object(server, "save_conversation") as mock_save, \
+         patch.object(server.retrieval, "retrieve", return_value=[]):
+        # First turn: escalate_to_human_tool
+        first_response = {
+            "stream": iter([
+                {"contentBlockStart": {"contentBlockIndex": 0, "start": {"toolUse": {"toolUseId": "t1", "name": "escalate_to_human_tool"}}}},
+                {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"toolUse": {"input": "{}"}}}},
+                {"messageStop": {"stopReason": "tool_use"}},
+            ])
+        }
+        # Second turn: follow-up text
+        second_response = {
+            "stream": iter([
+                {"contentBlockStart": {"contentBlockIndex": 0, "start": {"text": {}}}},
+                {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"text": "I'm escalating this."}}},
+                {"messageStop": {"stopReason": "end_turn"}},
+            ])
+        }
+        mock_stream.side_effect = [first_response, second_response]
+
+        response = client.post("/chat/stream", json={"message": "Please escalate", "session_id": session_id})
+        events = _read_sse_events(response)
+
+    # Verify escalation flag was sent
+    assert any(e.get("escalated") for e in events), "Escalation flag not found in response"
+
+    # Verify conversation was persisted with needs_attention: True
+    saved_conversation = mock_save.call_args.args[1]
+    assistant_messages = [m for m in saved_conversation if m["role"] == "assistant"]
+    assert len(assistant_messages) > 0, "No assistant message saved"
+    assert assistant_messages[-1]["needs_attention"] is True, "Escalated message not marked needs_attention"
+
+
+def test_chat_stream_connection_error_handling():
+    """Verify /chat/stream gracefully handles Bedrock connection errors."""
+    server._request_log.clear()
+    from botocore.exceptions import ClientError
+
+    with patch.object(server, "load_conversation", return_value=[]), \
+         patch.object(server.bedrock_client, "converse_stream") as mock_converse, \
+         patch.object(server, "save_conversation"):
+        mock_converse.side_effect = ClientError(
+            {"Error": {"Code": "ConnectionError", "Message": "Unable to connect"}},
+            "converse_stream"
+        )
+
+        response = client.post("/chat/stream", json={"message": "Hello", "session_id": "test_error"})
+        events = _read_sse_events(response)
+
+    # Verify error is returned in stream (status 200 is correct for streaming responses)
+    assert response.status_code == 200
+    error_events = [e for e in events if "error" in e]
+    assert len(error_events) > 0, "Error event not found in streaming response"
+    assert "ConnectionError" in error_events[0]["error"]

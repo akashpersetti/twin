@@ -5,9 +5,11 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
 import { Send } from 'lucide-react';
+import { streamChat } from '@/lib/chatStream';
 
 const MONO = 'var(--font-mono), "JetBrains Mono", "Fira Code", monospace';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const STREAM_API_URL = process.env.NEXT_PUBLIC_STREAM_API_URL || API_URL;
 
 interface Message {
     id: string;
@@ -102,53 +104,67 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         hiddenInputRef.current?.focus({ preventScroll: true });
     }, []);
 
-    const triggerGreeting = async (name: string) => {
-        const greetId = (Date.now() + 2).toString();
+    const runChatStream = async (
+        body: { message: string; session_id?: string; user_name?: string },
+        messageId: string,
+    ): Promise<{ humanControlled: boolean }> => {
         let placeholderAdded = false;
-        setIsLoading(true);
+        let contentSoFar = '';
+        let humanControlled = false;
+        let gotDone = false;
 
-        try {
-            const response = await fetch(`${API_URL}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: '__greet__', user_name: name }),
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.json().catch(() => null);
-                throw new Error(response.status === 429 && errorBody?.detail ? errorBody.detail : 'Request failed');
-            }
-
-            const data = await response.json();
-            if (data.session_id) setSessionId(data.session_id);
-
-            setMessages(prev => [...prev, { id: greetId, role: 'assistant', content: '', timestamp: new Date() }]);
+        const ensurePlaceholder = () => {
+            if (placeholderAdded) return;
+            setMessages(prev => [...prev, { id: messageId, role: 'assistant', content: '', timestamp: new Date() }]);
             placeholderAdded = true;
             setIsLoading(false);
             setIsStreaming(true);
+        };
 
-            const text: string = data.response;
-            await new Promise<void>(resolve => {
-                let pos = 0;
-                const tick = setInterval(() => {
-                    pos = Math.min(pos + 5, text.length);
-                    setMessages(prev => prev.map(m =>
-                        m.id === greetId ? { ...m, content: text.slice(0, pos) } : m
-                    ));
-                    if (pos >= text.length) { clearInterval(tick); resolve(); }
-                }, 16);
-            });
+        for await (const event of streamChat(`${STREAM_API_URL}/chat/stream`, body)) {
+            if (event.session_id) {
+                setSessionId(prev => prev || event.session_id!);
+            }
+            if (event.human_controlled) {
+                humanControlled = true;
+                continue;
+            }
+            if (event.chunk) {
+                ensurePlaceholder();
+                contentSoFar += event.chunk;
+                const snapshot = contentSoFar;
+                setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, content: snapshot } : m)));
+            }
+            if (event.error) {
+                ensurePlaceholder();
+                const errorText = contentSoFar
+                    ? `${contentSoFar}\n\n_[Connection interrupted — please try again.]_`
+                    : 'Sorry, I encountered an error. Please try again.';
+                setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, content: errorText } : m)));
+                throw new Error(event.error);
+            }
+            if (event.done) gotDone = true;
+        }
+
+        if (!gotDone && !humanControlled) {
+            throw new Error('Stream ended unexpectedly');
+        }
+        return { humanControlled };
+    };
+
+    const triggerGreeting = async (name: string) => {
+        const greetId = (Date.now() + 2).toString();
+        setIsLoading(true);
+
+        try {
+            await runChatStream({ message: '__greet__', user_name: name }, greetId);
         } catch (error) {
             const fallback = error instanceof Error && error.message === "You're sending messages too quickly — please slow down and try again in a moment."
                 ? error.message
                 : `Hey, ${name}! Ask me anything about Akash.`;
-            if (placeholderAdded) {
-                setMessages(prev => prev.map(m =>
-                    m.id === greetId && m.content === '' ? { ...m, content: fallback } : m
-                ));
-            } else {
-                setMessages(prev => [...prev, { id: greetId, role: 'assistant', content: fallback, timestamp: new Date() }]);
-            }
+            setMessages(prev => (
+                prev.some(m => m.id === greetId) ? prev : [...prev, { id: greetId, role: 'assistant', content: fallback, timestamp: new Date() }]
+            ));
         } finally {
             setIsLoading(false);
             setIsStreaming(false);
@@ -251,58 +267,17 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         setIsLoading(true);
 
         const assistantId = (Date.now() + 1).toString();
-        let placeholderAdded = false;
 
         try {
-            const response = await fetch(`${API_URL}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMessage.content, session_id: sessionId || undefined }),
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.json().catch(() => null);
-                throw new Error(response.status === 429 && errorBody?.detail ? errorBody.detail : 'Request failed');
-            }
-
-            const data = await response.json();
-            if (data.session_id && !sessionId) setSessionId(data.session_id);
-
-            if (data.human_controlled) {
-                setIsLoading(false);
-                return;
-            }
-
-            // Add placeholder and begin typewriter animation
-            setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', timestamp: new Date() }]);
-            placeholderAdded = true;
-            setIsLoading(false);
-            setIsStreaming(true);
-
-            const text: string = data.response;
-            await new Promise<void>(resolve => {
-                let pos = 0;
-                const tick = setInterval(() => {
-                    pos = Math.min(pos + 5, text.length);
-                    setMessages(prev => prev.map(m =>
-                        m.id === assistantId ? { ...m, content: text.slice(0, pos) } : m
-                    ));
-                    if (pos >= text.length) { clearInterval(tick); resolve(); }
-                }, 16);
-            });
-
+            await runChatStream({ message: userMessage.content, session_id: sessionId || undefined }, assistantId);
         } catch (error) {
             console.error('Chat error:', error);
             const errMsg = error instanceof Error && error.message === "You're sending messages too quickly — please slow down and try again in a moment."
                 ? error.message
                 : 'Sorry, I encountered an error. Please try again.';
-            if (placeholderAdded) {
-                setMessages(prev => prev.map(m =>
-                    m.id === assistantId && m.content === '' ? { ...m, content: errMsg } : m
-                ));
-            } else {
-                setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: errMsg, timestamp: new Date() }]);
-            }
+            setMessages(prev => (
+                prev.some(m => m.id === assistantId) ? prev : [...prev, { id: assistantId, role: 'assistant', content: errMsg, timestamp: new Date() }]
+            ));
         } finally {
             setIsLoading(false);
             setIsStreaming(false);
@@ -431,6 +406,7 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
                 {messages.length === 0 && onboardingStep === 'done' && !isLoading && !isStreaming && (
                     <div className="flex flex-col items-center justify-center h-full gap-4 select-none">
                         {!avatarError ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                                 src={avatarSrc}
                                 alt="Akash"

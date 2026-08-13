@@ -10,7 +10,11 @@ export function useTheme() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    // Must run post-hydration: SSR always renders the 'light' default so the
+    // server and first client render match exactly, then this effect corrects
+    // to the real DOM value an inline pre-hydration script already set.
     const current = document.documentElement.dataset.theme as Theme | undefined;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (current === 'dark' || current === 'light') setTheme(current);
     setHydrated(true);
   }, []);

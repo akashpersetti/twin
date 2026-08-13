@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 import pytest
 
@@ -45,6 +46,17 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 client = TestClient(server.app)
+
+
+def _tool_use_stream_events(tool_name, tool_input, final_text):
+    """Build a converse_stream event iterator: one tool_use turn, then a text-only follow-up turn is NOT
+    included here — the second bedrock_client.converse_stream call is mocked separately per test."""
+    import json as _json
+    return iter([
+        {"contentBlockStart": {"contentBlockIndex": 0, "start": {"toolUse": {"toolUseId": "t1", "name": tool_name}}}},
+        {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"toolUse": {"input": _json.dumps(tool_input)}}}},
+        {"messageStop": {"stopReason": "tool_use"}},
+    ])
 
 
 @pytest.fixture(autouse=True)
@@ -225,3 +237,132 @@ def test_chat_endpoint_skips_sns_notification_when_not_escalated():
         client.post("/chat", json={"message": "hello", "session_id": "no-escalate-sns-test"})
 
     mock_sns.publish.assert_not_called()
+
+
+def test_stream_bedrock_faq_tool_round_trip():
+    from server import stream_bedrock
+
+    # First call: tool use request
+    first_response = _tool_use_stream_events("faq_tool", {"faq_number": 1}, None)
+    # Second call: follow-up with tool result
+    second_response = iter([
+        {"contentBlockStart": {"contentBlockIndex": 0, "start": {"text": {}}}},
+        {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"text": "The answer to Q1."}}},
+        {"messageStop": {"stopReason": "end_turn"}},
+    ])
+
+    with patch("server.bedrock_client.converse_stream") as mock_converse, \
+         patch("server.save_conversation"), \
+         patch("server.retrieval.retrieve", return_value=[]):
+        mock_converse.side_effect = [
+            {"stream": first_response},
+            {"stream": second_response}
+        ]
+        generator = stream_bedrock([], "Do you have Q1?", "test-session")
+        chunks = list(generator)
+
+    # Verify both calls to Bedrock were made
+    assert mock_converse.call_count == 2
+
+    # Verify the second call included the tool result
+    second_call_args = mock_converse.call_args_list[1]
+    messages_arg = second_call_args[1]["messages"]
+    tool_result_message = next(m for m in messages_arg if m["role"] == "user" and "toolResult" in m["content"][0])
+    assert tool_result_message["content"][0]["toolResult"]["toolUseId"] == "t1"
+
+    # Verify final text output includes the follow-up answer
+    # Chunks are SSE strings like "data: {json}\n\n", so parse them
+    final_text = ""
+    for chunk in chunks:
+        if isinstance(chunk, str) and chunk.startswith("data: "):
+            try:
+                data = json.loads(chunk[6:])  # Strip "data: " prefix
+                if "chunk" in data:
+                    final_text += data["chunk"]
+            except json.JSONDecodeError:
+                pass
+    assert "The answer to Q1." in final_text
+
+
+def test_stream_bedrock_escalate_tool_sets_needs_attention():
+    from server import stream_bedrock
+
+    # First call: tool use request (escalate_to_human_tool)
+    first_response = _tool_use_stream_events("escalate_to_human_tool", {}, None)
+    # Second call: follow-up with tool result
+    second_response = iter([
+        {"contentBlockStart": {"contentBlockIndex": 0, "start": {"text": {}}}},
+        {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"text": "I'm escalating this to your developer."}}},
+        {"messageStop": {"stopReason": "end_turn"}},
+    ])
+
+    with patch("server.bedrock_client.converse_stream") as mock_converse, \
+         patch("server.save_conversation"), \
+         patch("server.retrieval.retrieve", return_value=[]):
+        mock_converse.side_effect = [
+            {"stream": first_response},
+            {"stream": second_response}
+        ]
+        generator = stream_bedrock([], "I need help", "test-session")
+        chunks = list(generator)
+
+    # Verify both calls to Bedrock were made
+    assert mock_converse.call_count == 2
+
+    # Check that the escalation flag was sent (will be in the SSE response)
+    # The test verifies the tool is called; the escalation handling is checked by integration tests
+    escalation_found = False
+    for chunk in chunks:
+        if isinstance(chunk, str) and chunk.startswith("data: "):
+            try:
+                data = json.loads(chunk[6:])  # Strip "data: " prefix
+                if data.get("escalated") is True:
+                    escalation_found = True
+                    break
+            except json.JSONDecodeError:
+                pass
+    assert escalation_found
+
+
+def test_chat_stream_answers_qn_shortcut_without_calling_bedrock():
+    def _read_sse_events(response):
+        """Parse SSE events from a streaming response."""
+        events = []
+        for line in response.iter_lines():
+            if isinstance(line, bytes):
+                line = line.decode('utf-8')
+            if line.startswith('data: '):
+                try:
+                    events.append(json.loads(line[6:]))
+                except json.JSONDecodeError:
+                    pass
+        return events
+
+    with patch("server.bedrock_client.converse_stream") as mock_converse_stream:
+        response = client.post("/chat/stream", json={"message": "Q1"})
+        events = _read_sse_events(response)
+
+    mock_converse_stream.assert_not_called()
+    chunks = [e["chunk"] for e in events if "chunk" in e]
+    assert len(chunks) == 1
+    assert chunks[0].startswith("**Q1:**")
+    assert any(e.get("done") for e in events)
+
+
+def test_stream_bedrock_escalate_publishes_sns():
+    from server import stream_bedrock
+
+    first_response = {"stream": _tool_use_stream_events("escalate_to_human_tool", {"reason": "wants a call"}, None)}
+    second_response = {"stream": iter([
+        {"contentBlockDelta": {"contentBlockIndex": 0, "delta": {"text": "I've let Akash know."}}},
+        {"messageStop": {"stopReason": "end_turn"}},
+    ])}
+
+    with patch("server.bedrock_client.converse_stream", side_effect=[first_response, second_response]), \
+         patch("server.save_conversation"), \
+         patch("server.retrieval.retrieve", return_value=[]), \
+         patch("server.sns_client.publish") as mock_publish, \
+         patch("server.SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789012:test"):
+        list(stream_bedrock([], "Can you get Akash?", "sess-sns"))
+
+    mock_publish.assert_called_once()

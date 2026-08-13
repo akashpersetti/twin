@@ -12,28 +12,86 @@ Twin is Akash Hadagali Persetti's AI-assisted portfolio, conversation system, ev
 - Retrieval-augmented answers using the top 5 matching profile-index chunks, Titan Embed Text v2 embeddings, and a configurable Claude Sonnet 4.5 answer model.
 - An authenticated resume-upload view in the admin UI that hands a PDF to a cloud pipeline (S3 upload, GitHub Actions dispatch, Bedrock-driven regeneration of resume/persona data, then a push to `main` that triggers the normal deploy) instead of requiring a local run of `scripts/update-resume.py`.
 
-## Architecture
+## Architecture: End-to-End Bedrock Streaming
+
+Twin now streams chat responses end-to-end, from Bedrock token generation through to the browser, with zero client-side buffering.
+
+### Real-Time Token Streaming
+
+- **Backend**: FastAPI + boto3 `converse_stream()` for real Bedrock token streaming
+- **Infrastructure**: Dedicated AWS Lambda (with Lambda Web Adapter) + REST API Gateway with `response_transfer_mode = STREAM`
+- **Frontend**: Native `fetch` + `ReadableStream` for incremental rendering (no setInterval typewriter)
+- **Protocol**: Server-Sent Events (SSE) for event-driven streaming
+
+### Dual-Path Architecture
+
+Twin supports both streaming and non-streaming paths for compatibility:
+
+**Streaming Path (Primary):**
+- Frontend POSTs to `/chat/stream` (dedicated streaming REST API)
+- Backend streams Bedrock tokens via SSE
+- Response appears incrementally as tokens arrive
+- Full `resolve_chat_guards()` parity with non-streaming (FAQ shortcuts, escalation, scope checks)
+
+**Non-Streaming Path (Fallback):**
+- Frontend POSTs to `/chat` (main HTTP API)
+- Backend calls Bedrock in full-response mode
+- Returns complete JSON response
+- Frontend applies typewriter effect (for backward compatibility)
+
+### Static Frontend and Frontend Infrastructure
 
 Both Next.js applications are independent static exports (`output: "export"`) that produce `out/` directories. The main portfolio and admin UI live in `frontend/`; the public reader experience lives in `blog-frontend/`. In the AWS design, S3 hosts each export behind its own CloudFront distribution, while API Gateway routes requests to FastAPI applications on Lambda.
 
-The main request flow is:
+### Key Components
 
-1. The browser posts a complete message to the main API's non-streaming `/chat` route.
-2. The API embeds the query with Titan Embed Text v2 (`amazon.titan-embed-text-v2:0`) and selects the top 5 chunks from `backend/data/profile_index.json`.
-3. The retrieved context and persona resources are sent to the configurable answer model. The code and Terraform default is Claude Sonnet 4.5 (`us.anthropic.claude-sonnet-4-5-20250929-v1:0`).
-4. The browser receives the complete response and renders it progressively with a client-side typewriter effect. The backend also exposes an SSE route, but the current frontend does not use it; production end-to-end streaming depends on the deployed integration supporting that route correctly.
-5. Conversations are written to DynamoDB first when configured. The main API retains S3 and local-filesystem fallbacks for other environments.
-6. The frontend polls conversation history for human replies. Owner replies are added through the authenticated admin inbox.
+- **`backend/server.py`**: Shared `resolve_chat_guards()` + `stream_bedrock()` (tool-use support)
+- **`backend/run.sh`**: Lambda Web Adapter bootstrap for streaming Lambda
+- **`frontend/lib/chatStream.ts`**: Pure SSE parser + `fetch`-based streaming utility (no DOM)
+- **`frontend/components/twin.tsx`**: Real incremental rendering via `streamChat()` utility
+- **`terraform/main.tf`**: Dedicated streaming REST API + Lambda infrastructure
+- **`scripts/verify_streaming.py`**: Production verification harness
+
+### Conversation Storage and Eval
+
+Conversations are written to DynamoDB first when configured. The main API retains S3 and local-filesystem fallbacks for other environments. The frontend polls conversation history for human replies. Owner replies are added through the authenticated admin inbox.
 
 Live chat responses can also be captured as raw eval records in an eval S3 bucket. Object creation under the live raw prefix invokes a separate judge Lambda, which writes faithfulness judgments using the configurable Nova Lite default (`amazon.nova-lite-v1:0`). Synthetic eval runs use the same retrieval and judging concepts but are initiated separately.
 
-The Terraform deployment design splits the backend across three Lambda functions and packages:
+### Terraform Deployment
+
+The Terraform deployment design splits the backend across four Lambda functions and packages:
 
 - The main FastAPI API: `backend/lambda_handler.py` and generated `lambda-deployment.zip` under `backend/`.
+- The dedicated streaming API: `backend/run.sh` (Lambda Web Adapter bootstrap) backed by the same `lambda-deployment.zip`.
 - The blog-admin API: `backend/blog_lambda_handler.py` and `backend/blog-lambda.zip`.
 - The asynchronous live judge: `backend/live_judge_handler.py` and generated `live-judge-lambda.zip` under `backend/`.
 
-Terraform describes supporting API Gateway, DynamoDB, S3, CloudFront, IAM, SES, SNS, SSM, certificate, and DNS resources. Their presence and readiness in any account must be verified at runtime.
+Terraform describes supporting API Gateway (with streaming REST API), DynamoDB, S3, CloudFront, IAM, SES, SNS, SSM, certificate, and DNS resources. Their presence and readiness in any account must be verified at runtime.
+
+### Local Development
+
+To test streaming locally:
+
+```bash
+# Terminal 1: Start backend dev server
+cd backend && uvicorn server:app --host 0.0.0.0 --port 8000
+
+# Terminal 2: Start frontend dev server
+cd frontend && npm run dev
+```
+
+Frontend will use `http://localhost:8000/chat/stream` (from `.env.example`).
+
+### Deployment
+
+Streaming infrastructure is defined in `terraform/main.tf` and deployed via `scripts/deploy.sh`:
+
+```bash
+./scripts/deploy.sh dev twin
+```
+
+The same deployment zip serves both the main HTTP API (Mangum) and the streaming API (Lambda Web Adapter).
 
 ## Repository Layout
 

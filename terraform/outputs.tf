@@ -57,3 +57,8 @@ output "blog_cloudfront_distribution_id" {
   description = "CloudFront distribution ID for blog — set as GitHub Actions secret BLOG_CF_DISTRIBUTION_ID"
   value       = aws_cloudfront_distribution.blog[0].id
 }
+
+output "stream_api_gateway_url" {
+  description = "Invoke URL of the dedicated REST API used for real Bedrock token streaming on /chat/stream"
+  value       = aws_api_gateway_stage.stream.invoke_url
+}

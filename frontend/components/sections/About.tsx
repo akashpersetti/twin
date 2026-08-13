@@ -102,7 +102,7 @@ export default function About() {
             <div className="px-5 py-2 text-[12px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>
               <div>akash@twin % git status</div>
               <div className="mt-2">On branch main</div>
-              <div>Your branch is up to date with 'origin/main'.</div>
+              <div>Your branch is up to date with &apos;origin/main&apos;.</div>
               <div className="mt-2">Current focus:</div>
               <div className="pl-4">modified: llm-evaluation</div>
               <div className="pl-4">modified: agentic-systems</div>

@@ -10,7 +10,7 @@ interface AdminLoginProps {
 export default function AdminLogin({ apiUrl, onLoggedIn }: AdminLoginProps) {
     const [email, setEmail] = useState('');
     const [sent, setSent] = useState(false);
-    const [verifying, setVerifying] = useState(false);
+    const [verifying, setVerifying] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('magic'));
     const [error, setError] = useState(false);
 
     useEffect(() => {
@@ -19,7 +19,6 @@ export default function AdminLogin({ apiUrl, onLoggedIn }: AdminLoginProps) {
         if (!magic) return;
 
         window.history.replaceState(null, '', window.location.pathname);
-        setVerifying(true);
         fetch(`${apiUrl}/admin/auth/verify?token=${encodeURIComponent(magic)}`)
             .then(response => {
                 if (!response.ok) throw new Error('Invalid or expired link');

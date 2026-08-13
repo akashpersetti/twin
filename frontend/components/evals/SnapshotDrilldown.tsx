@@ -26,12 +26,17 @@ export default function SnapshotDrilldown({
   onClose: () => void;
 }) {
   const [results, setResults] = useState<QueryResult[] | null>(null);
+  const [prevSnapshotKey, setPrevSnapshotKey] = useState(snapshotKey);
+
+  // Reset stale results during render (not in an effect) when the key prop
+  // itself changes, so a re-open never briefly shows the previous snapshot's data.
+  if (snapshotKey !== prevSnapshotKey) {
+    setPrevSnapshotKey(snapshotKey);
+    setResults(null);
+  }
 
   useEffect(() => {
-    if (!snapshotKey) {
-      setResults(null);
-      return;
-    }
+    if (!snapshotKey) return;
     fetch(`${apiUrl}/evals/synthetic/${encodeURIComponent(snapshotKey)}`)
       .then((r) => r.json())
       .then((data) => setResults(data.results));

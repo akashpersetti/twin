@@ -42,6 +42,7 @@ echo "🎯 Applying Terraform..."
 "${TF_APPLY_CMD[@]}"
 
 API_URL=$(terraform output -raw api_gateway_url)
+STREAM_API_URL=$(terraform output -raw stream_api_gateway_url 2>/dev/null || echo "http://localhost:8000")
 FRONTEND_BUCKET=$(terraform output -raw s3_frontend_bucket)
 CUSTOM_URL=$(terraform output -raw custom_domain_url 2>/dev/null || true)
 
@@ -49,8 +50,9 @@ CUSTOM_URL=$(terraform output -raw custom_domain_url 2>/dev/null || true)
 cd ../frontend
 
 # Create production environment file with API URL and cache-bust for avatar
-echo "📝 Setting API URL for production..."
+echo "📝 Setting API URLs for production..."
 echo "NEXT_PUBLIC_API_URL=$API_URL" > .env.production
+echo "NEXT_PUBLIC_STREAM_API_URL=$STREAM_API_URL" >> .env.production
 echo "NEXT_PUBLIC_AVATAR_VERSION=$(date +%s)" >> .env.production
 
 npm install
