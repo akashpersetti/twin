@@ -42,7 +42,9 @@ function fakeStreamResponse(chunks: string[], ok = true, status = 200, jsonBody:
 }
 
 describe('streamChat', () => {
-    afterEach(() => vi.unstubAllGlobals());
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
 
     it('reassembles one SSE event split across many network reads', async () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(fakeStreamResponse([

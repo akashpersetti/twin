@@ -9,6 +9,7 @@ import { streamChat } from '@/lib/chatStream';
 
 const MONO = 'var(--font-mono), "JetBrains Mono", "Fira Code", monospace';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const STREAM_API_URL = process.env.NEXT_PUBLIC_STREAM_API_URL || API_URL;
 
 interface Message {
     id: string;
@@ -69,89 +70,6 @@ export interface TwinHandle {
     clear: () => void;
 }
 
-/**
- * Attempt to stream chat response from /chat/stream endpoint.
- * Falls back to non-streaming /chat if streaming unavailable.
- */
-async function runChatStream(
-  sessionId: string,
-  message: string,
-  streamApiUrl: string | undefined,
-  onChunk: (text: string) => void,
-  onDone: (escalated: boolean) => void,
-  onError: (error: string) => void
-): Promise<void> {
-  if (!streamApiUrl) {
-    // No streaming URL available, fall back to non-streaming
-    await runChatNonStreaming(sessionId, message, onChunk, onDone, onError);
-    return;
-  }
-
-  try {
-    let escalated = false;
-
-    for await (const event of streamChat(sessionId, message, streamApiUrl)) {
-      if (event.chunk) {
-        onChunk(event.chunk);
-      }
-      if (event.done) {
-        escalated = event.escalated || false;
-        onDone(escalated);
-        break;
-      }
-      if (event.human_controlled) {
-        onDone(false);
-        break;
-      }
-    }
-  } catch (err) {
-    // Streaming failed; fall back to non-streaming
-    console.warn('Streaming failed, falling back to non-streaming:', err);
-    await runChatNonStreaming(sessionId, message, onChunk, onDone, onError);
-  }
-}
-
-/**
- * Non-streaming fallback: POST to /chat and reveal response with typewriter effect.
- * Keep existing logic here; this is the fallback when streaming is unavailable.
- */
-async function runChatNonStreaming(
-  sessionId: string,
-  message: string,
-  onChunk: (text: string) => void,
-  onDone: (escalated: boolean) => void,
-  onError: (error: string) => void
-): Promise<void> {
-  try {
-    const response = await fetch(`${API_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_id: sessionId,
-        message: message,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const fullText = data.response || '';
-    const escalated = data.needs_attention || false;
-
-    // Typewriter effect: reveal text character by character
-    for (let i = 0; i < fullText.length; i++) {
-      onChunk(fullText[i]);
-      await new Promise(resolve => setTimeout(resolve, 20)); // 20ms per character
-    }
-
-    onDone(escalated);
-  } catch (err) {
-    onError(err instanceof Error ? err.message : 'Unknown error');
-  }
-}
-
 const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -186,53 +104,67 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         hiddenInputRef.current?.focus({ preventScroll: true });
     }, []);
 
-    const triggerGreeting = async (name: string) => {
-        const greetId = (Date.now() + 2).toString();
+    const runChatStream = async (
+        body: { message: string; session_id?: string; user_name?: string },
+        messageId: string,
+    ): Promise<{ humanControlled: boolean }> => {
         let placeholderAdded = false;
-        setIsLoading(true);
+        let contentSoFar = '';
+        let humanControlled = false;
+        let gotDone = false;
 
-        try {
-            const response = await fetch(`${API_URL}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: '__greet__', user_name: name }),
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.json().catch(() => null);
-                throw new Error(response.status === 429 && errorBody?.detail ? errorBody.detail : 'Request failed');
-            }
-
-            const data = await response.json();
-            if (data.session_id) setSessionId(data.session_id);
-
-            setMessages(prev => [...prev, { id: greetId, role: 'assistant', content: '', timestamp: new Date() }]);
+        const ensurePlaceholder = () => {
+            if (placeholderAdded) return;
+            setMessages(prev => [...prev, { id: messageId, role: 'assistant', content: '', timestamp: new Date() }]);
             placeholderAdded = true;
             setIsLoading(false);
             setIsStreaming(true);
+        };
 
-            const text: string = data.response;
-            await new Promise<void>(resolve => {
-                let pos = 0;
-                const tick = setInterval(() => {
-                    pos = Math.min(pos + 5, text.length);
-                    setMessages(prev => prev.map(m =>
-                        m.id === greetId ? { ...m, content: text.slice(0, pos) } : m
-                    ));
-                    if (pos >= text.length) { clearInterval(tick); resolve(); }
-                }, 16);
-            });
+        for await (const event of streamChat(`${STREAM_API_URL}/chat/stream`, body)) {
+            if (event.session_id) {
+                setSessionId(prev => prev || event.session_id!);
+            }
+            if (event.human_controlled) {
+                humanControlled = true;
+                continue;
+            }
+            if (event.chunk) {
+                ensurePlaceholder();
+                contentSoFar += event.chunk;
+                const snapshot = contentSoFar;
+                setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, content: snapshot } : m)));
+            }
+            if (event.error) {
+                ensurePlaceholder();
+                const errorText = contentSoFar
+                    ? `${contentSoFar}\n\n_[Connection interrupted — please try again.]_`
+                    : 'Sorry, I encountered an error. Please try again.';
+                setMessages(prev => prev.map(m => (m.id === messageId ? { ...m, content: errorText } : m)));
+                throw new Error(event.error);
+            }
+            if (event.done) gotDone = true;
+        }
+
+        if (!gotDone && !humanControlled) {
+            throw new Error('Stream ended unexpectedly');
+        }
+        return { humanControlled };
+    };
+
+    const triggerGreeting = async (name: string) => {
+        const greetId = (Date.now() + 2).toString();
+        setIsLoading(true);
+
+        try {
+            await runChatStream({ message: '__greet__', user_name: name }, greetId);
         } catch (error) {
             const fallback = error instanceof Error && error.message === "You're sending messages too quickly — please slow down and try again in a moment."
                 ? error.message
                 : `Hey, ${name}! Ask me anything about Akash.`;
-            if (placeholderAdded) {
-                setMessages(prev => prev.map(m =>
-                    m.id === greetId && m.content === '' ? { ...m, content: fallback } : m
-                ));
-            } else {
-                setMessages(prev => [...prev, { id: greetId, role: 'assistant', content: fallback, timestamp: new Date() }]);
-            }
+            setMessages(prev => (
+                prev.some(m => m.id === greetId) ? prev : [...prev, { id: greetId, role: 'assistant', content: fallback, timestamp: new Date() }]
+            ));
         } finally {
             setIsLoading(false);
             setIsStreaming(false);
@@ -335,76 +267,17 @@ const Twin = forwardRef<TwinHandle>(function Twin(_, ref) {
         setIsLoading(true);
 
         const assistantId = (Date.now() + 1).toString();
-        let placeholderAdded = false;
 
         try {
-            // Try to determine streaming endpoint
-            const streamApiUrl = process.env.NEXT_PUBLIC_STREAM_API_URL
-                ? `${process.env.NEXT_PUBLIC_STREAM_API_URL}/chat/stream`
-                : undefined;
-
-            // Add placeholder message before attempting to get response
-            setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', timestamp: new Date() }]);
-            placeholderAdded = true;
-            setIsLoading(false);
-            setIsStreaming(true);
-
-            // Use real streaming if available, falls back to non-streaming
-            await runChatStream(
-                sessionId || '',
-                userMessage.content,
-                streamApiUrl,
-                (chunk) => {
-                    // Append chunk to current message
-                    setMessages(prev => prev.map(m =>
-                        m.id === assistantId ? { ...m, content: m.content + chunk } : m
-                    ));
-                },
-                () => {
-                    // Response complete - escalation flag handled by polling mechanism if needed
-                },
-                (error) => {
-                    // Error occurred after streaming started
-                    console.error('Chat error:', error);
-                    setMessages(prev => prev.map(m =>
-                        m.id === assistantId ? { ...m, content: `Error: ${error}` } : m
-                    ));
-                }
-            );
-
-            // Also try to set session ID and check for human_controlled from non-streaming endpoint
-            // This is for legacy flow compatibility
-            try {
-                const legacyResponse = await fetch(`${API_URL}/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userMessage.content, session_id: sessionId || undefined }),
-                });
-
-                if (legacyResponse.ok) {
-                    const data = await legacyResponse.json();
-                    if (data.session_id && !sessionId) setSessionId(data.session_id);
-                    if (data.human_controlled) {
-                        // Replace streaming response with human control notice
-                        setMessages(prev => prev.filter(m => m.id !== assistantId));
-                    }
-                }
-            } catch {
-                // Ignore legacy endpoint errors
-            }
-
+            await runChatStream({ message: userMessage.content, session_id: sessionId || undefined }, assistantId);
         } catch (error) {
             console.error('Chat error:', error);
             const errMsg = error instanceof Error && error.message === "You're sending messages too quickly — please slow down and try again in a moment."
                 ? error.message
                 : 'Sorry, I encountered an error. Please try again.';
-            if (placeholderAdded) {
-                setMessages(prev => prev.map(m =>
-                    m.id === assistantId && m.content === '' ? { ...m, content: errMsg } : m
-                ));
-            } else {
-                setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: errMsg, timestamp: new Date() }]);
-            }
+            setMessages(prev => (
+                prev.some(m => m.id === assistantId) ? prev : [...prev, { id: assistantId, role: 'assistant', content: errMsg, timestamp: new Date() }]
+            ));
         } finally {
             setIsLoading(false);
             setIsStreaming(false);
