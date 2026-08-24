@@ -19,10 +19,10 @@ export const resume = {
   },
 
   impact: [
-    { value: 40, unit: "%", label: "Coach intervention time reduced (ML Intern)" },
-    { value: 30, unit: "%", label: "Miscounting errors cut (ML Intern)" },
+    { value: 40, unit: "%", label: "Coach intervention time reduced (ML Intern)", icon: "" },
+    { value: 30, unit: "%", label: "Miscounting errors cut (ML Intern)", icon: "" },
     { value: 71, unit: "", label: "PyPI downloads in first month (mcp-second-opinion)", icon: "download" },
-    { value: 2, unit: "x", label: "RAG precision from semantic chunking (EvalBench)" },
+    { value: 2, unit: "x", label: "RAG precision from semantic chunking (EvalBench)", icon: "" },
   ],
 
   experience: [
@@ -36,6 +36,19 @@ export const resume = {
       bullets: [
         "Building an adaptive AI tutoring product that assesses a learner's existing knowledge of a target topic or certification and generates a customized, real-time training program covering only the gaps, using Python, LLMs (OpenAI SDK), and MySQL.",
         "Developed the initial assessment and curriculum-generation services using structured outputs, Pydantic validation schemas, and automated test cases, keeping generated coursework grounded and aligned to certification requirements while enabling rapid prototype iteration toward a QA-approved milestone.",
+      ],
+    },
+    {
+      role: "Founding Engineer",
+      company: "Laxora.ai",
+      location: "United States",
+      type: "Remote",
+      period: "May 2026 – Jul 2026",
+      project: "HIPAA-Compliant AI Scheduling Assistant",
+      bullets: [
+        "Co-founded Laxora.ai, building a HIPAA-compliant AI scheduling assistant for dental and physician offices, and architected the core LLM/agent layer powering automated appointment scheduling and patient interactions.",
+        "Owned end-to-end technical decisions across the stack – infrastructure, API design, model integration, and prompt engineering – with HIPAA compliance as a first-class constraint (PHI safeguards, data handling, access controls).",
+        "Took features from zero to production, balancing rapid iteration with reliability and security.",
       ],
     },
     {
@@ -143,7 +156,7 @@ export const resume = {
         "S3",
       ],
       bullets: [
-        "Built a tool-calling personal-website agent on Bedrock Claude Sonnet 4.5 using Titan-v2 retrieval over a persona corpus assembled at Lambda cold-start, with a pre-approved-FAQ tool and an escalate-to-human tool that SNS-notifies the owner for a live reply via a DynamoDB-backed admin inbox.",
+        "Built a streaming personal-website agent using Titan-embedding retrieval over a persona corpus, grounded in a profile assembled at Lambda cold-start from a LinkedIn PDF, career summary, and style guide (parsed via pypdf) and injected into a Bedrock Claude Sonnet system prompt.",
         "Shipped a public evals dashboard scoring retrieval quality (recall@k, nDCG@k) on 35 labeled queries per push and LLM-judged faithfulness on live traffic via an S3-event-driven judge Lambda that adds zero latency to chat responses.",
         "Cut full-stack deployment to a single command across dev, test, and prod by chaining Docker build, Lambda upload, Terraform apply, Next.js export, S3 sync, and CloudFront invalidation through GitHub Actions and AWS OIDC.",
       ],

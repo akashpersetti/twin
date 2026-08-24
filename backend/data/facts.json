@@ -40,6 +40,21 @@
       ]
     },
     {
+      "title": "Founding Engineer",
+      "company": "Laxora.ai",
+      "location": "United States",
+      "type": "Remote",
+      "period": "May 2026 - Jul 2026",
+      "summary": "Co-founded Laxora.ai, building a HIPAA-compliant AI scheduling assistant for dental and physician offices, and architected the core LLM/agent layer powering automated appointment scheduling and patient interactions. Owned end-to-end technical decisions across the stack \u2013 infrastructure, API design, model integration, and prompt engineering \u2013 with HIPAA compliance as a first-class constraint (PHI safeguards, data handling, access controls). Took features from zero to production, balancing rapid iteration with reliability and security.",
+      "stack": [
+        "Python",
+        "LLMs",
+        "HIPAA-compliant architecture",
+        "API design",
+        "prompt engineering"
+      ]
+    },
+    {
       "title": "Machine Learning Intern",
       "company": "MyEdMaster LLC",
       "location": "Leesburg, VA, United States",
@@ -133,7 +148,7 @@
     },
     {
       "name": "Twin",
-      "description": "Built a tool-calling personal-website agent on Bedrock Claude Sonnet 4.5 using Titan-v2 retrieval over a persona corpus assembled at Lambda cold-start, with a pre-approved FAQ tool and an escalate-to-human tool that SNS-notifies the owner for a live reply via a DynamoDB-backed admin inbox. Shipped a public evals dashboard scoring retrieval quality (recall@k, nDCG@k) on 35 labeled queries per push and LLM-judged faithfulness on live traffic via an S3-event-driven judge Lambda that adds zero latency to chat responses. Cut full-stack deployment to a single command across dev, test, and prod by chaining Docker build, Lambda upload, Terraform apply, Next.js export, S3 sync, and CloudFront invalidation through GitHub Actions and AWS OIDC.",
+      "description": "Built a streaming personal-website agent using Titan-embedding retrieval over a persona corpus, grounded in a profile assembled at Lambda cold-start from a LinkedIn PDF, career summary, and style guide (parsed via pypdf) and injected into a Bedrock Claude Sonnet system prompt. Shipped a public evals dashboard scoring retrieval quality (recall@k, nDCG@k) on 35 labeled queries per push and LLM-judged faithfulness on live traffic via an S3-event-driven judge Lambda that adds zero latency to chat responses. Cut full-stack deployment to a single command across dev, test, and prod by chaining Docker build, Lambda upload, Terraform apply, Next.js export, S3 sync, and CloudFront invalidation through GitHub Actions and AWS OIDC.",
       "url": "akashpersetti.com",
       "stack": [
         "FastAPI",
