@@ -1,7 +1,7 @@
 {
   "full_name": "Akash Hadagali Persetti",
   "name": "Akash",
-  "current_role": "Applied AI Engineer, building reliable agentic systems, LLM evaluation infrastructure, and production AI applications on AWS.",
+  "current_role": "Software Engineer Intern at Humaximus, building healthcare coordination platforms with AI governance layers, and AI Engineer at MyEdMaster LLC, owning LLM integration for adaptive learning systems.",
   "education_status": "Graduated with an M.S. in Computer Science from Indiana University Bloomington in May 2026 (no longer a student)",
   "location": "Bloomington, IN, United States",
   "email": "hadagalipersettiakash@gmail.com",
@@ -21,22 +21,45 @@
     "RAG Systems",
     "LangChain / LangGraph",
     "Serverless & AWS (Lambda, API Gateway, DynamoDB, S3, CloudFront)",
-    "DevOps & CI/CD (Docker, Terraform, GitHub Actions)"
+    "DevOps & CI/CD (Docker, Terraform, GitHub Actions)",
+    "LLM Evaluation and Observability",
+    "HIPAA-compliant Architecture"
   ],
   "years_experience": 2,
   "experience": [
+    {
+      "title": "Software Engineer Intern",
+      "company": "Humaximus",
+      "location": "Remote",
+      "type": "Remote",
+      "period": "Sep 2026 - Present",
+      "summary": "Sole engineer working directly with the CEO, rebuilding a healthcare and community-coordination platform for a Dallas\u2013Fort Worth pilot where partner organizations coordinate care across referrals, cases, tasks, and consent-governed data sharing. Built four portals (staff, partner, patient, helper) on a single Next.js 16 / React 19 / TypeScript app with server actions over Postgres. Designed the AI layer as a single governed gateway supporting Gemini 2.5 Flash, Kimi, and Claude Sonnet, switchable from admin settings. Architected agents as recommend-only by construction: episode briefings, stalled-work detection, and recovery-plan drafts operate on permission-filtered views, cannot write data, and emit audit records on every call. Authored AWS target architecture (ECS Fargate, Bedrock, S3) with service-by-service cost model showing $300\u2013450/month consolidated on AWS against $800\u2013870/month retaining Supabase. Led database cutover and ported prototype into production application; normalized 65-table hx.* schema now carries row-level security on 34 tables.",
+      "stack": [
+        "Next.js 16",
+        "React 19",
+        "TypeScript",
+        "PostgreSQL",
+        "AWS ECS Fargate",
+        "AWS Bedrock",
+        "S3",
+        "Gemini 2.5 Flash",
+        "Claude Sonnet",
+        "Kimi"
+      ]
+    },
     {
       "title": "AI Engineer",
       "company": "MyEdMaster LLC",
       "location": "Leesburg, VA, United States",
       "type": "Remote",
       "period": "Jun 2026 - Present",
-      "summary": "Building an adaptive AI tutoring product that assesses a learner's existing knowledge of a target topic or certification and generates a customized, real-time training program covering only the gaps, using Python, LLMs (OpenAI SDK), and MySQL. Developed the initial assessment and curriculum-generation services using structured outputs, Pydantic validation schemas, and automated test cases, keeping generated coursework grounded and aligned to certification requirements while enabling rapid prototype iteration toward a QA-approved milestone.",
+      "summary": "Own the LLM integration layer of an adaptive learning platform that assesses a learner's existing knowledge of a certification and generates coursework covering only the gaps; 111 of 140 commits on the main line across a five-person team, backed by 72 tests. Built a structured completion client over LiteLLM with validation retry and JSON-mode fallback, enforcing two-layer Pydantic schemas across all four pipeline stages so provider-shaped responses never leak into domain types. Moved question-type allocation out of the prompt into deterministic Python with post-validation retry. Diagnosed persistent HTTP 402 'insufficient credits' error as burst-rate throttling, replacing LiteLLM's built-in retry with tenacity exponential backoff (10s floor). Traced a 500-ing course-list endpoint to select_related pulling 10\u201326MB JSON payload columns into a sorted query, overflowing MySQL sort buffer on 17 rows; rewrote to explicit .values() projection. Defined answer-key stripping contract after expanding assessments to four question types.",
       "stack": [
         "Python",
-        "LLMs (OpenAI SDK)",
+        "LiteLLM",
+        "Pydantic",
         "MySQL",
-        "Pydantic"
+        "tenacity"
       ]
     },
     {
@@ -44,14 +67,16 @@
       "company": "Laxora.ai",
       "location": "United States",
       "type": "Remote",
-      "period": "May 2026 - Jul 2026",
-      "summary": "Co-founded Laxora.ai, building a HIPAA-compliant AI scheduling assistant for dental and physician offices, and architected the core LLM/agent layer powering automated appointment scheduling and patient interactions. Owned end-to-end technical decisions across the stack \u2013 infrastructure, API design, model integration, and prompt engineering \u2013 with HIPAA compliance as a first-class constraint (PHI safeguards, data handling, access controls). Took features from zero to production, balancing rapid iteration with reliability and security.",
+      "period": "Jun 2026 - Jul 2026",
+      "summary": "Co-founded a HIPAA-compliant AI scheduling assistant for dental and physician offices; owned the AWS architecture and cost model while co-founder owned Terraform provisioning and DNS. Reached working pre-launch POC with architecture and compliance design settled. Argued for Bedrock over direct provider APIs on compliance grounds \u2013 already signing AWS BAA for RDS and S3, and any third-party LLM would need separate BAA negotiation. Caught that CloudTrail logs AWS API actions but not application-layer access to patient data, so specified conversation-level audit logging separately. Revised infrastructure cost model service by service, correcting Lambda cost as duration-bound rather than request-bound; POC estimate moved from blended $148 to roughly $115/month. Specified prompt caching on system prompt and per-practice config, projected to cut roughly 90% of dominant input cost. Built and shipped public marketing site in Next.js static export in a single day.",
       "stack": [
-        "Python",
-        "LLMs",
-        "HIPAA-compliant architecture",
-        "API design",
-        "prompt engineering"
+        "AWS Bedrock",
+        "RDS",
+        "S3",
+        "Lambda",
+        "CloudTrail",
+        "Next.js",
+        "Terraform"
       ]
     },
     {
@@ -60,7 +85,7 @@
       "location": "Leesburg, VA, United States",
       "type": "Remote",
       "period": "Jun 2025 - Aug 2025",
-      "summary": "Built a real-time computer-vision exercise-assessment system that cut repetition miscounting by roughly 30% and reached over 92% count accuracy across 3 exercise types (Kettlebell Front Raise, Seated Leg Extensions, Jack Knives) by adding calibration routines and motion-consistency checks in Python and MediaPipe, lowering estimated coach intervention time by about 40%. Held form-detection latency under 100ms per frame by engineering real-time pose-landmark extraction and joint-angle calculations, delivering sub-second corrective feedback so users could self-correct during live sessions without instructor oversight.",
+      "summary": "Built a real-time computer-vision exercise-assessment system in Python and MediaPipe, holding form-detection latency under 100ms per frame through pose-landmark extraction and joint-angle calculation, delivering sub-second corrective feedback so users self-corrected during live sessions without instructor oversight. Cut counting errors from 20 to 14 over 200 ground-truth reps (over 92% count accuracy across kettlebell front raises, seated leg extensions, and jack knives) by adding calibration routines and motion-consistency checks rather than a heavier model, keeping latency budget intact; form-error events requiring coach intervention dropped from 50 to 30 on the same test set.",
       "stack": [
         "Python",
         "MediaPipe"
@@ -84,7 +109,7 @@
   "projects": [
     {
       "name": "RepoModernizer",
-      "description": "Built a 5-node LangGraph state machine (ingest, install deps, plan, migrate-file loop, finalize) that plans a file-by-file migration from a natural-language goal, rewrites each file with an LLM, and gates any diff above a risk threshold behind a human-in-the-loop interrupt() before it touches disk. Detects a cloned target repo's own dependency manifest (pip or npm) and installs it into an isolated per-task virtual environment, decoupled from the worker's own runtime, so the target's real test suite runs against its real dependencies \u2013 and fails fast before spending any LLM cost if install itself breaks. Computed diffs from known-good before/after file content rather than trusting LLM-authored diffs, added bounded retries with Bedrock primary/fallback failover on transient or provider errors, and enforced guardrails (forbidden paths, max changed lines, no deletions) plus a hard per-task cost cap. Deployed on API Gateway, Lambda (FastAPI via Mangum), SQS, and one-shot Fargate tasks with DynamoDB checkpointing and an EFS-mounted workspace so a fresh container resumes mid-migration after a crash; provisioned through Terraform and GitHub Actions OIDC, with 96 passing tests and no long-lived AWS credentials.",
+      "description": "Built a 5-node LangGraph state machine (ingest, install deps, plan, migrate-file loop, finalize) that plans a file-by-file migration from a natural-language goal, rewrites each file with an LLM, and gates any diff above a risk threshold behind a human-in-the-loop interrupt() before it touches disk. Computed diffs from known-good before/after content rather than trusting LLM-authored diffs, with bounded retries and Bedrock primary/fallback failover on transient errors, plus guardrails (forbidden paths, max changed lines, no deletions) and a hard per-task cost cap evaluated against estimated spend before each call. Fixed a concurrency defect where repeated approve clicks produced 6\u20139 duplicate commits, using a pending-interrupt check plus an atomic DynamoDB claim so exactly one resume wins. Root-caused a git apply rejection affecting roughly a third of files (10 of 31) to diff generation force-padding a trailing newline onto both sides. Ran 16 real migrations at $0.0023 and 4.8 minutes average per run on a deliberately NAT-free stack (API Gateway, Lambda via Mangum, SQS, one-shot Fargate, EFS-mounted workspace, DynamoDB checkpointing); provisioned via Terraform and GitHub Actions OIDC, 96 passing tests, no long-lived AWS credentials.",
       "url": "repo-modernizer.akashpersetti.com",
       "stack": [
         "LangGraph",
@@ -96,12 +121,13 @@
         "SQS",
         "DynamoDB",
         "Terraform",
-        "GitHub Actions"
+        "GitHub Actions",
+        "Mangum"
       ]
     },
     {
       "name": "TerraformAgent",
-      "description": "Built a 6-node LangGraph pipeline (orchestrator, researcher, parallel domain subagents, aggregator, reviewer, evaluator) that turns a natural-language infrastructure request into validated Terraform, with a conditional edge that reruns only the domains a review flags for up to a capped number of targeted retries. Gated output on a real evaluator that writes the generated code to disk and runs terraform fmt and terraform validate against a provider cache baked into the Docker image, reaching full offline validation by copying the read-only cache into a writable path once per execution environment. Hardened the review step with a multi-LLM fan-out (reusing my mcp-second-opinion pattern) that queries OpenAI and Anthropic in parallel and blocks on any security veto, falling back to single-LLM review so a provider outage degrades quality instead of failing the run. Deployed the containerized service on Lambda and Step Functions with JWT authentication, DynamoDB state, SQS failure handling, and Secrets Manager; provisioned the stack through Terraform and GitHub Actions OIDC, with 94 passing tests and no long-lived AWS credentials.",
+      "description": "Built a 6-node LangGraph pipeline (orchestrator, researcher, parallel domain subagents, aggregator, reviewer, evaluator) that turns a natural-language infrastructure request into validated Terraform, with a conditional edge that reruns only the domains a review flags, up to a capped number of targeted retries. Gated output on a real compiler: the evaluator writes generated code to disk and runs terraform fmt and terraform validate against a provider cache baked into the Docker image, reaching full offline validation by copying the read-only cache into a writable path once per execution environment. Instrumented the targeted-retry loop and measured it across 10 real prompts in both modes: zero pass-rate improvement (the same 4 of 10 passed) at 46s to 145s average wall time. Hardened review with a multi-LLM security fan-out (reusing the mcp-second-opinion pattern) querying OpenAI and Anthropic in parallel and blocking on any veto, degrading to single-LLM review on provider outage. Deployed the containerized service on Lambda and Step Functions with JWT authentication, DynamoDB state, SQS failure handling, and Secrets Manager; provisioned through Terraform and GitHub Actions OIDC, with 94 passing tests and no long-lived AWS credentials.",
       "url": "terraform-agent.akashpersetti.com",
       "stack": [
         "LangGraph",
@@ -112,7 +138,8 @@
         "SQS",
         "Secrets Manager",
         "Terraform",
-        "GitHub Actions"
+        "GitHub Actions",
+        "Docker"
       ]
     },
     {
@@ -128,7 +155,8 @@
         "CloudFront",
         "DynamoDB",
         "SES",
-        "Terraform"
+        "Terraform",
+        "pytest"
       ]
     },
     {
@@ -207,15 +235,28 @@
       "RAG",
       "function calling",
       "structured outputs",
+      "Pydantic validation",
       "prompt engineering",
+      "prompt caching",
       "multi-agent workflows",
-      "LLM evaluation and observability"
+      "human-in-the-loop gating",
+      "guardrails and cost caps",
+      "LLM evaluation and observability",
+      "schema-validity and retry accounting",
+      "recall@k",
+      "nDCG@k",
+      "MRR",
+      "LLM-as-judge with variance tracking",
+      "Wilson and binomial confidence intervals",
+      "latency/cost benchmarking",
+      "regression detection in CI"
     ],
     "cloud_devops": [
-      "AWS (Lambda, Bedrock, API Gateway, DynamoDB, S3, CloudFront, ECR, Fargate, EFS, Step Functions, SQS, SNS, SES, Secrets Manager)",
+      "AWS (Lambda, Bedrock, API Gateway, DynamoDB, S3, CloudFront, ECR, Fargate, EFS, Step Functions, SQS, SNS, SES, Secrets Manager, ECS, RDS, Aurora Serverless)",
       "Docker",
       "Terraform (IaC)",
       "GitHub Actions CI/CD (OIDC)",
+      "pytest",
       "serverless and event-driven architecture"
     ],
     "generative_ai_ml": [
@@ -233,7 +274,8 @@
       "Node.js",
       "PostgreSQL",
       "MySQL",
-      "DynamoDB"
+      "DynamoDB",
+      "Supabase"
     ]
   }
 }
