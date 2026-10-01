@@ -24,13 +24,15 @@ import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
+import boto3
+from botocore.config import Config
 from pypdf import PdfReader
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(ROOT / "backend"))
 import retrieval  # noqa: E402
-from bedrock_client import bedrock_client, BEDROCK_MODEL_ID  # noqa: E402
+from bedrock_client import BEDROCK_MODEL_ID  # noqa: E402
 
 FRONTEND_PDF = ROOT / "frontend/public/resume.pdf"
 BACKEND_PDF = ROOT / "backend/data/resume.pdf"
@@ -54,6 +56,14 @@ TOP_LEVEL_KEYS = [
 ]
 
 DEFAULT_MODEL = BEDROCK_MODEL_ID
+
+# Converse is non-streaming: generating the full resume.ts (up to 8000 output
+# tokens) can exceed botocore's default 60s read timeout, so raise it here.
+bedrock_client = boto3.client(
+    service_name="bedrock-runtime",
+    region_name=os.getenv("DEFAULT_AWS_REGION", "us-east-1"),
+    config=Config(read_timeout=600, retries={"max_attempts": 5, "mode": "adaptive"}),
+)
 
 
 def call_bedrock(instructions: str, user_message: str, model: str, max_tokens: int = 8000) -> str:
